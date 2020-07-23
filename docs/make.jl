@@ -8,5 +8,5 @@ makedocs(sitename="IBZ",
          pages=["index.md", "Documentation.md", "Usage.md"])
 
 deploydocs(
-repo = "github.com/jerjorg/IBZ.jl.git",
+    repo = "github.com/jerjorg/IBZ.jl",
 )
