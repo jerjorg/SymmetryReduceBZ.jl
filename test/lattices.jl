@@ -78,7 +78,7 @@ using IBZ, Test
     recip_latvecs = get_recip_latvecs(real_latvecs, convention)
     @test real_latvecs ≈ recip_latvecs
 
-    convection = "angular"
+    convention = "angular"
     recip_latvecs = get_recip_latvecs(real_latvecs, convention)
     @test real_latvecs ≈ [2π 0; 0 2π]
   end
