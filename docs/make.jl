@@ -7,6 +7,6 @@ makedocs(sitename="IBZ",
          authors = "Jeremy Jorgensen",
          pages=["index.md", "Documentation.md", "Usage.md"])
 
-# deploydocs(
-#    repo = "github.com/jerjorg/IBZ.jl.git",
-# )
+deploydocs(
+repo = "github.com/jerjorg/IBZ.jl.git",
+)

@@ -71,6 +71,11 @@ using IBZ, Test
              0.941907678956  0.015738060731  0.598940997350]
     rbasis=minkowski_reduce(basis)
     @test check_reduced(rbasis)
-
+  end
+  @testset "get_recip_latvecs" begin
+    real_latvecs = [1 0; 0 1]
+    convention = "ordinary"
+    recip_latvecs = get_recip_latvecs(real_latvecs, convention)
+    @test real_latvecs ≈ recip_latvecs
   end
 end
