@@ -1,210 +1,15 @@
 module Symmetry
 
-using Distances, LinearAlgebra, CDDLib, QHull, Polyhedra, Combinatorics
+import CDDLib: Library
+import Polyhedra: HalfSpace, polyhedron, points
+import LinearAlgebra: norm, det, I
+import QHull: Chull, chull
+import Combinatorics: permutations
 
 include("Lattices.jl")
-using .Lattices
-
-export mapto_unitcell, calc_pointgroup, calc_spacegroup, sampleCircle,
-    sampleSphere, calc_bz, calc_ibz
-
-@doc """
-    shoelace(vertices)
-
-Calculate the area of a polygon with the shoelace algorithm.
-
-# Arguments
-- `vertices::AbstractArray{<:Real,2}`: the xy-coordinates of the vertices
-    of the polygon as the columns of a 2D array.
-
-# Returns
-- `<:Real`: the area of the polygon.
-"""
-function shoelace(vertices)
-    xs = vertices[1,:]
-    ys = vertices[2,:]
-    abs(xs[end]*ys[1] - xs[1]*ys[end] +
-        sum([xs[i]*ys[i+1]-xs[i+1]*ys[i] for i=1:(size(vertices,2)-1)]))/2
-end
-
-@doc """
-    edgelengths(basis,radius)
-
-Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
-
-# Arguments
-- `basis::Array{<:Real,2}`: a 2x2 or 3x3 matrix whose columns give the
-    parallelogram or parallelepiped directions, respectively.
-- `radius::Real`: the radius of the sphere.
-- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
-    floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
-    comparisons.
-
-# Returns
-- `[la,lb,lc]::Array{Float64,1}`: a list of parallelepiped lengths.
-
-# Examples
-```jldoctest
-using IBZ
-basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
-radius=3.0
-IBZ.Symmetry.edgelengths(basis,radius)
-# output
-3-element Array{Float64,1}:
- 3.0
- 3.0
- 3.0
-```
-"""
-function edgelengths(basis::Array{<:Real,2}, radius::Real,
-        rtol::Real=sqrt(eps(float(radius))), atol::Real=0.0)::Array{Float64,1}
-
-    if radius < 0 | isapprox(radius, 0, rtol=rtol, atol=atol)
-        error("The radius has to be a positive number.")
-    end
-
-    if size(basis,1) == 2
-        (a,b)=[basis[:,i] for i=1:2]
-        ax,ay=a
-        bx,by=b
-        la=2*abs(radius*sqrt(bx^2+by^2)/(ay*bx-ax*by))
-        lb=2*abs(radius*sqrt(ax^2+ay^2)/(ay*bx-ax*by))
-        return [la,lb]
-
-    elseif size(basis,1) == 3
-        (a,b,c)=[basis[:,i] for i=1:3]
-        ax,ay,az=a
-        bx,by,bz=b
-        cx,cy,cz=c
-
-        la=abs(radius*sqrt((by*cx-bx*cy)^2+(bz*cx-bx*cz)^2+(bz*cy-by*cz)^2)/
-            (az*by*cx-ay*bz*cx-az*bx*cy+ax*bz*cy+ay*bx*cz-ax*by*cz))
-        lb=abs((radius*sqrt((ay*cx-ax*cy)^2+(az*cx-ax*cz)^2+(az*cy-ay*cz)^2))/
-            (az*by*cx-ay*bz*cx-az*bx*cy+ax*bz*cy+ay*bx*cz-ax*by*cz))
-        lc=abs(radius*sqrt((ay*bx-ax*by)^2+(az*bx-ax*bz)^2+(az*by-ay*bz)^2)/
-            (az*by*cx-ay*bz*cx-az*bx*cy+ax*bz*cy+ay*bx*cz-ax*by*cz))
-        return [la,lb,lc]
-    else
-        throw(ArgumentError("Basis has to be a 2x2 or 3x3 matrix."))
-    end
-end
-
-
-@doc """
-    sampleCircle(basis,radius,offset,rtol,atol)
-
-Sample uniformly within a circle centered about a point.
-
-## Arguments
-- `basis::Array{<:Real,2}`: a 2x2 matrix whose columns are the grid generating
-    vectors.
-- `radius::Real`: the radius of the circle.
-- `offset::Array{<:Real,1}=[0.,0.]`: the xy-coordinates of the center of the
-    circle.
-- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
-    floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
-    comparisons.
-
-## Returns
-- `pts::Array{Float64,2}` a matrix whose columns are sample points in Cartesian
-    coordinates.
-
-## Examples
-```jldoctest
-using IBZ
-basis=Array([1. 0.; 0. 1.]')
-radius=1.0
-offset=[0.,0.]
-IBZ.Symmetry.sampleCircle(basis,radius,offset)
-# output
-2×5 Array{Float64,2}:
-  0.0  -1.0  0.0  1.0  0.0
- -1.0   0.0  0.0  0.0  1.0
-```
-"""
-function sampleCircle(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::AbstractArray{<:Real,1}=[0.,0.],
-    rtol::Real=sqrt(eps(float(radius))), atol::Real=0.0)::Array{Float64,2}
-
-    # Put the offset in lattice coordinates and round.
-    (o1,o2)=round.(inv(basis)*offset)
-    lens=edgelengths(basis,radius)
-    n1,n2=round.(lens) .+ 1
-
-    l=0;
-    pt=Array{Float64,1}(undef,2)
-    pts=Array{Float64,2}(undef,2,Int((2*n1+1)*(2*n2+1)));
-    distances=Array{Float64,1}(undef,size(pts,2))
-    for (i,j) in Iterators.product((-n1+o1):(n1+o1),(-n2+o2):(n2+o2))
-        l+=1
-        pt=BLAS.gemv('N',float(basis),[i,j])
-        pts[:,l]=pt
-        distances[l]=euclidean(pt,offset)
-    end
-
-    return pts[:,distances.<=radius]
-
-end
-
-@doc """
-    sampleSphere(basis,radius,offset,rtol,atol)
-
-Sample uniformly within a circle centered about a point.
-
-# Arguments
-- `basis::Array{<:Real,2}`: a 3x3 matrix whose columns are the grid generating
-    vectors.
-- `radius::Real`: the radius of the sphere.
-- `offset::Array{<:Real,1}=[0.,0.]`: the xy-coordinates of the center of the
-    circle.
-- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
-    floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
-    comparisons.
-
-# Returns
-- `pts::Array{Float64,2}` a matrix whose columns are sample points in Cartesian
-    coordinates.
-
-# Examples
-```jldoctest
-using IBZ
-basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
-radius=1.0
-offset=[0.,0.,0.]
-IBZ.Symmetry.sampleSphere(basis,radius,offset)
-# output
-3×7 Array{Float64,2}:
-  0.0   0.0  -1.0  0.0  1.0  0.0  0.0
-  0.0  -1.0   0.0  0.0  0.0  1.0  0.0
- -1.0   0.0   0.0  0.0  0.0  0.0  1.0
-```
-"""
-function sampleSphere(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::Array{<:Real,1}=[0.,0.,0.], rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=0.0)::Array{Float64,2}
-
-    # Put the offset in lattice coordinates and round.
-    (o1,o2,o3)=round.(inv(basis)*offset)
-    lens=edgelengths(basis,radius)
-    n1,n2,n3=round.(lens) .+ 1
-
-    l=0;
-    pt=Array{Float64,1}(undef,3)
-    pts=Array{Float64,2}(undef,3,Int((2*n1+1)*(2*n2+1)*(2*n3+1)));
-    distances=Array{Float64,1}(undef,size(pts,2))
-    for (i,j,k) in Iterators.product((-n1+o1):(n1+o1),(-n2+o2):(n2+o2),
-                                     (-n3+o3):(n3+o3))
-        l+=1
-        pt=BLAS.gemv('N',float(basis),[i,j,k])
-        pts[:,l]=pt
-        distances[l]=euclidean(pt,offset)
-    end
-
-    pts[:,findall(x->(x<radius||isapprox(x,radius,rtol=rtol)),distances)]
-end
+include("Utilities.jl")
+import .Lattices: get_recip_latvecs, minkowski_reduce
+import .Utilities: sample_circle, sample_sphere, contains
 
 @doc """
     calc_pointgroup(latvecs,rtol,atol)
@@ -249,9 +54,9 @@ function calc_pointgroup(latvecs::AbstractArray{<:Real,2},
     latvecs = minkowski_reduce(latvecs)
     radius = maximum([norm(latvecs[:,i]) for i=1:dim])
     if dim==2
-        pts=sampleCircle(latvecs,radius,[0,0],rtol,atol)
+        pts=sample_circle(latvecs,radius,[0,0],rtol,atol)
     elseif dim==3
-        pts=sampleSphere(latvecs,radius,[0,0,0],rtol,atol)
+        pts=sample_sphere(latvecs,radius,[0,0,0],rtol,atol)
     else
         throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 array."))
     end
@@ -280,14 +85,14 @@ end
 
 
 @doc """
-    mapto_unitcell(pt,real_latvecs,inv_latvecs,coords,rtol)
+    mapto_unitcell(pt,latvecs,inv_latvecs,coords,rtol,atol)
 
 Map a point to the first unit (primitive) cell.
 
 # Arguments
 - `pt::AbstractArray{<:Real,1}`: a point in lattice or Cartesian coordinates.
-- `latvecs::AbstractArray{<:Real,2}`: the basis vectors of the lattice as columns
-    of an array.
+- `latvecs::AbstractArray{<:Real,2}`: the basis vectors of the lattice as
+    columns of an array.
 - `inv_latvecs::AbstractArray{<:Real,2}`: the inverse of the matrix of that
     contains the lattice vectors.
 - `coords::String`: indicates whether `pt` is in \"Cartesian\" or \"lattice\"
@@ -297,6 +102,7 @@ Map a point to the first unit (primitive) cell.
     transformed to lattice coordinates because the transformation requires
     calculating a matrix inverse. The components of the point in lattice
     coordinates are checked to ensure that values close to 1 are equal to 1.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `AbstractArray{<:Real,1}`: a translationally equivalent point to `pt` in the
@@ -319,8 +125,8 @@ IBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
 """
 function mapto_unitcell(pt::AbstractArray{<:Real,1},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
-    coords::String,rtol::Real=sqrt(eps(float(maximum(inv_latvecs))))
-    )::Array{Float64,1}
+    coords::String,rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
+    atol::Real=0.0)::Array{Float64,1}
     if coords == "Cartesian"
         Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
             for c=inv_latvecs*pt])
@@ -378,6 +184,11 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
             same."))
     end
 
+    # Place atom positions in Cartesian coordinates.
+    if coords == "lattice"
+        atom_pos = real_latvecs*atom_pos
+    end
+
     real_latvecs = minkowski_reduce(real_latvecs)
     inv_latvecs = inv(real_latvecs)
     pointgroup = calc_pointgroup(real_latvecs,rtol,atol)
@@ -385,19 +196,16 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
 
     # Map points to the primitive cell.
     atom_pos = reduce(hcat,[mapto_unitcell(atom_pos[:,i],real_latvecs,
-                inv_latvecs,coords,rtol) for i=1:numatoms])
-
-    # Place atom positions in Cartesian coordinates.
-    if coords == "lattice"
-        atom_pos = real_latvecs*atom_pos
-    end
+                inv_latvecs,"Cartesian",rtol) for i=1:numatoms])
 
     ops_spacegroup=[]
     trans_spacegroup=[]
     kindᵣ=atom_types[1]
+    opts = []
 
-    # Atoms of the same type as the first.
+    # Atoms of the same type as the first atom.
     same_atoms=findall(x->x==kindᵣ,atom_types)
+
     for op in pointgroup
         # Use the first atom to calculate allowed fractional translations.
         posᵣ=op*atom_pos[:,1]
@@ -405,14 +213,20 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
         for atomᵢ=same_atoms
             # Calculate a candidate fractional translation.
             ftrans = mapto_unitcell(atom_pos[:,atomᵢ]-posᵣ,real_latvecs,
-                inv_latvecs,"Cartesian")
+                inv_latvecs,"Cartesian",rtol,atol)
+
+            if !contains(ftrans, opts)
+                append!(opts, [ftrans])
+            end
 
             # Check that all atoms land on the lattice when rotated and
             # translated.
             mapped = false
             for atomⱼ = 1:numatoms
                 kindⱼ = atom_types[atomⱼ]
-                posⱼ = op*atom_pos[:,atomⱼ] + ftrans
+                posⱼ = mapto_unitcell(op*atom_pos[:,atomⱼ] + ftrans,
+                    real_latvecs,inv_latvecs,"Cartesian",rtol,atol)
+
                 mapped = any([kindⱼ == atom_types[i] &&
                         isapprox(posⱼ,atom_pos[:,i],rtol=rtol,atol=atol) ?
                             true : false for i=1:numatoms])
@@ -428,13 +242,13 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
 end
 
 @doc """
-    calc_bz(real_latvecs, convention, vertsOrHrep=true, eps=1e-9)
+    calc_bz(real_latvecs, convention, bzformat)
 
-Calculate the Brillouin zone for the given real-spcae lattice.
+Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Arguments
 - `real_latvecs::AbstractArray{<:Real,2}`: the real-space lattice vectors or
-    primitive translation vectors as columns of a 3x3 array.
+    primitive translation vectors as columns of a 2x2 or 3x3 array.
 - `convention::String="ordinary"`: the convention used to go between real and
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
@@ -480,7 +294,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},convention::String,
     for i=3:size(latpts,2)
         bz = bz ∩ HalfSpace(latpts[:,i],distances[i])
     end
-    verts = reduce(hcat,points(polyhedron(bz,CDDLib.Library())))
+    verts = reduce(hcat,points(polyhedron(bz,Library())))
     bzvolume = chull(Array(verts')).volume
 
     if !(bzvolume ≈ abs(det(recip_latvecs)))
@@ -554,7 +368,7 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
     copy_pg = deepcopy(pointgroup)
     bzformat = "half-space"
     bz = calc_bz(real_latvecs,convention,bzformat)
-    bz_vertices = collect(points(polyhedron(bz,CDDLib.Library())))
+    bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
     while length(copy_pg) > 0
         op = pop!(copy_pg)
@@ -567,7 +381,7 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
             end
         end
     end
-    ibz_vertices = reduce(hcat,points(polyhedron(ibz,CDDLib.Library())))
+    ibz_vertices = reduce(hcat,points(polyhedron(ibz,Library())))
     bz_vertices = reduce(hcat,bz_vertices)
     bzvolume = chull(Array(bz_vertices')).volume
     ibzvolume = chull(Array(ibz_vertices')).volume

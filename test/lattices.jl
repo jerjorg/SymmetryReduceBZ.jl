@@ -1,4 +1,6 @@
-using IBZ, Test
+using Test
+
+import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce
 
 @testset "lattices" begin
   @testset "minkowski_reduce" begin

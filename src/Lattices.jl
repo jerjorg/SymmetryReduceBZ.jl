@@ -1,6 +1,10 @@
 module Lattices
 
-using LinearAlgebra, Combinatorics
+
+import PyCall: pyimport
+sympy=pyimport("sympy")
+import SymPy.symbols
+import LinearAlgebra: dot, norm
 
 export get_recip_latvecs, minkowski_reduce, check_reduced, get_latparams
 # 2D Bravais lattices
@@ -491,7 +495,7 @@ function genlat_BCC(a::Real)::AbstractArray{<:Real,2}
 end
 
 @doc """
-    genlat_TET(a)
+    genlat_TET(a,c)
 
 Generate a simple tetragonal lattice.
 
@@ -525,7 +529,7 @@ function genlat_TET(a::Real,c::Real)::AbstractArray{<:Real,2}
 end
 
 @doc """
-    genlat_BCT(a)
+    genlat_BCT(a,c)
 
 Generate a body-centered tetragonal lattice.
 
@@ -862,7 +866,9 @@ Generate a triclinic lattice.
 - `a::Real`: a lattice constant
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
-- `α::Real`: a lattice angle in radians less than π/2
+- `α::Real`: a lattice angle in radians
+- `β::Real`: a lattice angle in radians
+- `γ::Real`: a lattice angle in radians
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
