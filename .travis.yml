@@ -13,6 +13,7 @@ notifications:
   email: false
 
 script:
+  - pip3 install sympy
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build();
       Pkg.activate("."); Pkg.test("IBZ", coverage=true)'
 
