@@ -1,7 +1,8 @@
 language: julia
 
 install:
-  - pip3 install scipy sympy
+  - julia -e 'using Pkg; Pkg.add("Conda"); using PyCall; 
+	  pyimport_conda("sympy", "sympy")'
 
 os:
   - osx
@@ -13,7 +14,6 @@ notifications:
   email: false
 
 script:
-  - pip3 install sympy
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build();
       Pkg.activate("."); Pkg.test("IBZ", coverage=true)'
 
