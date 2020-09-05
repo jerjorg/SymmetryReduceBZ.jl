@@ -1,7 +1,7 @@
 language: julia
 
 install:
-  - pip3 install scipy
+  - pip3 install scipy sympy
 
 os:
   - osx
