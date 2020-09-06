@@ -1,8 +1,6 @@
 language: julia
 
-install:
-  - julia -e 'using Pkg; Pkg.add("Conda"); using PyCall; 
-	  pyimport_conda("sympy", "sympy")'
+#install:
 
 os:
   - osx
@@ -14,6 +12,8 @@ notifications:
   email: false
 
 script:
+  - julia -e 'using Pkg; Pkg.add("Conda"); using PyCall; 
+      pyimport_conda("sympy", "sympy")'
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build();
       Pkg.activate("."); Pkg.test("IBZ", coverage=true)'
 

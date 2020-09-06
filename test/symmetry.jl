@@ -13,7 +13,6 @@ import SymPy: symbols
 x,y,z=symbols("x,y,z")
 
 
-
 # Lattice vectors
 # 2D
 a=ℯ
