@@ -30,7 +30,7 @@ import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
 
   @testset "reduce_basis!" begin
     latvecs = [1 0; 0 1]
-    @test_throws ArgumentError IBZ.Lattices.reduce_basis!(latvecs,1)
+    @test_throws ArgumentError reduce_basis!(latvecs,1)
   end
 
   @testset "minkowski_reduce" begin
