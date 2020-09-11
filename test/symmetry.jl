@@ -217,7 +217,7 @@ ibzformat="convex hull"
             @test length(pointgroup) == pgsizes[i]
         end
 
-        @test_throws ArgumentError IBZ.Symmetry.calc_pointgroup([1 0])
+        @test_throws ArgumentError calc_pointgroup([1 0])
 
     end
 
