@@ -234,12 +234,12 @@ true
 ```
 """
 function check_reduced(basis::AbstractArray{<:Real,2})::Bool
-    if size(basis,2) == 2
+    if size(basis) == (2,2)
         (a,b) = [basis[:,i] for i=1:2]
         all([norm(a) <= norm(b),
             norm(b) <= norm(b+a),
             norm(b) <= norm(b-a)])
-    elseif size(basis,1) == 3
+    elseif size(basis) == (3,3)
         (a,b,c) = [basis[:,i] for i=1:3]
         all([norm(a) <= norm(b),
         norm(b) <= norm(b+a),

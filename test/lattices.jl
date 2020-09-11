@@ -1,8 +1,38 @@
 using Test
 
-import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce
+import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
+  get_latparams, reduce_basis!, check_reduced
 
 @testset "lattices" begin
+  @testset "get_latparams" begin
+    latvecs = [1 0; 0 1]
+    (lengths,angles) = get_latparams(latvecs)
+    @test lengths == [1,1]
+    @test angles == [pi/2, pi/2]
+
+    latvecs = [1 0 0; 0 1 0; 0 0 1]
+    (lengths,angles) = get_latparams(latvecs)
+    @test lengths == [1,1,1]
+    @test angles == [pi/2,pi/2,pi/2]
+
+    @test_throws ArgumentError get_latparams([1 0])
+  end
+
+  @testset "check_reduced" begin
+    latvecs = [1 0; 0 1]
+    @test check_reduced(latvecs)
+
+    latvecs = Array([1 0; 1 1]')
+    @test check_reduced(latvecs) == false
+
+    @test_throws ArgumentError check_reduced([1 0])
+  end
+
+  @testset "reduce_basis!" begin
+    latvecs = [1 0; 0 1]
+    @test_throws ArgumentError IBZ.Lattices.reduce_basis!(latvecs,1)
+  end
+
   @testset "minkowski_reduce" begin
     # Test 1
     basis = [0.997559590093 0.327083693383 0.933708574257;

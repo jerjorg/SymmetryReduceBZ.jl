@@ -216,6 +216,9 @@ ibzformat="convex hull"
             pointgroup=calc_pointgroup(real_latvecs)
             @test length(pointgroup) == pgsizes[i]
         end
+
+        @test_throws ArgumentError IBZ.Symmetry.calc_pointgroup([1 0])
+
     end
 
     @testset "calc_bz" begin
@@ -268,6 +271,15 @@ ibzformat="convex hull"
         inv_basis = inv(basis)
         coords = "Cartesian"
         @test mapto_unitcell(pt,basis,inv_basis,coords) ≈ [0,0]
+
+        pt = [1,1]
+        basis = [1/2 1/2; 1/2 -1/2]
+        inv_basis = inv(basis)
+        coords = "Lattice"
+        @test mapto_unitcell(pt,basis,inv_basis,coords) ≈ [0,0]
+
+        coords = "spherical"
+        @test_throws ArgumentError mapto_unitcell(pt,basis,inv_basis,coords)
     end
 
     @testset "symmetry" begin

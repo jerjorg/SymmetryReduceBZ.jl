@@ -53,9 +53,9 @@ function calc_pointgroup(latvecs::AbstractArray{<:Real,2},
     dim=size(latvecs,1)
     latvecs = minkowski_reduce(latvecs)
     radius = maximum([norm(latvecs[:,i]) for i=1:dim])
-    if dim==2
+    if size(latvecs) == (2,2)
         pts=sample_circle(latvecs,radius,[0,0],rtol,atol)
-    elseif dim==3
+    elseif size(latvecs) == (3,3)
         pts=sample_sphere(latvecs,radius,[0,0,0],rtol,atol)
     else
         throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 array."))
