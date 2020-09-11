@@ -21,7 +21,7 @@ Calculate the affine transformation that maps the points to the xy-plane.
 ```jldoctest
 using IBZ
 pts = [0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 0.5 0.5; -0.5 -0.5 0.5]'
-IBZ.Plotting.affine_trans(pts)
+IBZ.Utilities.affine_trans(pts)
 # output
 4×4 Array{Float64,2}:
   0.0  -1.0   0.0  0.5
@@ -243,7 +243,7 @@ Map Cartesian points embedded in 3D on a plane to the xy-plane embedded in 2D.
 ```jldoctest
 using IBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-IBZ.Plotting.mapto_xyplane(pts)
+IBZ.Utilities.mapto_xyplane(pts)
 # output
 2×4 Array{Float64,2}:
  0.0  1.0  1.0  0.0
@@ -410,7 +410,7 @@ using IBZ
 a=[0,0]
 b=[1,0]
 c=[0.5,0.5]
-IBZ.Plotting.sort_points_comparison(a,b,c)
+IBZ.Utilities.sort_points_comparison(a,b,c)
 # output
 false
 ```
@@ -450,7 +450,7 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
 ```jldoctest
 using IBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-perm=IBZ.Plotting.sortpts_perm(pts)
+perm=IBZ.Utilities.sortpts_perm(pts)
 pts[:,perm]
 # output
 3×4 Array{Float64,2}:
@@ -488,7 +488,7 @@ Return the permutation vector that maps Cartesian 2D points `xypts` to `sxypts`.
 using IBZ
 xypts = [0 0; 0 1; 1 0; 1 1]'
 sxypts = [0 1; 1 1; 1 0; 0 0]'
-perm=IBZ.Plotting.sortslice_perm(xypts,sxypts)
+perm=IBZ.Utilities.sortslice_perm(xypts,sxypts)
 xypts[:,perm]
 # output
 2×4 Array{Int64,2}:
