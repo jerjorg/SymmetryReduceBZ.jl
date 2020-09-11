@@ -275,7 +275,7 @@ ibzformat="convex hull"
         pt = [1,1]
         basis = [1/2 1/2; 1/2 -1/2]
         inv_basis = inv(basis)
-        coords = "Lattice"
+        coords = "lattice"
         @test mapto_unitcell(pt,basis,inv_basis,coords) ≈ [0,0]
 
         coords = "spherical"
