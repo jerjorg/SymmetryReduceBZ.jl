@@ -3,6 +3,9 @@ using Test
 import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
   get_latparams, reduce_basis!, check_reduced
 
+import IBZ.Lattices
+const lt = Lattices
+
 @testset "lattices" begin
   @testset "get_latparams" begin
     latvecs = [1 0; 0 1]
@@ -113,5 +116,57 @@ import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
     convention = "angular"
     recip_latvecs = get_recip_latvecs(real_latvecs, convention)
     @test recip_latvecs ≈ [2π 0; 0 2π]
+
+    @test_throws ArgumentError get_recip_latvecs(real_latvecs, "Ordinary")
+
+  end
+
+  @testset "genlat" begin
+    a = 1
+    b = 1
+    @test_throws ArgumentError lt.genlat_RECI(a,b)
+
+    a=1.
+    b=1.
+    θ=π/7.
+    @test_throws ArgumentError lt.genlat_OBL(a,b,θ)
+    @test_throws ArgumentError lt.genlat_OBL(a,b,π/2)
+
+    a = 1
+    c = 1
+    @test_throws ArgumentError lt.genlat_TET(a,c)
+    @test_throws ArgumentError lt.genlat_BCT(a,c)
+
+    a = 1
+    b = 1
+    c = 2
+    @test_throws ArgumentError lt.genlat_ORC(a,b,c)
+    @test_throws ArgumentError lt.genlat_ORCF(a,c,b)
+    @test_throws ArgumentError lt.genlat_ORCI(c,a,b)
+    @test_throws ArgumentError lt.genlat_ORCC(c,b,a)
+
+
+    a = 1
+    @test_throws ArgumentError lt.genlat_HEX(a,a)
+
+    a = 1
+    θ=π/2
+    @test_throws ArgumentError lt.genlat_RHL(a,θ)
+
+    a = 1
+    b = 2
+    c = 3
+    θ=π/5
+    @test_throws ArgumentError lt.genlat_MCL(a,a,b,θ)
+    @test_throws ArgumentError lt.genlat_MCL(a,b,c,π/2)
+
+    @test_throws ArgumentError lt.genlat_MCLC(a,b,a,θ)
+    @test_throws ArgumentError lt.genlat_MCL(a,b,c,π/2)
+
+    α=π/3
+    β=π/4
+    γ=π/5
+    @test_throws ArgumentError lt.genlat_TRI(a,c,c,α,β,γ)
+    @test_throws ArgumentError lt.genlat_TRI(a,b,c,α,α,γ)
   end
 end

@@ -363,29 +363,31 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
         atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
         coords::String,ibzformat::String,convention::String="ordinary",
         rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-        atol::Real=0.0)::Chull{<:Real}
+        atol::Real=0.0)
     pointgroup = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)[2]
-    copy_pg = deepcopy(pointgroup)
     bzformat = "half-space"
     bz = calc_bz(real_latvecs,convention,bzformat)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
-    while length(copy_pg) > 0
-        op = pop!(copy_pg)
-        for v=bz_vertices
+    # Mark elements 1 when BZ is reduced by point operator.
+    rpg = zeros(length(pointgroup))
+    for v=bz_vertices
+        for (i,op)=enumerate(pointgroup)
             vʳ=op*v
-            if !isapprox(vʳ,v,rtol=rtol,atol=atol)
+            if !isapprox(vʳ,v,rtol=rtol,atol=atol) && rpg[i] == 0
                 a = vʳ-v
                 ibz = ibz ∩ HalfSpace(a,0)
-                break
+                rpg[i] = 1
             end
         end
     end
+
     ibz_vertices = reduce(hcat,points(polyhedron(ibz,Library())))
     bz_vertices = reduce(hcat,bz_vertices)
     bzvolume = chull(Array(bz_vertices')).volume
     ibzvolume = chull(Array(ibz_vertices')).volume
     reduction = bzvolume/ibzvolume
+
     if !(ibzvolume ≈ bzvolume/size(pointgroup,1))
         error("The area or volume of the irreducible Brillouin zone is
             incorrect.")

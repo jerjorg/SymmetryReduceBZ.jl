@@ -374,12 +374,14 @@ function genlat_RECI(a::Real,b::Real)::AbstractArray{<:Real,2}
 end
 
 @doc """
-    genlat_OBL(a,b)
+    genlat_OBL(a,b,θ)
 
 Generate a body-centered rectangular lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `b::Real`: the lattice constant
+- `θ::Real`: the lattice angle
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as

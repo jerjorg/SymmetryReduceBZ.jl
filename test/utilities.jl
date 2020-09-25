@@ -72,6 +72,10 @@ bzformat = "convex hull"
 
         radius = -π
         @test_throws ArgumentError edgelengths(basis,radius)
+
+        radius = 1
+        basis = [1 2 3; 0 0 1]
+        @test_throws ArgumentError edgelengths(basis,radius)
     end
 
     @testset "get_uniquefacets" begin

@@ -172,7 +172,7 @@ function edgelengths(basis::Array{<:Real,2}, radius::Real,
         throw(ArgumentError("The radius has to be a positive number."))
     end
 
-    if size(basis,1) == 2
+    if size(basis) == (2,2)
         (a,b)=[basis[:,i] for i=1:2]
         ax,ay=a
         bx,by=b
@@ -180,7 +180,7 @@ function edgelengths(basis::Array{<:Real,2}, radius::Real,
         lb=2*abs(radius*sqrt(ax^2+ay^2)/(ay*bx-ax*by))
         return [la,lb]
 
-    elseif size(basis,1) == 3
+    elseif size(basis) == (3,3)
         (a,b,c)=[basis[:,i] for i=1:3]
         ax,ay,az=a
         bx,by,bz=b

@@ -234,9 +234,14 @@ ibzformat="convex hull"
             # operations
             @test size(remove_duplicates(bzverts),2) == size(bz.points,1)
         end
+
+        bzformat="bad format"
+        @test_throws ArgumentError calc_bz(listreal_latvecs[1],
+            convention, bzformat)
     end
 
     @testset "calc_ibz" begin
+        ibzformat="convex hull"
         for real_latvecs=listreal_latvecs
             if size(real_latvecs) == (2,2)
                 atom_pos=Array([0 0]')
@@ -257,6 +262,16 @@ ibzformat="convex hull"
             @test all([any([isapprox(unfoldpts[i,:],bz.points[j,:])
                 for i=1:size(unfoldpts,1)]) for j=1:size(bz.points,1)])
         end
+
+        ibzformat="bad format"
+        @test_throws ArgumentError calc_ibz(listreal_latvecs[1], [0],
+            Array([0 0]'), "lattice", ibzformat, "ordinary")
+
+        passed = false
+        ibz = calc_ibz(listreal_latvecs[1], [0,0], Array([0 0; 0.5 0.5]'),
+            "Cartesian", "half-space", "ordinary")
+        passed = true
+        @test passed
     end
 
     @testset "mapto_unitcell" begin
@@ -334,6 +349,20 @@ ibzformat="convex hull"
                 sort(same) == range(1,stop=length(ibzT)) &&
                     length(ibzP) == length(findsymP)
             end
+
+            # Number of atom types and positions are different.
+            a=1
+            real_latvecs=lt.genlat_CUB(a)
+            atom_pos = Array([0 0 0; 0.25 0.25 0]')
+            # findsym FCC convention
+            creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
+                real_latvecs*[0,1,-1], real_latvecs*[0,-1,-1]])
+            catom_pos = Array([0 0 0; 0 0 0.75]')
+            atom_types=[0]
+            coords = "lattice"
+
+            @test_throws ArgumentError calc_spacegroup(creal_latvecs,atom_types,
+                atom_pos,coords)
 
             # SC
             a=1
@@ -451,7 +480,6 @@ ibzformat="convex hull"
             catom_pos = Array([0 0 0; 0.0 0.5 0.5]')
             atom_types=[0,1]
             coords = "lattice";
-
 
 
             findsymSG =
