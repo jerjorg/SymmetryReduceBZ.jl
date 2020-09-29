@@ -8,8 +8,9 @@ and paths within the IBZ.
 To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
 The IBZ will be returned as either a convex hull or intersection of half spaces.
 ```@example
-using IBZ # hide
-a = 1.0;
+import IBZ.Lattices: genlat_CUB
+import IBZ.Symmetry: calc_ibz
+a = 2.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
@@ -26,12 +27,14 @@ gives the convention for going from real to reciprocal space (whether or not to
 multiply by 2π). There is a simple function for visualizing the IBZ along with
 the Brillouin zone (BZ).
 ```@example
-using IBZ # hide
-a = 1.0 # hide
-real_latvecs = genlat_CUB(a) # hide
-atom_types = [0,0] # hide
-atom_pos = Array([0 0 0; 0.5 0.5 0.5]') # hide
-coordinates = "Cartesian" # hide
-convention = "ordinary" # hide
-plot_cells(real_latvecs,atom_types,atom_pos,coordinates,convention)
+import IBZ.Plotting: plot_convexhulls
+import IBZ.Lattices: genlat_CUB
+a = 2.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,0]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+coordinates = "Cartesian"
+convention = "ordinary"
+(fix,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
+  convention)
 ```
