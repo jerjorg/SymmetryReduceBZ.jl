@@ -64,6 +64,7 @@ Check if an array of points contains a point.
 
 # Examples
 ```jldoctest
+import IBZ.utilities: contains
 pts = Array([1 2; 2 3; 3 4; 4 5]')
 pt = [1,2]
 contains(pt,pts)
@@ -157,7 +158,7 @@ Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 using IBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=3.0
-IBZ.Symmetry.edgelengths(basis,radius)
+IBZ.Utilities.edgelengths(basis,radius)
 # output
 3-element Array{Float64,1}:
  3.0
@@ -282,7 +283,7 @@ using IBZ
 basis=Array([1. 0.; 0. 1.]')
 radius=1.0
 offset=[0.,0.]
-IBZ.Symmetry.sample_circle(basis,radius,offset)
+IBZ.Utilities.sample_circle(basis,radius,offset)
 # output
 2×5 Array{Float64,2}:
   0.0  -1.0  0.0  1.0  0.0
@@ -339,7 +340,7 @@ using IBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=1.0
 offset=[0.,0.,0.]
-IBZ.Symmetry.sample_sphere(basis,radius,offset)
+IBZ.Utilities.sample_sphere(basis,radius,offset)
 # output
 3×7 Array{Float64,2}:
   0.0   0.0  -1.0  0.0  1.0  0.0  0.0
@@ -454,9 +455,9 @@ perm=IBZ.Utilities.sortpts_perm(pts)
 pts[:,perm]
 # output
 3×4 Array{Float64,2}:
- 0.5   0.5   0.5   0.5
- 0.5   0.5  -0.5  -0.5
- 0.5  -0.5  -0.5   0.5
+  0.5  0.5   0.5   0.5
+  0.5  0.5  -0.5  -0.5
+ -0.5  0.5   0.5  -0.5
 ```
 """
 function sortpts_perm(pts::AbstractArray{<:Real,2})

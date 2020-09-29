@@ -171,7 +171,10 @@ atom_pos = Array([0 0; 0.5 0.5]')
 coords = "Cartesian"
 IBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 # output
-(Any[[0.0, 0.0], [0.0, 0.0]], Any[[1.0 0.0; 0.0 1.0], [0.0 1.0; 1.0 0.0]])
+(Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0],
+     [0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0],
+     [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0],
+     [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
 """
 function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
