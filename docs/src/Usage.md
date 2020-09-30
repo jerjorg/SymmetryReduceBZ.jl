@@ -5,8 +5,9 @@ in 2D and 3D. It also contains functions related to the symmetry of lattices and
 lattice reduction. Later on, it will be able to calculate high symmetry points
 and paths within the IBZ.
 
-To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
-The IBZ will be returned as either a convex hull or intersection of half spaces.
+To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`
+(the code currently only works if the structure provided is primitive). The IBZ
+will be returned as either a convex hull or intersection of half spaces.
 ```@example
 import IBZ.Lattices: genlat_CUB
 import IBZ.Symmetry: calc_ibz
