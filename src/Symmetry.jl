@@ -434,10 +434,12 @@ This is a Julia translation of the function by the same in
 - `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `spacegroup`: the space group of the crystal structure. The first element of
-    `spacegroup` is a list of fractional translations, and the second element is
-    a list of point operators. The translations are in Cartesian coordinates,
-    and the operators operate on points in Cartesian coordinates.
+- `prim_types::AbstractArray{<:Int,1}`: a list of atom types as integers in the
+    primitive unit cell.
+- `prim_pos::AbstractArray{<:Real,2}`: the positions of the atoms in in the 
+    crystal structure as columns of an array.
+- `prim_latvecs::AbstractArray{<:Real,2}`: the primitive lattice vectors as
+    columns of an array.
 
 # Examples
 ```jldoctest
@@ -452,7 +454,7 @@ coords = "Cartesian"
 convention = "ordinary"
 make_primitive(real_latvecs, atom_types, atom_pos, coords)
 # output
-([0.0, 0.0, 0.0], [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
+([0], [0.0; 0.0; 0.0], [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
 ```
 """
 function make_primitive(real_latvecs::AbstractArray{<:Real,2},
@@ -461,53 +463,80 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     atol::Real=0.0)
 
     (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
-    ftrans = remove_duplicates(reduce(hcat, ftrans))
     # Unique fractional translations
+    ftrans = remove_duplicates(reduce(hcat, ftrans))
 
     # No need to consider the origin.
-    origin_removed = false
+    dim = size(real_latvecs,1)
+    if dim==2 origin=[0,0] else origin=[0,0,0] end
+
     for i = 1:size(ftrans,2)
-        if isapprox(ftrans[:,i],[0,0,0])
-            origin_removed = true
+        if isapprox(ftrans[:,i],origin)
             ftrans  = ftrans[:,1:end .!= i]
             break
         end
     end
 
-    # Number lattice vector options
-    nopts = size(ftrans,2)+3
-
-    ftrans_car = real_latvecs*ftrans
-
-    # Lattice vector options
-    opts = hcat(real_latvecs, real_latvecs*ftrans)
     prim_latvecs = real_latvecs
-    inv_latvecs = real_latvecs
-    for i=1:nopts-2, j=i+1:nopts-1, k=j+1:nopts
-        prim_latvecs = opts[:,[i,j,k]]
-        inv_latvecs = inv(prim_latvecs)
-        # Move all atoms into the potential primitive unit cell.
-        test = [mapto_unitcell(ftrans_car[:,i],real_latvecs,
-                    inv_latvecs,"Cartesian") for i=1:nopts-3]
-        # Check if all coordinates of all fractional translations are
-        # integers.
-        test = isapprox(mod.(collect(Iterators.flatten(test)),1)
-                    ,zeros(3*(nopts-3)))
-        if test
-            break
+    inv_latvecs = inv(real_latvecs)
+
+    if size(ftrans,2)!=0
+        # Number of lattice vector options
+        nopts = size(ftrans,2)+3
+
+        # Lattice vector options
+        opts = hcat(real_latvecs, ftrans)
+        if dim == 2
+            for i=1:nopts-2, j=i+1:nopts-1
+                prim_latvecs = opts[:,[i,j]]
+                inv_latvecs = inv(prim_latvecs)
+                # Move all translations into the potential primitive unit cell.
+                test = [mapto_unitcell(ftrans[:,i],real_latvecs,
+                            inv_latvecs,"Cartesian") for i=1:size(ftrans,2)]
+
+                # Check if all coordinates of all fractional translations are
+                # integers in lattice coordinates.
+                test = [inv_latvecs*t for t=test]
+                test = isapprox(mod.(collect(Iterators.flatten(test)),1)
+                            ,zeros(2*length(test)))
+                if test
+                    break
+                end
+            end
+        else
+            for i=1:nopts-2, j=i+1:nopts-1, k=j+1:nopts
+                prim_latvecs = opts[:,[i,j,k]]
+                inv_latvecs = inv(prim_latvecs)
+                # Move all translations into the potential primitive unit cell.
+                test = [mapto_unitcell(ftrans[:,i],real_latvecs,
+                            inv_latvecs,"Cartesian") for i=1:size(ftrans,2)]
+
+                # Check if all coordinates of all fractional translations are
+                # integers in lattice coordinates.
+                test = [inv_latvecs*t for t=test]
+                test = isapprox(mod.(collect(Iterators.flatten(test)),1)
+                            ,zeros(3*length(test)))
+                if test
+                    break
+                end
+            end
         end
     end
 
-    # Map all
-    prim_ftrans = reduce(hcat,[mapto_unitcell(ftrans_car[:,i], prim_latvecs,
-                inv_latvecs, "Cartesian") for i=1:nopts-3])
-    if origin_removed
-        prim_ftrans = hcat(prim_ftrans, [0,0,0])
+    # Map all atoms into the primitive cell.
+    all_prim_pos = atom_pos
+    if coords == "lattice"
+        all_prim_pos = real_latvecs*all_prim_pos
     end
+    all_prim_pos = reduce(hcat,[mapto_unitcell(all_prim_pos[:,i], prim_latvecs,
+        inv_latvecs,"Cartesian") for i=1:length(atom_types)])
 
-    # Remove atoms at the same positions.
-    prim_ftrans = remove_duplicates(prim_ftrans)
-    (prim_ftrans, prim_latvecs)
+    # Remove atoms at the same positions that are the same type.
+    tmp = remove_duplicates(vcat(all_prim_pos,atom_types'))
+    prim_types = Int.(tmp[dim + 1,:])
+    prim_pos = tmp[1:dim,:]
+
+    (prim_types,prim_pos,prim_latvecs)
 end
 
 end #module

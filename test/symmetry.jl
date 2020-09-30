@@ -242,6 +242,7 @@ ibzformat="convex hull"
 
     @testset "calc_ibz" begin
         ibzformat="convex hull"
+        bzformat="convex hull"
         for real_latvecs=listreal_latvecs
             if size(real_latvecs) == (2,2)
                 atom_pos=Array([0 0]')
@@ -726,7 +727,20 @@ ibzformat="convex hull"
     end
 
     @testset "make_primitive" begin
-        import IBZ.Lattices: genlat_CUB
+        import IBZ.Lattices: genlat_CUB, genlat_BCC
+        a = 1.0
+        real_latvecs = genlat_BCC(a)
+        atom_types = [0,0,0,0,0]
+        atom_pos = Array([0 0 0; 1 0 0 ; 0 1 0; 1 1 0; 1 0 1]')
+        ibzformat = "convex hull"
+        coords = "lattice"
+        convention = "ordinary"
+        (prim_types, prim_pos, prim_latvecs) = make_primitive(real_latvecs,
+            atom_types, atom_pos, coords)
+        @test prim_types == [0]
+        @test isapprox(prim_pos, [0,0,0])
+        @test isapprox(prim_latvecs, [-0.5 0.5 0.5; 0.5 -0.5 0.5; 0.5 0.5 -0.5])
+
         a = 1.0
         real_latvecs = genlat_CUB(a)
         atom_types = [0,0,0]
@@ -734,10 +748,11 @@ ibzformat="convex hull"
         ibzformat = "convex hull"
         coords = "Cartesian"
         convention = "ordinary"
-        (prim_ftrans, prim_latvecs) = make_primitive(real_latvecs, atom_types,
-            atom_pos, coords)
-
-        @test isapprox(prim_ftrans, [0,0,0])
+        (prim_types, prim_pos, prim_latvecs) = make_primitive(real_latvecs,
+            atom_types, atom_pos, coords)
+        @test prim_types == [0]
+        @test isapprox(prim_pos, [0,0,0])
         @test isapprox(prim_latvecs, [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
+
     end
 end
