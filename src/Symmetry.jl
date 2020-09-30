@@ -9,7 +9,7 @@ import Combinatorics: permutations
 include("Lattices.jl")
 include("Utilities.jl")
 import .Lattices: get_recip_latvecs, minkowski_reduce
-import .Utilities: sample_circle, sample_sphere, contains
+import .Utilities: sample_circle, sample_sphere, contains, remove_duplicates
 
 @doc """
     calc_pointgroup(latvecs,rtol,atol)
@@ -364,9 +364,12 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
         coords::String,ibzformat::String,convention::String="ordinary",
         rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
         atol::Real=0.0)
-    pointgroup = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)[2]
+
+    (prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,atom_types,
+        atom_pos,coords)
+    pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coords)[2]
     bzformat = "half-space"
-    bz = calc_bz(real_latvecs,convention,bzformat)
+    bz = calc_bz(prim_latvecs,convention,bzformat)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
     # Mark elements 1 when BZ is reduced by point operator.
@@ -409,5 +412,102 @@ lat_types = ["square", "rectangular", "triangular", "oblique", "triclinic",
 
 """Give the size of the point group of a Bravais lattice."""
 pointgroup_size = Dict{String,Integer}(i=>j for (i,j)=zip(lat_types, num_ops))
+
+@doc """
+    make_primitive(real_latvecs,atom_types,atom_pos,coords,rtol,atol)
+
+Make a given unit cell primitive.
+
+This is a Julia translation of the function by the same in
+    https://github.com/msg-byu/symlib.
+
+# Arguments
+- `real_latvecs::AbstractArray{<:Real,2}`: the basis of the lattice as columns
+    of an array.
+- `atom_types::AbstractArray{<:Int,1}`: a list of atom types as integers.
+- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
+    structure as columns of an array.
+- `coords::String`: indicates the positions of the atoms are in \"lattice\" or
+    \"Cartesian\" coordinates.
+- `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
+    floating point comparisons.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+
+# Returns
+- `spacegroup`: the space group of the crystal structure. The first element of
+    `spacegroup` is a list of fractional translations, and the second element is
+    a list of point operators. The translations are in Cartesian coordinates,
+    and the operators operate on points in Cartesian coordinates.
+
+# Examples
+```jldoctest
+import IBZ.Lattices: genlat_CUB
+import IBZ.Symmetry: make_primitive
+a = 1.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,0]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+ibzformat = "convex hull"
+coords = "Cartesian"
+convention = "ordinary"
+make_primitive(real_latvecs, atom_types, atom_pos, coords)
+# output
+([0.0, 0.0, 0.0], [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
+```
+"""
+function make_primitive(real_latvecs::AbstractArray{<:Real,2},
+    atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+    coords::String,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
+    atol::Real=0.0)
+
+    (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+    ftrans = remove_duplicates(reduce(hcat, ftrans))
+    # Unique fractional translations
+
+    # No need to consider the origin.
+    origin_removed = false
+    for i = 1:size(ftrans,2)
+        if isapprox(ftrans[:,i],[0,0,0])
+            origin_removed = true
+            ftrans  = ftrans[:,1:end .!= i]
+            break
+        end
+    end
+
+    # Number lattice vector options
+    nopts = size(ftrans,2)+3
+
+    ftrans_car = real_latvecs*ftrans
+
+    # Lattice vector options
+    opts = hcat(real_latvecs, real_latvecs*ftrans)
+    prim_latvecs = real_latvecs
+    inv_latvecs = real_latvecs
+    for i=1:nopts-2, j=i+1:nopts-1, k=j+1:nopts
+        prim_latvecs = opts[:,[i,j,k]]
+        inv_latvecs = inv(prim_latvecs)
+        # Move all atoms into the potential primitive unit cell.
+        test = [mapto_unitcell(ftrans_car[:,i],real_latvecs,
+                    inv_latvecs,"Cartesian") for i=1:nopts-3]
+        # Check if all coordinates of all fractional translations are
+        # integers.
+        test = isapprox(mod.(collect(Iterators.flatten(test)),1)
+                    ,zeros(3*(nopts-3)))
+        if test
+            break
+        end
+    end
+
+    # Map all
+    prim_ftrans = reduce(hcat,[mapto_unitcell(ftrans_car[:,i], prim_latvecs,
+                inv_latvecs, "Cartesian") for i=1:nopts-3])
+    if origin_removed
+        prim_ftrans = hcat(prim_ftrans, [0,0,0])
+    end
+
+    # Remove atoms at the same positions.
+    prim_ftrans = remove_duplicates(prim_ftrans)
+    (prim_ftrans, prim_latvecs)
+end
 
 end #module

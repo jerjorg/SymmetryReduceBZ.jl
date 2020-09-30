@@ -539,11 +539,12 @@ IBZ.Utilities.remove_duplicates(points)
 """
 function remove_duplicates(points::AbstractArray{<:Real,2},
     rtol::Real=sqrt(eps(float(maximum(points)))),
-    atol::Real=0.0)::AbstractArray{<:Real,2}
+    atol::Real=1e-15)::Union{Array{Float64,1},Array{Float64,2}}
     uniquepts=[]
     for i=1:size(points,2)
         pt=points[:,i]
-        if !any([isapprox(pt,uniquepts[i],rtol=rtol) for i=1:length(uniquepts)])
+        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for
+                i=1:length(uniquepts)])
             append!(uniquepts,[pt])
         end
     end

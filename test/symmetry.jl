@@ -4,7 +4,7 @@ import IBZ.Lattices
 const lt = Lattices
 
 import IBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
-    mapto_unitcell
+    mapto_unitcell, make_primitive
 import IBZ.Utilities: remove_duplicates
 import QHull: chull
 import PyCall: pyimport
@@ -723,5 +723,21 @@ ibzformat="convex hull"
                 findsymSG)
             @test tritest
         end
+    end
+
+    @testset "make_primitive" begin
+        import IBZ.Lattices: genlat_CUB
+        a = 1.0
+        real_latvecs = genlat_CUB(a)
+        atom_types = [0,0,0]
+        atom_pos = Array([0 0 0; 0.5 0.5 0.5; 1 1 1]')
+        ibzformat = "convex hull"
+        coords = "Cartesian"
+        convention = "ordinary"
+        (prim_ftrans, prim_latvecs) = make_primitive(real_latvecs, atom_types,
+            atom_pos, coords)
+
+        @test isapprox(prim_ftrans, [0,0,0])
+        @test isapprox(prim_latvecs, [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
     end
 end
