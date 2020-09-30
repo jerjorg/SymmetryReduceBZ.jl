@@ -6,3 +6,5 @@ https://coveralls.io/github/jerjorg/IBZ.jl?branch=master)
 
 # IBZ
 Calculate the irreducible Brillouin zone (IBZ) of 2D or 3D crystal structures.
+See the User Guide in the [documentation][https://jerjorg.github.io/IBZ.jl/]
+for a quick introduction and usage examples.

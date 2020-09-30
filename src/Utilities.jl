@@ -64,7 +64,7 @@ Check if an array of points contains a point.
 
 # Examples
 ```jldoctest
-import IBZ.utilities: contains
+import IBZ.Utilities: contains
 pts = Array([1 2; 2 3; 3 4; 4 5]')
 pt = [1,2]
 contains(pt,pts)
@@ -95,6 +95,7 @@ Check if an array of arrays contains an array.
 
 # Examples
 ```jldoctest
+import IBZ.Utilities: contains
 arrays = [[1 2; 2 3], [2 3; 4 5]]
 array = [1 2; 2 3]
 contains(array, arrays)
@@ -413,7 +414,7 @@ b=[1,0]
 c=[0.5,0.5]
 IBZ.Utilities.sort_points_comparison(a,b,c)
 # output
-false
+true
 ```
 """
 function sort_points_comparison(a::AbstractArray{<:Real,1},
