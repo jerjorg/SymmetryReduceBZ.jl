@@ -1,6 +1,9 @@
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](
+https://jerjorg.github.io/IBZ.jl/)
 [![Build Status](
 https://travis-ci.com/jerjorg/IBZ.jl.svg?branch=master)](
-https://travis-ci.com/jerjorg/IBZ.jl)[![Coverage Status](
+https://travis-ci.com/jerjorg/IBZ.jl)
+[![Coverage Status](
 https://coveralls.io/repos/github/jerjorg/IBZ.jl/badge.svg?branch=master)](
 https://coveralls.io/github/jerjorg/IBZ.jl?branch=master)
 
