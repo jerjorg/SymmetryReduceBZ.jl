@@ -368,20 +368,23 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
     (prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,atom_types,
         atom_pos,coords)
     pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coords)[2]
+	sizepg = size(pointgroup,1)
     bzformat = "half-space"
     bz = calc_bz(prim_latvecs,convention,bzformat)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
-    # Mark elements 1 when BZ is reduced by point operator.
-    rpg = zeros(length(pointgroup))
     for v=bz_vertices
-        for (i,op)=enumerate(pointgroup)
+		for i=length(pointgroup):-1:1
+			op = pointgroup[i]
             vʳ=op*v
-            if !isapprox(vʳ,v,rtol=rtol,atol=atol) && rpg[i] == 0
+            if !isapprox(vʳ,v,rtol=rtol,atol=atol) #&& rpg[i] == 0
                 a = vʳ-v
                 ibz = ibz ∩ HalfSpace(a,0)
-                rpg[i] = 1
+				deleteat!(pointgroup,i)
             end
+		if length(pointgroup) == 0
+			break
+		end
         end
     end
 
@@ -391,7 +394,9 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
     ibzvolume = chull(Array(ibz_vertices')).volume
     reduction = bzvolume/ibzvolume
 
-    if !(ibzvolume ≈ bzvolume/size(pointgroup,1))
+    if !(ibzvolume ≈ bzvolume/sizepg)
+		@show ibzvolume
+		@show bzvolume/sizepg
         error("The area or volume of the irreducible Brillouin zone is
             incorrect.")
     end
