@@ -551,4 +551,19 @@ function remove_duplicates(points::AbstractArray{<:Real,2},
     reduce(hcat,uniquepts)
 end
 
+function remove_duplicates(points::AbstractArray{<:Real,1},
+    rtol::Real=sqrt(eps(float(maximum(points)))),
+    atol::Real=1e-15)
+    uniquepts=[]
+    for i=1:length(points)
+        pt=points[i]
+        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for
+                i=1:length(uniquepts)])
+            append!(uniquepts,pt)
+        end
+    end
+    uniquepts
+end
+
+
 end # module
