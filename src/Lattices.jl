@@ -853,9 +853,9 @@ function genlat_MCLC(a::Real,b::Real,c::Real,α::Real)::AbstractArray{<:Real,2}
         throw(ArgumentError("The lattices constants must all be different for a
             monoclinic lattice."))
     end
-    if α ≈ π/2 || α > π/2
-        throw(ArgumentError("The lattice angle must be less than π/2."))
-    end
+#    if α ≈ π/2 || α > π/2
+#        throw(ArgumentError("The lattice angle must be less than π/2."))
+#    end
     Array([a/2 b/2 0; -a/2 b/2 0; 0 c*cos(α) c*sin(α)]')
 end
 
