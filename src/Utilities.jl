@@ -103,39 +103,11 @@ contains(array, arrays)
 true
 ```
 """
-function contains(array,arrays,
+function contains(array::AbstractArray,arrays::AbstractArray,
     rtol::Real=sqrt(eps(float(maximum(Iterators.flatten(array))))),
     atol::Real=0.0)::Bool
     any(isapprox(array,a,rtol=rtol,atol=atol) for a in arrays)
 end
-
-# @doc """
-#     contains(pt,pts,rtol,atol)
-#
-# Check if an array of points contains a point.
-#
-# # Arguments
-# - `item`: a real or abstract array of reals.
-# - `pts`:: an abstract array of reals.
-# - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
-#     point comparisons
-# - `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
-#
-# # Returns
-# - `Bool`: a boolean that indicates the presence of absence of `pt` in `pts`.
-#
-# # Examples
-# ```jldoctest
-# pts = Array([1 2; 2 3; 3 4; 4 5]')
-# pt = [1,2]
-# contains(pt,pts)
-# # output
-# true
-# ```
-# """
-# contains(item, itr,
-#     rtol::Real=sqrt(eps(float(maximum(Iterators.flatten(itr))))),
-#     atol::Real=0.0) = any(x -> isapprox(item,x,rtol=rtol,atol=atol),itr)
 
 @doc """
     edgelengths(basis,radius)
