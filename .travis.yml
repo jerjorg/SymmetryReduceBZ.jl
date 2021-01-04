@@ -17,7 +17,7 @@ script:
   - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                     Pkg.instantiate()'
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build();
-      Pkg.activate("."); Pkg.test("IBZ", coverage=true)'
+      Pkg.activate("."); Pkg.test("ComputeIBZ", coverage=true)'
 
 after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage;
