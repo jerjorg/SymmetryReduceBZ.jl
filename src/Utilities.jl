@@ -537,9 +537,9 @@ ComputeIBZ.Utilities.remove_duplicates(points)
  2  3  4
 ```
 """
-function remove_duplicates(points,#::AbstractArray{<:Real,2},
+function remove_duplicates(points::AbstractArray,#::AbstractArray{<:Real,2},
     rtol::Real=sqrt(eps(float(maximum(points)))),
-    atol::Real=1e-15)::Union{Array{Float64,1},Array{Float64,2}}
+    atol::Real=1e-15)::AbstractArray
     uniquepts=[]
     for i=1:size(points,2)
         pt=points[:,i]
@@ -553,7 +553,7 @@ end
 
 function remove_duplicates(points::AbstractArray{<:Real,1},
     rtol::Real=sqrt(eps(float(maximum(points)))),
-    atol::Real=1e-15)
+    atol::Real=1e-15)::AbstractArray
     uniquepts=[]
     for i=1:length(points)
         pt=points[i]
