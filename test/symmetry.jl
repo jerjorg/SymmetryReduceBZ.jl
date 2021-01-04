@@ -8,6 +8,7 @@ import ComputeIBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
 import ComputeIBZ.Utilities: remove_duplicates
 import QHull: chull
 import PyCall: pyimport
+pyimport("pip")["main"](["install","--user","sympy"])
 sympy=pyimport("sympy")
 import SymPy: symbols
 x,y,z=symbols("x,y,z")
