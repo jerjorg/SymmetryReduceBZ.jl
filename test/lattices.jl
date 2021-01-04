@@ -168,5 +168,6 @@ const lt = Lattices
     γ=π/5
     @test_throws ArgumentError lt.genlat_TRI(a,c,c,α,β,γ)
     @test_throws ArgumentError lt.genlat_TRI(a,b,c,α,α,γ)
+	@test_throws ArgumentError lt.genlat_TRI(a,b,c,β,β,γ)
   end
 end
