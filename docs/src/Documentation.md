@@ -4,25 +4,25 @@
 
 ### Lattices
 ```@index
-Modules = [IBZ.Lattices]
+Modules = [ComputeIBZ.Lattices]
 Order   = [:function, :type]
 ```
 
 ### Plotting
 ```@index
-Modules = [IBZ.Plotting]
+Modules = [ComputeIBZ.Plotting]
 Order   = [:function, :type]
 ```
 
 ### Symmetry
 ```@index
-Modules = [IBZ.Symmetry]
+Modules = [ComputeIBZ.Symmetry]
 Order   = [:function, :type]
 ```
 
 ### Utilites
 ```@index
-Modules = [IBZ.Utilities]
+Modules = [ComputeIBZ.Utilities]
 Order   = [:function, :type]
 ```
 
@@ -30,24 +30,24 @@ Order   = [:function, :type]
 
 ### Lattices
 ```@autodocs
-Modules = [IBZ.Lattices]
+Modules = [ComputeIBZ.Lattices]
 Order   = [:function, :type]
 ```
 
 ### Plotting
 ```@autodocs
-Modules = [IBZ.Plotting]
+Modules = [ComputeIBZ.Plotting]
 Order   = [:function, :type]
 ```
 
 ### Symmetry
 ```@autodocs
-Modules = [IBZ.Symmetry]
+Modules = [ComputeIBZ.Symmetry]
 Order   = [:function, :type]
 ```
 
 ### Utilities
 ```@autodocs
-Modules = [IBZ.Utilities]
+Modules = [ComputeIBZ.Utilities]
 Order   = [:function, :type]
 ```

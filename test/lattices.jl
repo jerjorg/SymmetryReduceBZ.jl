@@ -1,9 +1,9 @@
 using Test
 
-import IBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
+import ComputeIBZ.Lattices: check_reduced, get_recip_latvecs, minkowski_reduce,
   get_latparams, reduce_basis!, check_reduced
 
-import IBZ.Lattices
+import ComputeIBZ.Lattices
 const lt = Lattices
 
 @testset "lattices" begin

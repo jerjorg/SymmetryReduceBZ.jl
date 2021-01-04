@@ -1,14 +1,11 @@
 module Lattices
 
-
-import PyCall: pyimport
-sympy=pyimport("sympy")
-import SymPy.symbols
 import LinearAlgebra: dot, norm
 
 export get_recip_latvecs, minkowski_reduce, check_reduced, get_latparams
 # 2D Bravais lattices
 export genlat_SQR, genlat_HXG, genlat_REC, genlat_RECI, genlat_OBL
+
 # 3D Bravais lattices
 export genlat_CUB, genlat_FCC, genlat_BCC, genlat_TET, genlat_BCT, genlat_ORC,
     genlat_ORCF, genlat_ORCI, genlat_ORCC, genlat_HEX, genlat_RHL, genlat_MCL,
@@ -33,10 +30,10 @@ Calculate the reciprocal lattice vectors.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 real_latvecs=[1 0 0; 0 1 0; 0 0 1]
 convention="angular"
-IBZ.Lattices.get_recip_latvecs(real_latvecs,convention)
+ComputeIBZ.Lattices.get_recip_latvecs(real_latvecs,convention)
 # output
 3×3 Array{Float64,2}:
  6.28319  0.0      0.0
@@ -71,9 +68,9 @@ Calculate the lattice constants and angles of a lattice basis.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 latvecs = [1 0; 0 1]
-IBZ.Lattices.get_latparams(latvecs)
+ComputeIBZ.Lattices.get_latparams(latvecs)
 # output
 2-element Array{Array{Float64,1},1}:
  [1.0, 1.0]
@@ -117,10 +114,10 @@ lattice vectors by increasing Euclidean norms.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis = Array([1 2 0; 0 1 0; 3 2 1]')
 k=2
-IBZ.Lattices.reduce_basis!(basis,k)
+ComputeIBZ.Lattices.reduce_basis!(basis,k)
 basis
 # output
 3×3 Array{Int64,2}:
@@ -188,9 +185,9 @@ Minkowski reduce a lattice basis. Follows the logic of Fig. 4 in
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis = [1 2 0; 0 1 0; 0 0 1]
-IBZ.Lattices.minkowski_reduce(basis)
+ComputeIBZ.Lattices.minkowski_reduce(basis)
 # output
 3×3 Array{Int64,2}:
  0  1  0
@@ -226,9 +223,9 @@ Verify a lattice basis is Minkowski reduced
 
 # Examples
 ``` jldoctest
-using IBZ
+using ComputeIBZ
 basis = [1 0; 0 1]
-IBZ.Lattices.check_reduced(basis)
+ComputeIBZ.Lattices.check_reduced(basis)
 # output
 true
 ```
@@ -273,9 +270,9 @@ Generate a square lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
-IBZ.Lattices.genlat_SQR(a)
+ComputeIBZ.Lattices.genlat_SQR(a)
 # output
 2×2 Array{Int64,2}:
  1  0
@@ -300,9 +297,9 @@ Generate a 2D hexagonal lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
-IBZ.Lattices.genlat_HXG(a)
+ComputeIBZ.Lattices.genlat_HXG(a)
 # output
 2×2 Array{Float64,2}:
  1.0  -0.5
@@ -327,10 +324,10 @@ Generate a rectangular lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
-IBZ.Lattices.genlat_REC(a,b)
+ComputeIBZ.Lattices.genlat_REC(a,b)
 # output
 2×2 Array{Float64,2}:
  1.0  0.0
@@ -355,10 +352,10 @@ Generate a body-centered rectangular lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
-IBZ.Lattices.genlat_RECI(a,b)
+ComputeIBZ.Lattices.genlat_RECI(a,b)
 # output
 2×2 Array{Float64,2}:
   0.5  0.5
@@ -389,11 +386,11 @@ Generate a body-centered rectangular lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
 θ=π/3
-IBZ.Lattices.genlat_OBL(a,b,θ)
+ComputeIBZ.Lattices.genlat_OBL(a,b,θ)
 # output
 2×2 Array{Float64,2}:
  1.0  0.6
@@ -426,9 +423,9 @@ Generate a simple cubic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
-IBZ.Lattices.genlat_CUB(a)
+ComputeIBZ.Lattices.genlat_CUB(a)
 # output
 3×3 Array{Int64,2}:
  1  0  0
@@ -454,9 +451,9 @@ Generate a face-centered cubic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
-IBZ.Lattices.genlat_FCC(a)
+ComputeIBZ.Lattices.genlat_FCC(a)
 # output
 3×3 Array{Float64,2}:
  0.0  0.5  0.5
@@ -482,9 +479,9 @@ Generate a body-centered cubic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
-IBZ.Lattices.genlat_BCC(a)
+ComputeIBZ.Lattices.genlat_BCC(a)
 # output
 3×3 Array{Float64,2}:
  -0.5   0.5   0.5
@@ -511,10 +508,10 @@ Generate a simple tetragonal lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 c=1.2;
-IBZ.Lattices.genlat_TET(a,c)
+ComputeIBZ.Lattices.genlat_TET(a,c)
 # output
 3×3 Array{Float64,2}:
  1.0  0.0  0.0
@@ -545,10 +542,10 @@ Generate a body-centered tetragonal lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 c=1.2;
-IBZ.Lattices.genlat_BCT(a,c)
+ComputeIBZ.Lattices.genlat_BCT(a,c)
 # output
 3×3 Array{Float64,2}:
  -0.5   0.5   0.5
@@ -580,11 +577,11 @@ Generate an orthorhombic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.4;
 c=1.2;
-IBZ.Lattices.genlat_ORC(a,b,c)
+ComputeIBZ.Lattices.genlat_ORC(a,b,c)
 # output
 3×3 Array{Float64,2}:
  1.0  0.0  0.0
@@ -616,11 +613,11 @@ Generate a face-centered orthorhombic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.4;
 c=1.2;
-IBZ.Lattices.genlat_ORCF(a,b,c)
+ComputeIBZ.Lattices.genlat_ORCF(a,b,c)
 # output
 3×3 Array{Float64,2}:
  0.0  0.5  0.5
@@ -652,11 +649,11 @@ Generate a body-centered orthorhombic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.4;
 c=1.2;
-IBZ.Lattices.genlat_ORCI(a,b,c)
+ComputeIBZ.Lattices.genlat_ORCI(a,b,c)
 # output
 3×3 Array{Float64,2}:
  -0.5   0.5   0.5
@@ -688,11 +685,11 @@ Generate a base-centered orthorhombic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2;
 c=1.4;
-IBZ.Lattices.genlat_ORCC(a,b,c)
+ComputeIBZ.Lattices.genlat_ORCC(a,b,c)
 # output
 3×3 Array{Float64,2}:
   0.5  0.5  0.0
@@ -723,10 +720,10 @@ Generate a hexagonal lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 c=1.2;
-IBZ.Lattices.genlat_HEX(a,c)
+ComputeIBZ.Lattices.genlat_HEX(a,c)
 # output
 3×3 Array{Float64,2}:
   0.5       0.5       0.0
@@ -757,10 +754,10 @@ Generate a rhombohedral lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 α=π/6;
-IBZ.Lattices.genlat_RHL(a,α)
+ComputeIBZ.Lattices.genlat_RHL(a,α)
 # output
 3×3 Array{Float64,2}:
   0.965926  0.965926  0.896575
@@ -794,12 +791,12 @@ Generate a monoclinic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
 c=1.4
 α=π/6;
-IBZ.Lattices.genlat_MCL(a,b,c,α)
+ComputeIBZ.Lattices.genlat_MCL(a,b,c,α)
 # output
 3×3 Array{Float64,2}:
  1.0  0.0  0.0
@@ -835,12 +832,12 @@ Generate a base-centered monoclinic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
 c=1.4
 α=π/6;
-IBZ.Lattices.genlat_MCLC(a,b,c,α)
+ComputeIBZ.Lattices.genlat_MCLC(a,b,c,α)
 # output
 3×3 Array{Float64,2}:
  0.5  -0.5  0.0
@@ -878,14 +875,14 @@ Generate a triclinic lattice.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=1
 b=1.2
 c=1.4
 α=π/6;
 β=π/3;
 γ=π/4;
-IBZ.Lattices.genlat_TRI(a,b,c,α,β,γ)
+ComputeIBZ.Lattices.genlat_TRI(a,b,c,α,β,γ)
 # output
 3×3 Array{Float64,2}:
  1.0  0.848528  0.7
@@ -908,4 +905,4 @@ function genlat_TRI(a::Real,b::Real,c::Real,α::Real,β::Real,
             √(sin(γ)^2-cos(α)^2-cos(β)^2+2*cos(α)*cos(β)*cos(γ))]')
 end
 
-end
+end # module

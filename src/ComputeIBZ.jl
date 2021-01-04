@@ -1,4 +1,4 @@
-module IBZ
+module ComputeIBZ
 
 include("Lattices.jl")
 include("Plotting.jl")

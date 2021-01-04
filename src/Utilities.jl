@@ -19,9 +19,9 @@ Calculate the affine transformation that maps the points to the xy-plane.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 pts = [0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 0.5 0.5; -0.5 -0.5 0.5]'
-IBZ.Utilities.affine_trans(pts)
+ComputeIBZ.Utilities.affine_trans(pts)
 # output
 4×4 Array{Float64,2}:
   0.0  -1.0   0.0  0.5
@@ -64,7 +64,7 @@ Check if an array of points contains a point.
 
 # Examples
 ```jldoctest
-import IBZ.Utilities: contains
+import ComputeIBZ.Utilities: contains
 pts = Array([1 2; 2 3; 3 4; 4 5]')
 pt = [1,2]
 contains(pt,pts)
@@ -95,7 +95,7 @@ Check if an array of arrays contains an array.
 
 # Examples
 ```jldoctest
-import IBZ.Utilities: contains
+import ComputeIBZ.Utilities: contains
 arrays = [[1 2; 2 3], [2 3; 4 5]]
 array = [1 2; 2 3]
 contains(array, arrays)
@@ -156,10 +156,10 @@ Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=3.0
-IBZ.Utilities.edgelengths(basis,radius)
+ComputeIBZ.Utilities.edgelengths(basis,radius)
 # output
 3-element Array{Float64,1}:
  3.0
@@ -243,9 +243,9 @@ Map Cartesian points embedded in 3D on a plane to the xy-plane embedded in 2D.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-IBZ.Utilities.mapto_xyplane(pts)
+ComputeIBZ.Utilities.mapto_xyplane(pts)
 # output
 2×4 Array{Float64,2}:
  0.0  1.0  1.0  0.0
@@ -280,11 +280,11 @@ Sample uniformly within a circle centered about a point.
 
 ## Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis=Array([1. 0.; 0. 1.]')
 radius=1.0
 offset=[0.,0.]
-IBZ.Utilities.sample_circle(basis,radius,offset)
+ComputeIBZ.Utilities.sample_circle(basis,radius,offset)
 # output
 2×5 Array{Float64,2}:
   0.0  -1.0  0.0  1.0  0.0
@@ -337,11 +337,11 @@ Sample uniformly within a circle centered about a point.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=1.0
 offset=[0.,0.,0.]
-IBZ.Utilities.sample_sphere(basis,radius,offset)
+ComputeIBZ.Utilities.sample_sphere(basis,radius,offset)
 # output
 3×7 Array{Float64,2}:
   0.0   0.0  -1.0  0.0  1.0  0.0  0.0
@@ -408,11 +408,11 @@ A "less than" function for sorting Cartesian points in 2D.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 a=[0,0]
 b=[1,0]
 c=[0.5,0.5]
-IBZ.Utilities.sort_points_comparison(a,b,c)
+ComputeIBZ.Utilities.sort_points_comparison(a,b,c)
 # output
 true
 ```
@@ -450,9 +450,9 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-perm=IBZ.Utilities.sortpts_perm(pts)
+perm=ComputeIBZ.Utilities.sortpts_perm(pts)
 pts[:,perm]
 # output
 3×4 Array{Float64,2}:
@@ -487,10 +487,10 @@ Return the permutation vector that maps Cartesian 2D points `xypts` to `sxypts`.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 xypts = [0 0; 0 1; 1 0; 1 1]'
 sxypts = [0 1; 1 1; 1 0; 0 0]'
-perm=IBZ.Utilities.sortslice_perm(xypts,sxypts)
+perm=ComputeIBZ.Utilities.sortslice_perm(xypts,sxypts)
 xypts[:,perm]
 # output
 2×4 Array{Int64,2}:
@@ -528,9 +528,9 @@ Remove duplicate points from an array.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
-IBZ.Utilities.remove_duplicates(points)
+ComputeIBZ.Utilities.remove_duplicates(points)
 # output
 2×3 Array{Int64,2}:
  1  2  3

@@ -2,8 +2,8 @@ module Symmetry
 
 import CDDLib: Library
 import Polyhedra: HalfSpace, polyhedron, points
-import LinearAlgebra: norm, det, I
-import QHull: Chull, chull
+import LinearAlgebra: norm, det
+import QHull: chull
 import Combinatorics: permutations
 
 include("Lattices.jl")
@@ -31,9 +31,9 @@ Calculate the point group of lattice in 2D or 3D.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 basis = [1 0; 0 1]
-IBZ.Symmetry.calc_pointgroup(basis)
+ComputeIBZ.Symmetry.calc_pointgroup(basis)
 # output
 8-element Array{Array{Float64,2},1}:
  [0.0 -1.0; -1.0 0.0]
@@ -110,12 +110,12 @@ Map a point to the first unit (primitive) cell.
 
 #Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 real_latvecs = [0 1 2; 0 -1 1; 1 0 0]
 inv_latvecs=inv(real_latvecs)
 pt=[1,2,3.2]
 coords = "Cartesian"
-IBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
+ComputeIBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
 # output
 3-element Array{Float64,1}:
  0.0
@@ -164,12 +164,12 @@ Calculate the space group of a crystal structure.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 real_latvecs = Array([1 0; 2 1]')
 atom_types = [0, 1]
 atom_pos = Array([0 0; 0.5 0.5]')
 coords = "Cartesian"
-IBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+ComputeIBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 # output
 (Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
@@ -262,11 +262,11 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 real_latvecs=[1 0; 0 1]
 convention="ordinary"
 bzformat = "convex hull"
-IBZ.Symmetry.calc_bz(real_latvecs,convention,bzformat)
+ComputeIBZ.Symmetry.calc_bz(real_latvecs,convention,bzformat)
 # output
 Convex Hull of 4 points in 2 dimensions
 Hull segment vertex indices:
@@ -341,14 +341,14 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
 # Examples
 ```jldoctest
-using IBZ
+using ComputeIBZ
 real_latvecs = [1 0; 0 1]
 convention="ordinary"
 atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
 ibzformat = "convex hull"
-IBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
+ComputeIBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
     convention)
 # output
 Convex Hull of 3 points in 2 dimensions
@@ -448,8 +448,8 @@ This is a Julia translation of the function by the same in
 
 # Examples
 ```jldoctest
-import IBZ.Lattices: genlat_CUB
-import IBZ.Symmetry: make_primitive
+import ComputeIBZ.Lattices: genlat_CUB
+import ComputeIBZ.Symmetry: make_primitive
 a = 1.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
@@ -545,4 +545,4 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
 end
 
 end #module
-:q
+:q

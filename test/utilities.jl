@@ -1,10 +1,11 @@
 using Test
 
-import IBZ.Utilities: affine_trans, contains, edgelengths, get_uniquefacets,
-    mapto_xyplane, remove_duplicates, sample_circle, sample_sphere, shoelace,
-    sort_points_comparison, sortpts_perm, sortslice_perm
+import ComputeIBZ.Utilities: affine_trans, contains, edgelengths,
+	get_uniquefacets, mapto_xyplane, remove_duplicates, sample_circle,
+	sample_sphere, shoelace, sort_points_comparison, sortpts_perm,
+	sortslice_perm
 
-import IBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HXG,
+import ComputeIBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HXG,
     genlat_OBL, genlat_CUB
 
 # Lattice vectors

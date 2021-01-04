@@ -1,11 +1,11 @@
 using Test
 
-import IBZ.Lattices
+import ComputeIBZ.Lattices
 const lt = Lattices
 
-import IBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
+import ComputeIBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
     mapto_unitcell, make_primitive
-import IBZ.Utilities: remove_duplicates
+import ComputeIBZ.Utilities: remove_duplicates
 import QHull: chull
 import PyCall: pyimport
 sympy=pyimport("sympy")
@@ -727,7 +727,7 @@ ibzformat="convex hull"
     end
 
     @testset "make_primitive" begin
-        import IBZ.Lattices: genlat_CUB, genlat_BCC
+        import ComputeIBZ.Lattices: genlat_CUB, genlat_BCC
         a = 1.0
         real_latvecs = genlat_BCC(a)
         atom_types = [0,0,0,0,0]

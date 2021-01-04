@@ -1,13 +1,13 @@
 using Test
 
-import IBZ
-import IBZ.Plotting: plot_convexhulls
+import ComputeIBZ
+import ComputeIBZ.Plotting: plot_convexhulls
 
 
 @testset "plotting" begin
     @testset "plot_convexhulls" begin
 
-        cub_latvecs = IBZ.Lattices.genlat_CUB(1)
+        cub_latvecs = ComputeIBZ.Lattices.genlat_CUB(1)
         real_latvecs = cub_latvecs
         atom_types = [0]
         coords = "Cartesian"
@@ -19,7 +19,7 @@ import IBZ.Plotting: plot_convexhulls
             convention,false)
         @test true
 
-        sqr_latvecs = IBZ.Lattices.genlat_SQR(1)
+        sqr_latvecs = ComputeIBZ.Lattices.genlat_SQR(1)
         real_latvecs = sqr_latvecs
         atom_types = [0]
         coords = "Cartesian"
