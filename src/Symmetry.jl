@@ -2,7 +2,7 @@ module Symmetry
 
 import CDDLib: Library
 import Polyhedra: HalfSpace, polyhedron, points
-import LinearAlgebra: norm, det
+import LinearAlgebra: norm, det, I
 import QHull: chull
 import Combinatorics: permutations
 
