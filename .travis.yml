@@ -11,8 +11,10 @@ julia:
 notifications:
   email: false
 
+import Pkg; Pkg.add("Documenter")
+
 script:
-  - julia -e 'using Pkg; Pkg.add("Conda"); using PyCall;
+  - julia -e 'using Pkg; Pkg.add(["Conda","Documenter"]); using PyCall;
       pyimport_conda("sympy", "sympy")'
   - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                     Pkg.instantiate()'
@@ -23,4 +25,5 @@ after_success:
   - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage;
       Coveralls.submit(process_folder())'
   - julia --project ./docs/make.jl
+
 coveralls: true
