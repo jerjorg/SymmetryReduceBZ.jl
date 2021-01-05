@@ -1,6 +1,6 @@
 # Home
 
-`ComputeIBZ.jl` is a julia package for calculating the irreducible Brillouin 
+`SymmetryReduceBZ.jl` is a julia package for calculating the irreducible Brillouin 
 zone. It also contains methods related to the symmetry of lattices and 
 lattice reduction.
 

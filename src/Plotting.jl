@@ -26,16 +26,16 @@ Plot a 2D convex hull
 
 # Examples
 ```
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = [1 0; 0 1]
 convention = "ordinary"
 bzformat = "convex hull"
 bz = calc_bz(real_latvecs,convention,bzformat)
 
 fig,ax=subplots(figsize=figaspect(1)*1.5)
-ax = ComputeIBZ.Plotting.plot_2Dconvexhull(bz,ax,"deepskyblue");
+ax = SymmetryReduceBZ.Plotting.plot_2Dconvexhull(bz,ax,"deepskyblue");
 color="deepskyblue"
-ComputeIBZ.Plotting.plot_2Dconvexhull(bz,ax,color)
+SymmetryReduceBZ.Plotting.plot_2Dconvexhull(bz,ax,color)
 ```
 """
 function plot_2Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
@@ -70,14 +70,14 @@ Plot a 3D convex hull
 
 # Examples
 ```
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 convention = "ordinary"
 bzformat = "convex hull"
 bz = calc_bz(real_latvecs,convention,bzformat)
 fig = figure(figsize=figaspect(1)*1.5)
 ax = fig.add_subplot(111, projection="3d")
-ax = ComputeIBZ.Plotting.plot_3Dconvexhull(bz,ax,"deepskyblue")
+ax = SymmetryReduceBZ.Plotting.plot_3Dconvexhull(bz,ax,"deepskyblue")
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
@@ -144,7 +144,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 
 # Examples
 ```
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = [1 0; .5 1]
 atom_types=[0]
 coords = "Cartesian"

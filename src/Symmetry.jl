@@ -31,9 +31,9 @@ Calculate the point group of lattice in 2D or 3D.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 basis = [1 0; 0 1]
-ComputeIBZ.Symmetry.calc_pointgroup(basis)
+SymmetryReduceBZ.Symmetry.calc_pointgroup(basis)
 # output
 8-element Array{Array{Float64,2},1}:
  [0.0 -1.0; -1.0 0.0]
@@ -110,12 +110,12 @@ Map a point to the first unit (primitive) cell.
 
 #Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = [0 1 2; 0 -1 1; 1 0 0]
 inv_latvecs=inv(real_latvecs)
 pt=[1,2,3.2]
 coords = "Cartesian"
-ComputeIBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
+SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
 # output
 3-element Array{Float64,1}:
  0.0
@@ -164,12 +164,12 @@ Calculate the space group of a crystal structure.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = Array([1 0; 2 1]')
 atom_types = [0, 1]
 atom_pos = Array([0 0; 0.5 0.5]')
 coords = "Cartesian"
-ComputeIBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 # output
 (Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
@@ -262,11 +262,11 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs=[1 0; 0 1]
 convention="ordinary"
 bzformat = "convex hull"
-ComputeIBZ.Symmetry.calc_bz(real_latvecs,convention,bzformat)
+SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,convention,bzformat)
 # output
 Convex Hull of 4 points in 2 dimensions
 Hull segment vertex indices:
@@ -341,14 +341,14 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 real_latvecs = [1 0; 0 1]
 convention="ordinary"
 atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
 ibzformat = "convex hull"
-ComputeIBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
+SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
     convention)
 # output
 Convex Hull of 3 points in 2 dimensions
@@ -448,8 +448,8 @@ This is a Julia translation of the function by the same in
 
 # Examples
 ```jldoctest
-import ComputeIBZ.Lattices: genlat_CUB
-import ComputeIBZ.Symmetry: make_primitive
+import SymmetryReduceBZ.Lattices: genlat_CUB
+import SymmetryReduceBZ.Symmetry: make_primitive
 a = 1.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
@@ -566,8 +566,8 @@ Calculate the high symmetry points of the reciprocal lattice.
 
 # Examples
 ```jldoctest
-import ComputeIBZ.Lattices: gengal_FCC
-import ComputeIBZ.Symmetry: calc_sympts
+import SymmetryReduceBZ.Lattices: gengal_FCC
+import SymmetryReduceBZ.Symmetry: calc_sympts
 Al_type = "FCC"
 Al_abc = [4.0495, 4.0495, 4.0495]
 Al_αβγ = [π/2, π/2, π/2]

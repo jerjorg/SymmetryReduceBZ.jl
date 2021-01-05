@@ -1,4 +1,4 @@
-name = "ComputeIBZ"
+name = "SymmetryReduceBZ"
 uuid = "49a35663-c880-4242-bebb-1ec8c0fa8046"
 authors = ["Jeremy Jorgensen <jerjorg@gmail.com>"]
 version = "0.1.0"

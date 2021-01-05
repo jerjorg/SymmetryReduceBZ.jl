@@ -1,14 +1,14 @@
 push!(LOAD_PATH,"../src/")
-using Documenter, ComputeIBZ
+using Documenter, SymmetryReduceBZ
 
-makedocs(sitename="ComputeIBZ",
+makedocs(sitename="SymmetryReduceBZ",
          # format = Documenter.HTML(prettyurls = false),
-         modules = [ComputeIBZ],
+         modules = [SymmetryReduceBZ],
          authors = "Jeremy Jorgensen",
          doctest = true,
          pages=["index.md", "Documentation.md", "Usage.md"])
 
 deploydocs(
-    repo = "github.com/jerjorg/ComputeIBZ.jl.git",
+    repo = "github.com/jerjorg/SymmetryReduceBZ.jl.git",
     versions = ["stable" => "v#.#"],
     devurl = "docs")

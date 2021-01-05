@@ -1,6 +1,6 @@
 using PyCall
 
-println("Running build.jl for the ComputeIBZ package.")
+println("Running build.jl for the SymmetryReduceBZ package.")
 
 # Change that to whatever packages you need.
 const PACKAGES = ["sympy"]

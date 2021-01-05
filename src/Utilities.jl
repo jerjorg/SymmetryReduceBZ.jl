@@ -19,9 +19,9 @@ Calculate the affine transformation that maps the points to the xy-plane.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 pts = [0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 0.5 0.5; -0.5 -0.5 0.5]'
-ComputeIBZ.Utilities.affine_trans(pts)
+SymmetryReduceBZ.Utilities.affine_trans(pts)
 # output
 4×4 Array{Float64,2}:
   0.0  -1.0   0.0  0.5
@@ -64,7 +64,7 @@ Check if an array of points contains a point.
 
 # Examples
 ```jldoctest
-import ComputeIBZ.Utilities: contains
+import SymmetryReduceBZ.Utilities: contains
 pts = Array([1 2; 2 3; 3 4; 4 5]')
 pt = [1,2]
 contains(pt,pts)
@@ -95,7 +95,7 @@ Check if an array of arrays contains an array.
 
 # Examples
 ```jldoctest
-import ComputeIBZ.Utilities: contains
+import SymmetryReduceBZ.Utilities: contains
 arrays = [[1 2; 2 3], [2 3; 4 5]]
 array = [1 2; 2 3]
 contains(array, arrays)
@@ -128,10 +128,10 @@ Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=3.0
-ComputeIBZ.Utilities.edgelengths(basis,radius)
+SymmetryReduceBZ.Utilities.edgelengths(basis,radius)
 # output
 3-element Array{Float64,1}:
  3.0
@@ -215,9 +215,9 @@ Map Cartesian points embedded in 3D on a plane to the xy-plane embedded in 2D.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-ComputeIBZ.Utilities.mapto_xyplane(pts)
+SymmetryReduceBZ.Utilities.mapto_xyplane(pts)
 # output
 2×4 Array{Float64,2}:
  0.0  1.0  1.0  0.0
@@ -252,11 +252,11 @@ Sample uniformly within a circle centered about a point.
 
 ## Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 basis=Array([1. 0.; 0. 1.]')
 radius=1.0
 offset=[0.,0.]
-ComputeIBZ.Utilities.sample_circle(basis,radius,offset)
+SymmetryReduceBZ.Utilities.sample_circle(basis,radius,offset)
 # output
 2×5 Array{Float64,2}:
   0.0  -1.0  0.0  1.0  0.0
@@ -309,11 +309,11 @@ Sample uniformly within a circle centered about a point.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=1.0
 offset=[0.,0.,0.]
-ComputeIBZ.Utilities.sample_sphere(basis,radius,offset)
+SymmetryReduceBZ.Utilities.sample_sphere(basis,radius,offset)
 # output
 3×7 Array{Float64,2}:
   0.0   0.0  -1.0  0.0  1.0  0.0  0.0
@@ -380,11 +380,11 @@ A "less than" function for sorting Cartesian points in 2D.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 a=[0,0]
 b=[1,0]
 c=[0.5,0.5]
-ComputeIBZ.Utilities.sort_points_comparison(a,b,c)
+SymmetryReduceBZ.Utilities.sort_points_comparison(a,b,c)
 # output
 true
 ```
@@ -422,9 +422,9 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-perm=ComputeIBZ.Utilities.sortpts_perm(pts)
+perm=SymmetryReduceBZ.Utilities.sortpts_perm(pts)
 pts[:,perm]
 # output
 3×4 Array{Float64,2}:
@@ -459,10 +459,10 @@ Return the permutation vector that maps Cartesian 2D points `xypts` to `sxypts`.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 xypts = [0 0; 0 1; 1 0; 1 1]'
 sxypts = [0 1; 1 1; 1 0; 0 0]'
-perm=ComputeIBZ.Utilities.sortslice_perm(xypts,sxypts)
+perm=SymmetryReduceBZ.Utilities.sortslice_perm(xypts,sxypts)
 xypts[:,perm]
 # output
 2×4 Array{Int64,2}:
@@ -500,9 +500,9 @@ Remove duplicate points from an array.
 
 # Examples
 ```jldoctest
-using ComputeIBZ
+using SymmetryReduceBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
-ComputeIBZ.Utilities.remove_duplicates(points)
+SymmetryReduceBZ.Utilities.remove_duplicates(points)
 # output
 2×3 Array{Int64,2}:
  1  2  3

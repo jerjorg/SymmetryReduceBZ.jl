@@ -1,6 +1,6 @@
 # User guide
 
-`ComputeIBZ.jl` calculates the irreducible Brillouin zone (IBZ) of a crystal structure
+`SymmetryReduceBZ.jl` calculates the irreducible Brillouin zone (IBZ) of a crystal structure
 in 2D and 3D. It also contains functions related to the symmetry of lattices and
 lattice reduction. Later on, it will be able to calculate high symmetry points
 and paths within the IBZ.
@@ -8,8 +8,8 @@ and paths within the IBZ.
 To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
 The IBZ will be returned as either a convex hull or intersection of half spaces.
 ```@example
-import ComputeIBZ.Lattices: genlat_CUB
-import ComputeIBZ.Symmetry: calc_ibz
+import SymmetryReduceBZ.Lattices: genlat_CUB
+import SymmetryReduceBZ.Symmetry: calc_ibz
 a = 2.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
@@ -27,8 +27,8 @@ gives the convention for going from real to reciprocal space (whether or not to
 multiply by 2π). There is a simple function for visualizing the IBZ along with
 the Brillouin zone (BZ).
 ```@example
-import ComputeIBZ.Plotting: plot_convexhulls
-import ComputeIBZ.Lattices: genlat_CUB
+import SymmetryReduceBZ.Plotting: plot_convexhulls
+import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 2.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
