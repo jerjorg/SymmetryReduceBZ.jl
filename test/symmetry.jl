@@ -4,8 +4,10 @@ import ComputeIBZ.Lattices
 const lt = Lattices
 
 import ComputeIBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
-    mapto_unitcell, make_primitive
+    mapto_unitcell, make_primitive, calc_sympts
 import ComputeIBZ.Utilities: remove_duplicates
+import ComputeIBZ.Lattices: genlat_FCC
+
 import QHull: chull
 import PyCall: pyimport
 sympy=pyimport("sympy")
@@ -754,5 +756,15 @@ ibzformat="convex hull"
         @test isapprox(prim_pos, [0,0,0])
         @test isapprox(prim_latvecs, [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
 
+    end
+
+    @testset "calc_sympts" begin
+        Al_type = "FCC"
+        Al_abc = [4.0495, 4.0495, 4.0495]
+        Al_αβγ = [π/2, π/2, π/2]
+        Al_latvecs = genlat_FCC(Al_abc[1])
+        sympts = calc_sympts(Al_latvecs,Al_type,Al_abc,Al_αβγ)
+
+        @test all([haskey(sympts,key) for key=["U","W","X","Γ","L","K"]])
     end
 end
