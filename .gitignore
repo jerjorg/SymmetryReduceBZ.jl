@@ -23,4 +23,6 @@ docs/site/
 # environment.
 Manifest.toml
 
+# Miscellaneous
 notebooks
+.coveralls.yml
