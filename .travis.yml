@@ -11,8 +11,6 @@ julia:
 notifications:
   email: false
 
-import Pkg; Pkg.add("Documenter")
-
 script:
   - julia -e 'using Pkg; Pkg.add(["Conda","Documenter"]); using PyCall;
       pyimport_conda("sympy", "sympy")'
