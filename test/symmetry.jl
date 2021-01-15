@@ -4,7 +4,7 @@ import SymmetryReduceBZ.Lattices
 const lt = Lattices
 
 import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
-    mapto_unitcell, make_primitive, calc_sympts
+    mapto_unitcell, make_primitive
 import SymmetryReduceBZ.Utilities: remove_duplicates
 import SymmetryReduceBZ.Lattices: genlat_FCC
 
@@ -758,13 +758,4 @@ ibzformat="convex hull"
 
     end
 
-    @testset "calc_sympts" begin
-        Al_type = "FCC"
-        Al_abc = [4.0495, 4.0495, 4.0495]
-        Al_αβγ = [π/2, π/2, π/2]
-        Al_latvecs = genlat_FCC(Al_abc[1])
-        sympts = calc_sympts(Al_latvecs,Al_type,Al_abc,Al_αβγ)
-
-        @test all([haskey(sympts,key) for key=["U","W","X","Γ","L","K"]])
-    end
 end
