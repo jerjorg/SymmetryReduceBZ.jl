@@ -1,9 +1,10 @@
 # User guide
 
-`SymmetryReduceBZ.jl` calculates the irreducible Brillouin zone (IBZ) of a crystal structure
-in 2D and 3D. It also contains functions related to the symmetry of lattices and
-lattice reduction. Later on, it will be able to calculate high symmetry points
-and paths within the IBZ.
+`SymmetryReduceBZ.jl` calculates the irreducible Brillouin zone (IBZ) of a
+crystal structure in 2D and 3D. It also contains functions related to the
+symmetry of lattices and lattice reduction.
+
+## Julia
 
 To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
 The IBZ will be returned as either a convex hull or intersection of half spaces.
@@ -38,3 +39,5 @@ convention = "ordinary"
 (fix,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   convention)
 ```
+
+## Python

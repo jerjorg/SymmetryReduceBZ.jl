@@ -81,15 +81,9 @@ ax = SymmetryReduceBZ.Plotting.plot_3Dconvexhull(bz,ax,"deepskyblue")
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
-    color::String, plotrange=false)
+    color::String)
 
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
-
-    if plotrange ==false
-        ϵ=0.1*convexhull.volume
-        plotrange=[[minimum(convexhull.points[:,i])-ϵ,
-                maximum(convexhull.points[:,i])+ϵ] for i=1:3]
-    end
 
     facesᵢ=get_uniquefacets(convexhull)
     edgesᵢ=deepcopy(facesᵢ)
@@ -110,10 +104,6 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
     ax.add_collection3d(p)
     ax.add_collection3d(l)
 
-    #ax.view_init(-45,-45)
-    ax.set_xlim3d(plotrange[1]...)
-    ax.set_ylim3d(plotrange[2]...)
-    ax.set_zlim3d(plotrange[3]...)
     return ax
 end
 
@@ -172,9 +162,11 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,convention,
         ax = fig.add_subplot(111, projection="3d")
         ϵ=0.1*bz.volume
         plotrange=[[minimum(bz.points[:,i])-ϵ,
-                maximum(bz.points[:,i])+ϵ] for i=1:3]
-        ax = plot_3Dconvexhull(bz,ax,"blue",plotrange)
-        ax = plot_3Dconvexhull(ibz,ax,"red",plotrange)
+            maximum(bz.points[:,i])+ϵ] for i=1:3]
+        ax = plot_3Dconvexhull(bz,ax,"blue")
+        ax = plot_3Dconvexhull(ibz,ax,"red")
+        ax.auto_scale_xyz(plotrange[1],plotrange[2],plotrange[3])
+
     else
         throw(ArgumentError("The lattice vectors must be in a 2x2 or 3x3
             array."))

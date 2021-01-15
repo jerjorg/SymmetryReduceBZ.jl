@@ -5,7 +5,6 @@ import LinearAlgebra: dot, norm
 export get_recip_latvecs, minkowski_reduce, check_reduced, get_latparams
 # 2D Bravais lattices
 export genlat_SQR, genlat_HXG, genlat_REC, genlat_RECI, genlat_OBL
-
 # 3D Bravais lattices
 export genlat_CUB, genlat_FCC, genlat_BCC, genlat_TET, genlat_BCT, genlat_ORC,
     genlat_ORCF, genlat_ORCI, genlat_ORCC, genlat_HEX, genlat_RHL, genlat_MCL,
@@ -256,6 +255,10 @@ function check_reduced(basis::AbstractArray{<:Real,2})::Bool
 end
 
 
+# Lattice generting functions take from the paper High-throughput electronic
+# band structure calculations: Challenges and tools by Wahyu Setyawan and
+# Stefano Curtarolo.
+
 @doc """
     genlat_SQR(a)
 
@@ -263,6 +266,7 @@ Generate a square lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -279,7 +283,7 @@ SymmetryReduceBZ.Lattices.genlat_SQR(a)
  0  1
 ```
 """
-function genlat_SQR(a::Real)::AbstractArray{<:Real,2}
+function genlat_SQR(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
     [a 0; 0 a]
 end
 
@@ -290,6 +294,7 @@ Generate a 2D hexagonal lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -306,7 +311,7 @@ SymmetryReduceBZ.Lattices.genlat_HXG(a)
  0.0   0.866025
 ```
 """
-function genlat_HXG(a::Real)::AbstractArray{<:Real,2}
+function genlat_HXG(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
     Array([a 0; -a/2 a*√3/2]')
 end
 
@@ -317,6 +322,7 @@ Generate a rectangular lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -334,7 +340,8 @@ SymmetryReduceBZ.Lattices.genlat_REC(a,b)
  0.0  1.2
 ```
 """
-function genlat_REC(a::Real,b::Real)::AbstractArray{<:Real,2}
+function genlat_REC(a::Real,b::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     Array([a 0; 0 b]')
 end
 
@@ -345,6 +352,7 @@ Generate a body-centered rectangular lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -362,23 +370,33 @@ SymmetryReduceBZ.Lattices.genlat_RECI(a,b)
  -0.6  0.6
 ```
 """
-function genlat_RECI(a::Real,b::Real)::AbstractArray{<:Real,2}
+function genlat_RECI(a::Real,b::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b
         throw(ArgumentError("The lattice constant must be different sizes for a
             rectangular lattice."))
     end
-    Array([a/2 -b/2; a/2 b/2]')
+
+    if type == "primitive"
+        Array([a/2 -b/2; a/2 b/2]')
+    elseif type=="conventional"
+        genlat_REC(a,b)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
     genlat_OBL(a,b,θ)
 
-Generate a body-centered rectangular lattice.
+Generate an oblique lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
 - `b::Real`: the lattice constant
 - `θ::Real`: the lattice angle
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -397,7 +415,8 @@ SymmetryReduceBZ.Lattices.genlat_OBL(a,b,θ)
  0.0  1.03923
 ```
 """
-function genlat_OBL(a::Real,b::Real,θ::Real)::AbstractArray{<:Real,2}
+function genlat_OBL(a::Real,b::Real,θ::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b
         throw(ArgumentError("The lattice constant must be different sizes for an
             oblique lattice."))
@@ -416,6 +435,7 @@ Generate a simple cubic lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -433,7 +453,7 @@ SymmetryReduceBZ.Lattices.genlat_CUB(a)
  0  0  1
 ```
 """
-function genlat_CUB(a::Real)::AbstractArray{<:Real,2}
+function genlat_CUB(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
     [a 0 0; 0 a 0; 0 0 a]
 end
 
@@ -444,6 +464,7 @@ Generate a face-centered cubic lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -461,8 +482,15 @@ SymmetryReduceBZ.Lattices.genlat_FCC(a)
  0.5  0.5  0.0
 ```
 """
-function genlat_FCC(a::Real)::AbstractArray{<:Real,2}
-    Array([0 a/2 a/2; a/2 0 a/2; a/2 a/2 0]')
+function genlat_FCC(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+    if type == "primitive"
+        Array([0 a/2 a/2; a/2 0 a/2; a/2 a/2 0]')
+    elseif type=="conventional"
+        genlat_CUB(a)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -472,6 +500,7 @@ Generate a body-centered cubic lattice.
 
 # Arguments
 - `a::Real`: the lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -489,8 +518,15 @@ SymmetryReduceBZ.Lattices.genlat_BCC(a)
   0.5   0.5  -0.5
 ```
 """
-function genlat_BCC(a::Real)::AbstractArray{<:Real,2}
-    a/2*Array([-1 1 1; 1 -1 1; 1 1 -1]')
+function genlat_BCC(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+    if type == "primitive"
+        a/2*Array([-1 1 1; 1 -1 1; 1 1 -1]')
+    elseif type=="conventional"
+        genlat_CUB(a)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -501,6 +537,7 @@ Generate a simple tetragonal lattice.
 # Arguments
 - `a::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -519,7 +556,8 @@ SymmetryReduceBZ.Lattices.genlat_TET(a,c)
  0.0  0.0  1.2
 ```
 """
-function genlat_TET(a::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_TET(a::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             tetragonal lattice."))
@@ -535,6 +573,7 @@ Generate a body-centered tetragonal lattice.
 # Arguments
 - `a::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -553,12 +592,20 @@ SymmetryReduceBZ.Lattices.genlat_BCT(a,c)
   0.6   0.6  -0.6
 ```
 """
-function genlat_BCT(a::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_BCT(a::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             tetragonal lattice."))
     end
-    Array([-a/2 a/2 c/2; a/2 -a/2 c/2; a/2 a/2 -c/2]')
+    if type == "primitive"
+        Array([-a/2 a/2 c/2; a/2 -a/2 c/2; a/2 a/2 -c/2]')
+    elseif type=="conventional"
+        genlat_TET(a,c)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -570,6 +617,7 @@ Generate an orthorhombic lattice.
 - `a::Real`: a lattice constant
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -589,7 +637,8 @@ SymmetryReduceBZ.Lattices.genlat_ORC(a,b,c)
  0.0  0.0  1.2
 ```
 """
-function genlat_ORC(a::Real,b::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_ORC(a::Real,b::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
@@ -606,6 +655,7 @@ Generate a face-centered orthorhombic lattice.
 - `a::Real`: a lattice constant
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -625,12 +675,21 @@ SymmetryReduceBZ.Lattices.genlat_ORCF(a,b,c)
  0.6  0.6  0.0
 ```
 """
-function genlat_ORCF(a::Real,b::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_ORCF(a::Real,b::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
     end
-    Array([0 b/2 c/2; a/2 0 c/2; a/2 b/2 0]')
+
+    if type == "primitive"
+        Array([0 b/2 c/2; a/2 0 c/2; a/2 b/2 0]')
+    elseif type=="conventional"
+        genlat_ORC(a,b,c)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -642,6 +701,7 @@ Generate a body-centered orthorhombic lattice.
 - `a::Real`: a lattice constant
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -661,12 +721,21 @@ SymmetryReduceBZ.Lattices.genlat_ORCI(a,b,c)
   0.6   0.6  -0.6
 ```
 """
-function genlat_ORCI(a::Real,b::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_ORCI(a::Real,b::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
     end
-    Array([-a/2 b/2 c/2; a/2 -b/2 c/2; a/2 b/2 -c/2]')
+
+    if type == "primitive"
+        Array([-a/2 b/2 c/2; a/2 -b/2 c/2; a/2 b/2 -c/2]')
+    elseif type=="conventional"
+        genlat_ORC(a,b,c)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -678,6 +747,7 @@ Generate a base-centered orthorhombic lattice.
 - `a::Real`: a lattice constant
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -697,12 +767,21 @@ SymmetryReduceBZ.Lattices.genlat_ORCC(a,b,c)
   0.0  0.0  1.4
 ```
 """
-function genlat_ORCC(a::Real,b::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_ORCC(a::Real,b::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
     end
-    Array([a/2 -b/2 0; a/2 b/2 0; 0 0 c]')
+
+    if type == "primitive"
+        Array([a/2 -b/2 0; a/2 b/2 0; 0 0 c]')
+    elseif type=="conventional"
+        genlat_ORC(a,b,c)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -713,6 +792,7 @@ Generate a hexagonal lattice.
 # Arguments
 - `a::Real`: a lattice constant
 - `c::Real`: a lattice constant
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -731,7 +811,8 @@ SymmetryReduceBZ.Lattices.genlat_HEX(a,c)
   0.0       0.0       1.2
 ```
 """
-function genlat_HEX(a::Real,c::Real)::AbstractArray{<:Real,2}
+function genlat_HEX(a::Real,c::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             hexagonal lattice."))
@@ -747,6 +828,7 @@ Generate a rhombohedral lattice.
 # Arguments
 - `a::Real`: a lattice constant
 - `α::Real`: a lattice angle in radians
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -765,7 +847,8 @@ SymmetryReduceBZ.Lattices.genlat_RHL(a,α)
   0.0       0.0       0.442891
 ```
 """
-function genlat_RHL(a::Real,α::Real)::AbstractArray{<:Real,2}
+function genlat_RHL(a::Real,α::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if α ≈ π/2
         throw(ArgumentError("The lattice angle cannot be π/2 for a rhombohedral
             lattice."))
@@ -784,6 +867,7 @@ Generate a monoclinic lattice.
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
 - `α::Real`: a lattice angle in radians less than π/2
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -804,7 +888,8 @@ SymmetryReduceBZ.Lattices.genlat_MCL(a,b,c,α)
  0.0  0.0  0.7
 ```
 """
-function genlat_MCL(a::Real,b::Real,c::Real,α::Real)::AbstractArray{<:Real,2}
+function genlat_MCL(a::Real,b::Real,c::Real,α::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             monoclinic lattice."))
@@ -825,6 +910,7 @@ Generate a base-centered monoclinic lattice.
 - `b::Real`: a lattice constant
 - `c::Real`: a lattice constant
 - `α::Real`: a lattice angle in radians less than π/2
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -845,7 +931,8 @@ SymmetryReduceBZ.Lattices.genlat_MCLC(a,b,c,α)
  0.0   0.0  0.7
 ```
 """
-function genlat_MCLC(a::Real,b::Real,c::Real,α::Real)::AbstractArray{<:Real,2}
+function genlat_MCLC(a::Real,b::Real,c::Real,α::Real,
+        type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             monoclinic lattice."))
@@ -853,7 +940,14 @@ function genlat_MCLC(a::Real,b::Real,c::Real,α::Real)::AbstractArray{<:Real,2}
 #    if α ≈ π/2 || α > π/2
 #        throw(ArgumentError("The lattice angle must be less than π/2."))
 #    end
-    Array([a/2 b/2 0; -a/2 b/2 0; 0 c*cos(α) c*sin(α)]')
+    if type == "primitive"
+        Array([a/2 b/2 0; -a/2 b/2 0; 0 c*cos(α) c*sin(α)]')
+    elseif type=="conventional"
+        genlat_MCL(a,b,c,α)
+    else
+        throw(ArgumentError("The lattice type can be \"primitive\" or
+            \"conventional\"."))
+    end
 end
 
 @doc """
@@ -868,6 +962,7 @@ Generate a triclinic lattice.
 - `α::Real`: a lattice angle in radians
 - `β::Real`: a lattice angle in radians
 - `γ::Real`: a lattice angle in radians
+- `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
 - `AbstractArray{<:Real,2}`: the basis of the lattice as
@@ -891,7 +986,7 @@ SymmetryReduceBZ.Lattices.genlat_TRI(a,b,c,α,β,γ)
 ```
 """
 function genlat_TRI(a::Real,b::Real,c::Real,α::Real,β::Real,
-    γ::Real)::AbstractArray{<:Real,2}
+    γ::Real,type::String="primitive")::AbstractArray{<:Real,2}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             triclinic lattice."))
@@ -904,5 +999,13 @@ function genlat_TRI(a::Real,b::Real,c::Real,α::Real,β::Real,
             c*cos(β) c/sin(γ)*(cos(α)-cos(β)*cos(γ)) c/sin(γ)*
             √(sin(γ)^2-cos(α)^2-cos(β)^2+2*cos(α)*cos(β)*cos(γ))]')
 end
+
+""" A list of lattice types. Follows the naming convention in the article
+High-throughput electronic band structure calculations: Challenges and tools
+by Wahyu Setyawan and Stefano Curtarolo except triclinic lattices have "β"
+instead of "b" as subscripts."""
+lattice_types=["CUB", "FCC", "BCC", "BCT₁", "BCT₂", "HEX", "TET", "ORC",
+	"ORCF₁", "ORCF₂", "ORCF₃", "ORCI", "ORCC","RHL₁", "RHL₂", "MCL", "MCLC₁",
+	"MCLC₂", "MCLC₃", "MCLC₄", "MCLC₅", "TRI₁ₐ", "TRI₁ᵦ", "TRI₂ₐ", "TRI₂ᵦ"]
 
 end # module
