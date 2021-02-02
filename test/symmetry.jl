@@ -3,10 +3,10 @@ using Test
 import SymmetryReduceBZ.Lattices
 const lt = Lattices
 
-import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz, calc_ibz,
-    mapto_unitcell, make_primitive
+import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
+    calc_ibz, mapto_unitcell, make_primitive
 import SymmetryReduceBZ.Utilities: remove_duplicates
-import SymmetryReduceBZ.Lattices: genlat_FCC
+import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
 import QHull: chull
 import PyCall: pyimport
@@ -224,55 +224,117 @@ ibzformat="convex hull"
     end
 
     @testset "calc_bz" begin
-        convention="ordinary"
+        coords="Cartesian"
         bzformat="convex hull"
         for real_latvecs=listreal_latvecs
-            bz=calc_bz(real_latvecs,convention,bzformat)
-            pointgroup=calc_pointgroup(real_latvecs)
-            # Rotate BZ vertices
-            bzverts=reduce(hcat,[op*(bz.points[i,:]) for op=pointgroup
-                for i=1:size(bz.points,1)])
-            # BZ vertices should map to other BZ vertices under point group
-            # operations
-            @test size(remove_duplicates(bzverts),2) == size(bz.points,1)
+            if size(real_latvecs) == (2,2)
+                atype_list=[[0],[0,0],[0,1],[0,1,0]]
+                apos_list=[Array([0 0]'),
+                           Array([0 0; 0 0.5]'),
+                           Array([0 0; 0 0.5]'),
+                           Array([0 0; 0 0.5; 0.5 0.5]')]
+            else
+                atype_list=[[0],[0,0],[0,1],[0,1,0]]
+                apos_list=[Array([0 0 0]'),
+                           Array([0 0 0; 0.5 0.5 0.5]'),
+                           Array([0 0 0; 0.5 0.5 0.5]'),
+                           Array([0 0 0; 0 0 0.5; 0.5 0.5 0.5]')]
+            end
+            for (atom_types,atom_pos)=zip(atype_list,apos_list)
+                for primitive=[true,false]
+                    for convention=["ordinary","angular"]
+
+                        bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
+                            bzformat,primitive,convention)
+
+                        if primitive
+                        	(prim_types,prim_pos,prim_latvecs) = make_primitive(
+                                real_latvecs,atom_types,atom_pos,coords)
+                    	else
+                    		(prim_types,prim_pos,prim_latvecs)=(
+                                atom_types,atom_pos,real_latvecs)
+                    	end
+
+                        pointgroup=calc_pointgroup(prim_latvecs)
+                        # Rotate BZ vertices
+                        bzverts=reduce(hcat,[op*(bz.points[i,:]) for
+                            op=pointgroup for i=1:size(bz.points,1)])
+                        # BZ vertices should map to other BZ vertices under
+                        # point group operations
+                        @test (size(remove_duplicates(bzverts),2) ==
+                            size(bz.points,1))
+                    end
+                end
+            end
         end
 
+        real_latvecs = [1.0 0.0; 0.0 1.0]
+        primitive=false
+        atom_types=[0]
+        atom_pos=Array([0 0]')
+        coords="Cartesian"
+        convention="ordinary"
         bzformat="bad format"
-        @test_throws ArgumentError calc_bz(listreal_latvecs[1],
-            convention, bzformat)
+        @test_throws ArgumentError bz=calc_bz(real_latvecs,atom_types,atom_pos,
+            coords,bzformat,primitive,convention)
     end
 
     @testset "calc_ibz" begin
+        coords="Cartesian"
         ibzformat="convex hull"
         bzformat="convex hull"
         for real_latvecs=listreal_latvecs
             if size(real_latvecs) == (2,2)
-                atom_pos=Array([0 0]')
+                atype_list=[[0],[0,0],[0,1],[0,1,0]]
+                apos_list=[Array([0 0]'),
+                           Array([0 0; 0 0.5]'),
+                           Array([0 0; 0 0.5]'),
+                           Array([0 0; 0 0.5; 0.5 0.5]')]
             else
-                atom_pos=Array([0 0 0]')
+                atype_list=[[0],[0,0],[0,1],[0,1,0]]
+                apos_list=[Array([0 0 0]'),
+                           Array([0 0 0; 0.5 0.5 0.5]'),
+                           Array([0 0 0; 0.5 0.5 0.5]'),
+                           Array([0 0 0; 0 0 0.5; 0.5 0.5 0.5]')]
             end
-            pointgroup=calc_pointgroup(real_latvecs)
-            bz=calc_bz(real_latvecs,convention,bzformat)
-            ibz=calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
-                convention);
+            for (atom_types,atom_pos)=zip(atype_list,apos_list)
+                for primitive=[true,false]
 
-            # Unfold IBZ
-            unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
-                        for i=1:size(ibz.points,1)])
-            unfold_chull = chull(Array(unfoldpts'))
-            unfoldpts=unfold_chull.points[unfold_chull.vertices,:]
-            @test size(unfoldpts,1) == size(bz.points[bz.vertices,:],1)
-            @test all([any([isapprox(unfoldpts[i,:],bz.points[j,:])
-                for i=1:size(unfoldpts,1)]) for j=1:size(bz.points,1)])
+                    if primitive
+                    	(prim_types,prim_pos,prim_latvecs) = make_primitive(
+                            real_latvecs,atom_types,atom_pos,coords)
+                	else
+                		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,
+                            real_latvecs)
+                	end
+
+                    pointgroup = calc_spacegroup(prim_latvecs,prim_types,
+                        prim_pos,coords)[2]
+
+                    bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
+                        bzformat,primitive,convention)
+
+                    ibz=calc_ibz(real_latvecs,atom_types,atom_pos,coords,
+                        ibzformat,primitive,convention)
+
+                    # Unfold IBZ
+                    unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
+                                for i=1:size(ibz.points,1)])
+                    unfold_chull = chull(Array(unfoldpts'))
+                    unfoldpts=unfold_chull.points[unfold_chull.vertices,:]
+                    @test size(unfoldpts,1) == size(bz.points[bz.vertices,:],1)
+                    @test all([any([isapprox(unfoldpts[i,:],bz.points[j,:])
+                        for i=1:size(unfoldpts,1)]) for j=1:size(bz.points,1)])
+                end
+            end
         end
-
         ibzformat="bad format"
         @test_throws ArgumentError calc_ibz(listreal_latvecs[1], [0],
-            Array([0 0]'), "lattice", ibzformat, "ordinary")
+            Array([0 0]'), "lattice", ibzformat, false, "ordinary")
 
         passed = false
         ibz = calc_ibz(listreal_latvecs[1], [0,0], Array([0 0; 0.5 0.5]'),
-            "Cartesian", "half-space", "ordinary")
+            "Cartesian", "half-space", true,"ordinary")
         passed = true
         @test passed
     end
@@ -757,5 +819,4 @@ ibzformat="convex hull"
         @test isapprox(prim_latvecs, [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
 
     end
-
 end

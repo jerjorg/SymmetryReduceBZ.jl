@@ -3,6 +3,7 @@ module Utilities
 import LinearAlgebra: cross, dot, norm
 import LinearAlgebra.BLAS: gemv
 import Distances: euclidean
+import Base.Iterators: flatten
 
 @doc """
     affine_trans(pts)
@@ -491,8 +492,8 @@ Remove duplicate points from an array.
 
 # Arguments
 - `points::AbstractArray{<:Real,2}`: the points are columns of a 2D array.
-- `rtol::Real=sqrt(eps(float(maximum(points))))`: a relative tolerance for
-    floating point comparisons.
+- `rtol::Real=sqrt(eps(float(maximum(flatten(points)))))`: a relative tolerance
+    for floating point comparisons.
 - `atol::Real=0.0`: an absolume tolerance for floating point comparisons.
 
 # Returns
@@ -510,7 +511,7 @@ SymmetryReduceBZ.Utilities.remove_duplicates(points)
 ```
 """
 function remove_duplicates(points::AbstractArray,#::AbstractArray{<:Real,2},
-    rtol::Real=sqrt(eps(float(maximum(points)))),
+    rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
     atol::Real=1e-15)::AbstractArray
     uniquepts=[]
     for i=1:size(points,2)

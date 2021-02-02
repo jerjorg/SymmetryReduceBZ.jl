@@ -28,13 +28,17 @@ Plot a 2D convex hull
 ```
 using SymmetryReduceBZ
 real_latvecs = [1 0; 0 1]
-convention = "ordinary"
-bzformat = "convex hull"
-bz = calc_bz(real_latvecs,convention,bzformat)
-
+convention="ordinary"
+atom_types=[0]
+atom_pos = Array([0 0]')
+coords = "Cartesian"
+ibzformat = "convex hull"
+primitive=false
+ibz = SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,
+	ibzformat,primitive,convention)
 fig,ax=subplots(figsize=figaspect(1)*1.5)
-ax = SymmetryReduceBZ.Plotting.plot_2Dconvexhull(bz,ax,"deepskyblue");
 color="deepskyblue"
+ax = SymmetryReduceBZ.Plotting.plot_2Dconvexhull(ibz,ax,color);
 SymmetryReduceBZ.Plotting.plot_2Dconvexhull(bz,ax,color)
 ```
 """
@@ -71,10 +75,15 @@ Plot a 3D convex hull
 # Examples
 ```
 using SymmetryReduceBZ
-real_latvecs = [1 0 0; 0 1 0; 0 0 1]
-convention = "ordinary"
+real_latvecs = [1 0; 0 1]
+convention="ordinary"
+atom_types=[0]
+atom_pos = Array([0 0]')
+coords = "Cartesian"
 bzformat = "convex hull"
-bz = calc_bz(real_latvecs,convention,bzformat)
+primitive=false
+bz = SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coords,
+    bzformat,primitive,convention)
 fig = figure(figsize=figaspect(1)*1.5)
 ax = fig.add_subplot(111, projection="3d")
 ax = SymmetryReduceBZ.Plotting.plot_3Dconvexhull(bz,ax,"deepskyblue")
@@ -108,8 +117,8 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
 end
 
 @doc """
-    plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,convention,rtol,
-      atol)
+    plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
+        convention,rtol,atol)
 
 Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 
@@ -121,6 +130,8 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
     structure as columns of an array.
 - `coords::String`: indicates the positions of the atoms are in \"lattice\" or
     \"Cartesian\" coordinates.
+- `primitive::Bool=false`: make the unit cell primitive before calculating the
+    the IBZ if equal to `true`.
 - `convention::String="ordinary"`: the convention used to go between real and
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
@@ -143,11 +154,14 @@ convention = "ordinary"
 (fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,convention)
 ```
 """
-function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,convention,
-        rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
+function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
+    convention,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
+    atol::Real=0.0)
+
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
     bzformat = "convex hull"
-    bz = calc_bz(real_latvecs,convention,bzformat)
+    bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,convention,
+        rtol,atol)
     ibzformat = "convex hull"
     ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,convention,
         rtol,atol)

@@ -169,9 +169,13 @@ real_latvecs = Array([1 0; 2 1]')
 atom_types = [0, 1]
 atom_pos = Array([0 0; 0.5 0.5]')
 coords = "Cartesian"
-SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
+	coords)
 # output
-(Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
+(Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0],
+[0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0],
+[-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0],
+[1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
 """
 function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
@@ -196,7 +200,7 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
 
     # Map points to the primitive cell.
     atom_pos = reduce(hcat,[mapto_unitcell(atom_pos[:,i],real_latvecs,
-                inv_latvecs,"Cartesian",rtol) for i=1:numatoms])
+                inv_latvecs,"Cartesian",rtol,atol) for i=1:numatoms])
 
     ops_spacegroup=[]
     trans_spacegroup=[]
@@ -238,23 +242,35 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
             end
         end
     end
+	trans_spacegroup=convert(Array{Array{Float64,1}}, trans_spacegroup)
     (trans_spacegroup,ops_spacegroup)
 end
 
 @doc """
-    calc_bz(real_latvecs, convention, bzformat)
+    calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,primitive,
+		convention,rtol,atol)
 
 Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Arguments
 - `real_latvecs::AbstractArray{<:Real,2}`: the real-space lattice vectors or
-    primitive translation vectors as columns of a 2x2 or 3x3 array.
-- `convention::String="ordinary"`: the convention used to go between real and
-    reciprocal space. The two conventions are ordinary (temporal) frequency and
-    angular frequency. The transformation from real to reciprocal space is
-    unitary if the convention is ordinary.
+	primitive translation vectors as columns of a 2x2 or 3x3 array.
+- `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
+- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
+    structure as columns of an array.
+- `coords::String`: indicates the positions of the atoms are in \"lattice\" or
+    \"Cartesian\" coordinates.
 - `bzformat::String`: the format of the Brillouin zone. Options include
     \"convex-hull\" and \"half-space\".
+- `primitive::Bool=false`: make the unit cell primitive before calculating the
+	the BZ if equal to `true`.
+- `convention::String="ordinary"`: the convention used to go between real and
+	reciprocal space. The two conventions are ordinary (temporal) frequency and
+	angular frequency. The transformation from real to reciprocal space is
+	unitary if the convention is ordinary.
+- `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
+	floating point comparisons.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `bz`: the vertices or half-space representation of the Brillouin zone
@@ -262,11 +278,15 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Examples
 ```jldoctest
-using SymmetryReduceBZ
-real_latvecs=[1 0; 0 1]
+real_latvecs = [1 0; 0 1]
 convention="ordinary"
+atom_types=[0]
+atom_pos = Array([0 0]')
+coords = "Cartesian"
 bzformat = "convex hull"
-SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,convention,bzformat)
+primitive=false
+SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coords,
+	bzformat,primitive,convention,primitive)
 # output
 Convex Hull of 4 points in 2 dimensions
 Hull segment vertex indices:
@@ -276,11 +296,21 @@ Points on convex hull in original order:
 [0.5 0.5; 0.5 -0.5; -0.5 -0.5; -0.5 0.5]
 ```
 """
-function calc_bz(real_latvecs::AbstractArray{<:Real,2},convention::String,
-    bzformat::String)
+function calc_bz(real_latvecs::AbstractArray{<:Real,2},
+	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+	coords::String,bzformat::String,primitive::Bool=false,
+	convention::String="ordinary",
+	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
 
-    recip_latvecs = minkowski_reduce(get_recip_latvecs(real_latvecs,convention))
+	if primitive
+    	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
+			atom_types,atom_pos,coords,rtol,atol)
+	else
+		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
+	end
 
+	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,
+		convention))
     if size(real_latvecs) == (2,2)
         latpts = reduce(hcat,[recip_latvecs*[i,j] for
             (i,j)=Iterators.product(-2:2,-2:2)])
@@ -312,8 +342,8 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},convention::String,
 end
 
 @doc """
-    calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,convention,rtol,
-        atol)
+    calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,primitive,
+		convention,rtol,atol)
 
 Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
@@ -331,6 +361,8 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
+- `primitive::Bool=false`: make the unit cell primitive before calculating the
+	the IBZ if equal to `true`.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
@@ -348,8 +380,9 @@ atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
 ibzformat = "convex hull"
-SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,
-    convention)
+primitive=false
+SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,
+	ibzformat,primitive,convention)
 # output
 Convex Hull of 3 points in 2 dimensions
 Hull segment vertex indices:
@@ -360,24 +393,30 @@ Points on convex hull in original order:
 ```
 """
 function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
-        atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
-        coords::String,ibzformat::String,convention::String="ordinary",
-        rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-        atol::Real=0.0)
+	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+	coords::String,ibzformat::String,primitive::Bool=false,
+	convention::String="ordinary",
+	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
 
-    (prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,atom_types,
-        atom_pos,coords)
-    pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coords)[2]
+	if primitive
+    	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
+			atom_types,atom_pos,coords,rtol,atol)
+	else
+		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
+	end
+	pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coords,
+		rtol,atol)[2]
 	sizepg = size(pointgroup,1)
     bzformat = "half-space"
-    bz = calc_bz(prim_latvecs,convention,bzformat)
+    bz = calc_bz(prim_latvecs,prim_types,prim_pos,coords,bzformat,false,
+		convention,rtol,atol)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
     for v=bz_vertices
 		for i=length(pointgroup):-1:1
 			op = pointgroup[i]
             vʳ=op*v
-            if !isapprox(vʳ,v,rtol=rtol,atol=atol) #&& rpg[i] == 0
+            if !isapprox(vʳ,v,rtol=rtol,atol=atol)
                 a = vʳ-v
                 ibz = ibz ∩ HalfSpace(a,0)
 				deleteat!(pointgroup,i)
@@ -467,16 +506,16 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     coords::String,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=0.0)
 
-    (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+    (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords,rtol,
+		atol)
     # Unique fractional translations
     ftrans = remove_duplicates(reduce(hcat, ftrans))
-
     # No need to consider the origin.
     dim = size(real_latvecs,1)
-    if dim==2 origin=[0,0] else origin=[0,0,0] end
+    if dim==2 origin=[0.,0.] else origin=[0.,0.,0.] end
 
     for i = 1:size(ftrans,2)
-        if isapprox(ftrans[:,i],origin)
+        if isapprox(ftrans[:,i],origin,rtol=rtol,atol=atol)
             ftrans  = ftrans[:,1:end .!= i]
             break
         end
@@ -497,13 +536,14 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
                 inv_latvecs = inv(prim_latvecs)
                 # Move all translations into the potential primitive unit cell.
                 test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                            inv_latvecs,"Cartesian") for i=1:size(ftrans,2)]
+                        inv_latvecs,"Cartesian",rtol,atol) for
+						i=1:size(ftrans,2)]
 
                 # Check if all coordinates of all fractional translations are
                 # integers in lattice coordinates.
                 test = [inv_latvecs*t for t=test]
                 test = isapprox(mod.(collect(Iterators.flatten(test)),1)
-                            ,zeros(2*length(test)))
+                            ,zeros(2*length(test)),rtol=rtol,atol=atol)
                 if test
                     break
                 end
@@ -514,7 +554,8 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
                 inv_latvecs = inv(prim_latvecs)
                 # Move all translations into the potential primitive unit cell.
                 test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                            inv_latvecs,"Cartesian") for i=1:size(ftrans,2)]
+                        inv_latvecs,"Cartesian",rtol,atol)
+						for i=1:size(ftrans,2)]
 
                 # Check if all coordinates of all fractional translations are
                 # integers in lattice coordinates.
@@ -534,7 +575,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
         all_prim_pos = real_latvecs*all_prim_pos
     end
     all_prim_pos = reduce(hcat,[mapto_unitcell(all_prim_pos[:,i], prim_latvecs,
-        inv_latvecs,"Cartesian") for i=1:length(atom_types)])
+        inv_latvecs,"Cartesian",rtol,atol) for i=1:length(atom_types)])
 
     # Remove atoms at the same positions that are the same type.
     tmp = remove_duplicates(vcat(all_prim_pos,atom_types'))

@@ -36,7 +36,7 @@ atom_types = [0,0]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
 convention = "ordinary"
-(fix,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   convention)
 ```
 
