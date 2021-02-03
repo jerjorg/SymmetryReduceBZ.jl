@@ -159,12 +159,12 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
     atol::Real=0.0)
 
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
-    bzformat = "convex hull"
-    bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,convention,
-        rtol,atol)
-    ibzformat = "convex hull"
-    ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,convention,
-        rtol,atol)
+    format = "convex hull"
+    primitive = false
+    bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,format,primitive,
+        convention,rtol,atol)
+    ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,format,primitive,
+        convention,rtol,atol)
 
     dim = size(real_latvecs,1)
     if dim == 2
