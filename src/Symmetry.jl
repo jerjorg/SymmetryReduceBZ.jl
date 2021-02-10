@@ -2,9 +2,10 @@ module Symmetry
 
 import CDDLib: Library
 import Polyhedra: HalfSpace, polyhedron, points
-import LinearAlgebra: norm, det, I
-import QHull: chull
+import LinearAlgebra: norm, det, I, dot
+import QHull: chull, Chull
 import Combinatorics: permutations
+import Base.Iterators: product, flatten
 
 include("Lattices.jl")
 include("Utilities.jl")
@@ -87,7 +88,7 @@ end
 @doc """
     mapto_unitcell(pt,latvecs,inv_latvecs,coords,rtol,atol)
 
-Map a point to the first unit (primitive) cell.
+Map a point to the first unit cell.
 
 # Arguments
 - `pt::AbstractArray{<:Real,1}`: a point in lattice or Cartesian coordinates.
@@ -108,7 +109,7 @@ Map a point to the first unit (primitive) cell.
 - `AbstractArray{<:Real,1}`: a translationally equivalent point to `pt` in the
     first unit cell in the same coordinates.
 
-#Examples
+# Examples
 ```jldoctest
 using SymmetryReduceBZ
 real_latvecs = [0 1 2; 0 -1 1; 1 0 0]
@@ -126,7 +127,7 @@ SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,coords)
 function mapto_unitcell(pt::AbstractArray{<:Real,1},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
     coords::String,rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=0.0)::Array{Float64,1}
+    atol::Real=0.0)::Array{Real,1}
     if coords == "Cartesian"
         Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
             for c=inv_latvecs*pt])
@@ -137,6 +138,215 @@ function mapto_unitcell(pt::AbstractArray{<:Real,1},
         throw(ArgumentError("Allowed coordinates of the point are \"Cartesian\"
                 and \"lattice\"."))
     end
+end
+
+@doc """
+    mapto_BZ(kpoint,recip_latvecs,inv_latvecs,coords,rtol,atol)
+
+Map a k-point to a translationally equivalent point within the Brillouin zone.
+
+# Arguments
+- `kpoint::AbstractArray{<:Real,1}`: a single *k*-point in lattice or Cartesian
+    coordinates.
+- `recip_latvecs::AbstractArray{<:Real,2}`: the reciprocal lattice vectors as
+    columns of an array.
+- `inv_latvecs::AbstractArray{<:Real,2}`: the inverse matrix of the reciprocal
+    lattice vectors.
+- `coords::String`: the coordinates of the given *k*-point, either \"lattice\"
+	or \"Cartesian\". The *k*-point returned will be in the same coordinates.
+- `rtol::Real=sqrt(eps(float(maximum(recip_latvecs))))`: a relative tolerance
+	for floating point comparisons. Finite precision errors creep in when `pt`
+	is transformed to lattice coordinates because the transformation requires
+    calculating a matrix inverse. The components of the *k*-point in lattice
+    coordinates are checked to ensure that values close to 1 are equal to 1.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+
+# Returns
+- `bz_point::AbtractArray{<:Real,1}`: the symmetrically equivalent *k*-point
+	within the Brillouin zone in either lattice or Cartesian coordinates,
+	depending on the coordinates specified.
+
+# Examples
+```jldoctest
+import LinearAlgebra: inv
+recip_latvecs = [1 0 0; 0 1 0; 0 0 1]
+inv_latvecs = inv(recip_latvecs)
+kpoint = [2, 3, 2]
+coords = "Cartesian"
+mapto_BZ(kpoint, recip_latvecs, inv_latvecs, coords)
+# output
+3-element Array{Real,1}:
+ 0.0
+ 0.0
+ 0.0
+```
+"""
+function mapto_BZ(kpoint::AbstractArray{<:Real,1},
+	recip_latvecs::AbstractArray{<:Real,2},inv_rlatvecs::AbstractArray{<:Real,2},
+	coords::String,rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
+    atol::Real=0.0)::Array{Float64,1}
+
+    uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coords,rtol,
+		atol)
+    if coords == "lattice"
+		bz_point = recip_latvecs*uc_point
+	else
+		bz_point = uc_point
+    end
+    bz_dist = norm(bz_point)
+
+	if size(recip_latvecs) == (2,2)
+		for (i,j)=product(-1:0,-1:0)
+			tpoint = uc_point + recip_latvecs*[i,j]
+			if norm(tpoint) < bz_dist
+				bz_point = tpoint
+				bz_dist = norm(tpoint)
+			end
+		end
+	else
+	    for (i,j,k)=product(-1:0,-1:0,-1:0)
+	        tpoint = uc_point + recip_latvecs*[i,j,k]
+	        if norm(tpoint) < bz_dist
+	            bz_point = tpoint
+	            bz_dist = norm(tpoint)
+	        end
+	    end
+	end
+
+    if coords == "Cartesian"
+        bz_point
+    elseif coords == "lattice"
+        inv_rlatvecs*bz_point
+    end
+end
+
+@doc """
+	inhull(point, chull, rtol, atol)
+
+Check if a point lies within a convex hull (including the boundaries).
+
+# Arguments
+- `point::AbstractArray{<:Real,1}`: a point in Cartesian coordinates.
+- `chull::Chull{Float64}`: a convex hull in 2D or 3D.
+- `rtol::Real=sqrt(eps(float(maximum(flatten(chull.points)))))`: a relative
+	tolerance for floating point comparisons. Needed when a point is on the
+	boundary of the convex hull.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+
+# Returns
+- `inside::Bool`: if true, the point lies within the convex hull.
+
+# Examples
+```jldoctest
+real_latvecs = [1 0; 0 2]
+atomtypes=[0]
+atompos=Array([0 0]')
+bzformat="convex hull"
+coords="Cartesian"
+convention="ordinary"
+makeprim=false
+bz=calc_bz(real_latvecs, atomtypes,atompos,coords,bzformat,makeprim,convention)
+
+point = [0,0]
+inhull(point,bz)
+# output
+true
+```
+"""
+function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64},
+    rtol::Real=sqrt(eps(float(maximum(flatten(chull.points))))),
+    atol::Real=0.0)::Bool
+
+    hullpts = Array(chull.points')
+    distances = chull.facets[:,end]
+    norms = Array(chull.facets[:,1:end-1]')
+    inside = true
+    for i=1:length(distances)
+        s = dot(point + distances[i]*norms[:,i], norms[:,i])
+
+        if !(s <= 0 || isapprox(s,0.0,rtol=rtol,atol=atol))
+            inside = false
+            break
+        end
+    end
+    inside
+end
+
+"""
+	mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords,rtol,atol)
+
+Map a point to a symmetrically equivalent point within the IBZ.
+
+# Arguments
+- `kpoint::AbstractArray{<:Real,1}`: a *k*-point in 2D or 3D in Cartesian
+	coordinates.
+- `recip_latvecs::AbstractArray{<:Real,2}`: the reciprocal lattice vectors as
+	columns of a an array.
+- `inv_rlatvecs::AbstractArray{<:Real,2}`: the inverse of the square array
+	`recip_latvecs`.
+- `ibz::Chull{Float64}`: the irreducible Brillouin zone as as a convex hull
+	objects from `QHull`.
+- `pointgroup::Array{Array{Float64,2},1}`: a list of point symmetry operators
+	in matrix form that operate on points from the left.
+- `coords::String`: the coordinates the *k*-point is in. Options are \"lattice\"
+	and \"Cartesian\". The *k*-point within the IBZ is returned in the same
+	coordinates.
+- `rtol::Real=sqrt(eps(float(maximum(recip_latvecs))))`: a relative tolerance
+	for floating point comparisons. The *k*-point is first mapped the unit cell
+	and `rtol` is used when comparing components of the *k*-point to 1. It is
+	also used for comparing floats to zero when checking if the point lies
+	within `ibz`.
+- `atol::Real=0.0`: an absolute tolerance for floating point comparisons. This
+	is used everywhere `rtol` is used.
+
+# Returns
+- `rot_point::AbstractArray{Real,1}`: a symmetrically equivalent *k*-point to
+	`kpoint` within the irreducible Brillouin zone in the same coordinates as
+	`coords`.
+
+#Examples
+```jldoctest
+import SymmetryReduceBZ.Lattices: get_recip_latvecs
+import SymmetryReduceBZ.Symmetry: calc_pointgroup, calc_ibz, mapto_IBZ
+
+real_latvecs = [1 0; 0 2]
+convention="ordinary"
+recip_latvecs = get_recip_latvecs(real_latvecs,convention)
+inv_rlatvecs = inv(recip_latvecs)
+atomtypes=[0]
+atompos=Array([0 0]')
+coords="Cartesian"
+ibzformat="convex hull"
+makeprim=false
+
+ibz=calc_ibz(real_latvecs, atomtypes,atompos,coords,ibzformat,makeprim,convention)
+pg = calc_pointgroup(real_latvecs)
+kpoint = [2,3]
+ibz_point = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coords)
+# output
+2-element Array{Real,1}:
+ 0.0
+ 0.0
+```
+"""
+function mapto_IBZ(kpoint::AbstractArray{<:Real,1},
+        recip_latvecs::AbstractArray{<:Real,2},
+        inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
+        pointgroup::Array{Array{Float64,2},1}, coords::String,
+        rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
+        atol::Real=0.0)::AbstractArray{Real,1}
+
+    bzpoint = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords, rtol, atol)
+    for op in pointgroup
+        rot_point = op*bzpoint
+        if inhull(rot_point,ibz,rtol,atol)
+			if coords == "lattice"
+				rot_point = inv_rlatvecs*rot_point
+			end
+            return rot_point
+        end
+    end
+    error("Failed to map the k-point to the IBZ.")
 end
 
 @doc """
@@ -243,11 +453,13 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
         end
     end
 	trans_spacegroup=convert(Array{Array{Float64,1}}, trans_spacegroup)
+	ops_spacegroup = convert(Array{Array{Float64,2},1},ops_spacegroup)
+
     (trans_spacegroup,ops_spacegroup)
 end
 
 @doc """
-    calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,primitive,
+    calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,
 		convention,rtol,atol)
 
 Calculate the Brillouin zone for the given real-space lattice basis.
@@ -257,12 +469,12 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 	primitive translation vectors as columns of a 2x2 or 3x3 array.
 - `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
 - `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-    structure as columns of an array.
+	structure as columns of an array.
 - `coords::String`: indicates the positions of the atoms are in \"lattice\" or
-    \"Cartesian\" coordinates.
+	\"Cartesian\" coordinates.
 - `bzformat::String`: the format of the Brillouin zone. Options include
-    \"convex-hull\" and \"half-space\".
-- `primitive::Bool=false`: make the unit cell primitive before calculating the
+	\"convex-hull\" and \"half-space\".
+- `makeprim::Bool=false`: make the unit cell primitive before calculating the
 	the BZ if equal to `true`.
 - `convention::String="ordinary"`: the convention used to go between real and
 	reciprocal space. The two conventions are ordinary (temporal) frequency and
@@ -274,7 +486,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Returns
 - `bz`: the vertices or half-space representation of the Brillouin zone
-    depending on the value of `vertsOrHrep`.
+	depending on the value of `vertsOrHrep`.
 
 # Examples
 ```jldoctest
@@ -284,9 +496,9 @@ atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
 bzformat = "convex hull"
-primitive=false
+makeprim=false
 SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coords,
-	bzformat,primitive,convention,primitive)
+	bzformat,makeprim,convention)
 # output
 Convex Hull of 4 points in 2 dimensions
 Hull segment vertex indices:
@@ -298,11 +510,11 @@ Points on convex hull in original order:
 """
 function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
-	coords::String,bzformat::String,primitive::Bool=false,
+	coords::String,bzformat::String,makeprim::Bool=false,
 	convention::String="ordinary",
 	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
 
-	if primitive
+	if makeprim
     	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
 			atom_types,atom_pos,coords,rtol,atol)
 	else
@@ -342,7 +554,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 end
 
 @doc """
-    calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,primitive,
+    calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,
 		convention,rtol,atol)
 
 Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
@@ -361,8 +573,8 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `primitive::Bool=false`: make the unit cell primitive before calculating the
-	the IBZ if equal to `true`.
+- `makeprim::Bool=false`: make the unit cell primitive before calculating the
+	the IBZ if true.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
@@ -380,9 +592,9 @@ atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
 ibzformat = "convex hull"
-primitive=false
+makeprim=false
 SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,
-	ibzformat,primitive,convention)
+	ibzformat,makeprim,convention)
 # output
 Convex Hull of 3 points in 2 dimensions
 Hull segment vertex indices:
@@ -394,11 +606,11 @@ Points on convex hull in original order:
 """
 function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
 	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
-	coords::String,ibzformat::String,primitive::Bool=false,
+	coords::String,ibzformat::String,makeprim::Bool=false,
 	convention::String="ordinary",
 	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
 
-	if primitive
+	if makeprim
     	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
 			atom_types,atom_pos,coords,rtol,atol)
 	else

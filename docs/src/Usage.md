@@ -1,10 +1,5 @@
 # User guide
 
-`SymmetryReduceBZ` calculates the irreducible Brillouin zone (IBZ) of a
-crystal structure in 2D and 3D. It also contains functions related to the
-symmetry of lattices and lattice reduction. Below are usage examples in Julia
-and Python.
-
 ## Julia
 
 To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
@@ -18,9 +13,10 @@ atom_types = [0,0]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 ibzformat = "convex hull"
 coordinates = "Cartesian"
+makeprim = false
 convention = "ordinary"
 ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,
-  convention)
+  makeprim,convention)
 ```
 The columns of `real_latvecs` are the lattice generating vectors, the columns
 of `atom_pos` are the positions of the atoms in Cartesian coordinates (in this
@@ -36,9 +32,10 @@ real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
+makeprim = false
 convention = "ordinary"
 (fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
-  convention)
+  makeprim,convention)
 ```
 
 ## Python
@@ -63,8 +60,10 @@ atom_types = [0,1]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
 primitive = true
+makeprim = false
 convention = "ordinary"
-(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,primitive,convention)
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+   convention)
 fig.show()
 ```
 
@@ -84,9 +83,10 @@ real_latvecs = genlat_CUB(a)
 atom_types = [0,1]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
-primitive = true
+makeprim = true
 convention = "ordinary"
-(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,primitive,convention)
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+   convention)
 fig.show()
 """)
 ```

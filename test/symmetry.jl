@@ -4,10 +4,11 @@ import SymmetryReduceBZ.Lattices
 const lt = Lattices
 
 import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
-    calc_ibz, mapto_unitcell, make_primitive
+    calc_ibz, mapto_unitcell, make_primitive, inhull, mapto_BZ, mapto_IBZ
 import SymmetryReduceBZ.Utilities: remove_duplicates
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
+import LinearAlgebra: inv
 import QHull: chull
 import PyCall: pyimport
 sympy=pyimport("sympy")
@@ -362,433 +363,603 @@ ibzformat="convex hull"
         @test_throws ArgumentError mapto_unitcell(pt,basis,inv_basis,coords)
     end
 
-    @testset "symmetry" begin
-        @testset "calc_spacegroup" begin
+    @testset "mapto_BZ" begin
+        kpoint = [3.3, 4.4]
+        real_latvecs = [1 0; 0 1]
+        atom_types = [0]
+        atom_pos = Array([0 0]')
+        coords = "Cartesian"
+        bz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
 
-            function compareSG(real_latvecs, atom_types, atom_pos, coords,
-                findsymSG,atol=1e-8,rtol=1e-8)
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+            convention)
 
-                # Make a matrix and vector of each space group operator that can
-                # easily be compared.
-                findsymP=[]
-                findsymT=[]
-                for opᵢ=1:length(findsymSG)
-                    tmp=reduce(hcat,[Array{Float64,1}(
-                        [sympy.poly(findsymSG[opᵢ][i],x,y,z).coeff_monomial(var)
-                        for var=[x,y,z,1]]) for i=1:3])
-                    append!(findsymP,[tmp[1:3,1:3]])
-                    append!(findsymT,[tmp[end,:]])
-                end
+        recip_latvecs = real_latvecs
+        inv_rlatvecs = inv(recip_latvecs)
+        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
 
-                # We first calculate the space group in Cartesian coordinates
-                # (the point operators operate on points in Cartesian
-                # coordinates and the translations are in Cartesian
-                # coordinates).
-                (ibzT,ibzP)=calc_spacegroup(real_latvecs,atom_types,atom_pos,
-                    coords)
-                # We put the space group in lattice coordinates (the point
-                # operators operate on points in lattice coordinates and the
-                # translations are in lattice coordinates).
-                ibzSG=[round.(inv(real_latvecs)*ibzP[i]*real_latvecs,
-                    digits=8)*[x,y,z] + round.(inv(real_latvecs)*ibzT[i],
-                    digits=8) for i=1:length(ibzP)]
-                # Make a matrix and vector of each space group operator that can
-                # easily be compared.
-                ibzP=[]
-                ibzT=[]
-                for opᵢ=1:length(ibzSG)
-                    tmp=reduce(hcat,[Array{Float64,1}([sympy.poly(ibzSG[opᵢ][i],
-                        x,y,z).coeff_monomial(var) for var=[x,y,z,1]])
-                        for i=1:3])
-                    append!(ibzP,[tmp[1:3,1:3]])
-                    append!(ibzT,[tmp[end,:]])
-                end
+        @test inhull(bz_point,bz)
+        @test bz_point ≈ [.3,.4]
 
-                same = []
-                for i=1:length(ibzP), j=1:length(findsymP)
-                    if isapprox(ibzP[i],findsymP[j],atol=atol,rtol=rtol) &&
-            		   isapprox(ibzT[i],findsymT[j],atol=atol,rtol=rtol)
-                        append!(same,i)
-                    end
-                end
-                sort(same) == range(1,stop=length(ibzT)) &&
-                    length(ibzP) == length(findsymP)
+        coords = "lattice"
+        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+
+        @test inhull(bz_point,bz)
+        @test bz_point ≈ [.3,.4]
+
+        kpoint = [3.3, 4.4, 2.5]
+        real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+        atom_types = [0]
+        atom_pos = Array([0 0 0]')
+        coords = "Cartesian"
+        bz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
+
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+            convention)
+
+        recip_latvecs = real_latvecs
+        inv_rlatvecs = inv(recip_latvecs)
+        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+
+        @test inhull(bz_point,bz)
+        @test bz_point ≈ [.3, .4, .5]
+
+        coords = "lattice"
+        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+
+        @test inhull(bz_point,bz)
+        @test bz_point ≈ [.3, .4, .5]
+
+    end
+
+    @testset "inhull" begin
+
+        real_latvecs = [0.5 0; 0 0.5]
+        atom_types = [0]
+        atom_pos = Array([0 0]')
+        coords = "Cartesian"
+        bz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
+
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+            convention)
+
+        kpoint = [1.2,0]
+        @test inhull(kpoint,bz) == false
+
+        kpoint = [0.2,0.2]
+        @test inhull(kpoint,bz) == true
+
+        kpoint = [1,1]
+        @test inhull(kpoint,bz) == true
+
+        kpoint = [1.00000000001,0]
+        rtol=1e-9
+        atol=1e-9
+        @test inhull(kpoint,bz,rtol,atol) == true
+
+        # 3D
+        real_latvecs = [0.5 0 0; 0 0.5 0; 0 0 0.5]
+        atom_types = [0]
+        atom_pos = Array([0 0 0]')
+        coords = "Cartesian"
+        bz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
+
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+            convention)
+
+        kpoint = [1.2,0,0]
+        @test inhull(kpoint,bz) == false
+
+        kpoint = [1.1,0.5,2.2]
+        @test inhull(kpoint,bz) == false
+
+        kpoint = [0.2,0.2,0.2]
+        @test inhull(kpoint,bz) == true
+
+        kpoint = [1,1,1]
+        @test inhull(kpoint,bz) == true
+
+        kpoint = [1.000000001,1,0]
+        rtol=1e-7
+        atol=1e-7
+        @test inhull(kpoint,bz,rtol,atol) == true
+
+    end
+
+    @testset "mapto_IBZ" begin
+
+        real_latvecs = [0.5 0; 0 0.5]
+        atom_types = [0]
+        atom_pos = Array([0 0]')
+        coords = "Cartesian"
+        ibz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
+        recip_latvecs = get_recip_latvecs(real_latvecs,convention)
+        inv_rlatvecs = inv(recip_latvecs)
+
+
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention)
+        (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+
+        kpoint = [1.2,0]
+        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+
+        @test inhull(ibzpoint, ibz)
+        @test ibzpoint ≈ [0.8, 0.0]
+
+        kpoint = [3.4,1.7]
+        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        @test inhull(ibzpoint, ibz)
+        @test ibzpoint ≈ [0.6, -0.3]
+
+        real_latvecs = [0.5 0 0; 0 0.5 0; 0 0 0.5]
+        atom_types = [0]
+        atom_pos = Array([0 0 0]')
+        coords = "Cartesian"
+        ibz_format = "convex hull"
+        makeprim = false
+        convention = "ordinary"
+        recip_latvecs = get_recip_latvecs(real_latvecs,convention)
+        inv_rlatvecs = inv(recip_latvecs)
+
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention)
+        (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
+
+        kpoint = [1.2,0,0]
+        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+
+        @test inhull(ibzpoint, ibz)
+        @test ibzpoint ≈ [0.8,0,0]
+
+        kpoint = [1.2,3.6,8.9]
+        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+
+        @test inhull(ibzpoint, ibz)
+        @test ibzpoint ≈ [0.9, -0.8, -0.4]
+
+        kpoint = [1.2,3.6,8.9]
+        coords = "lattice"
+        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        @test ibzpoint ≈ [0.225, -0.15, -0.05]
+        ibzpoint = convert(Array{Float64,1},recip_latvecs*ibzpoint)
+        @test inhull(ibzpoint, ibz)
+    end
+
+    @testset "calc_spacegroup" begin
+
+        function compareSG(real_latvecs, atom_types, atom_pos, coords,
+            findsymSG,atol=1e-8,rtol=1e-8)
+
+            # Make a matrix and vector of each space group operator that can
+            # easily be compared.
+            findsymP=[]
+            findsymT=[]
+            for opᵢ=1:length(findsymSG)
+                tmp=reduce(hcat,[Array{Float64,1}(
+                    [sympy.poly(findsymSG[opᵢ][i],x,y,z).coeff_monomial(var)
+                    for var=[x,y,z,1]]) for i=1:3])
+                append!(findsymP,[tmp[1:3,1:3]])
+                append!(findsymT,[tmp[end,:]])
             end
 
-            # Number of atom types and positions are different.
-            a=1
-            real_latvecs=lt.genlat_CUB(a)
-            atom_pos = Array([0 0 0; 0.25 0.25 0]')
-            # findsym FCC convention
-            creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
-                real_latvecs*[0,1,-1], real_latvecs*[0,-1,-1]])
-            catom_pos = Array([0 0 0; 0 0 0.75]')
-            atom_types=[0]
-            coords = "lattice"
+            # We first calculate the space group in Cartesian coordinates
+            # (the point operators operate on points in Cartesian
+            # coordinates and the translations are in Cartesian
+            # coordinates).
+            (ibzT,ibzP)=calc_spacegroup(real_latvecs,atom_types,atom_pos,
+                coords)
+            # We put the space group in lattice coordinates (the point
+            # operators operate on points in lattice coordinates and the
+            # translations are in lattice coordinates).
+            ibzSG=[round.(inv(real_latvecs)*ibzP[i]*real_latvecs,
+                digits=8)*[x,y,z] + round.(inv(real_latvecs)*ibzT[i],
+                digits=8) for i=1:length(ibzP)]
+            # Make a matrix and vector of each space group operator that can
+            # easily be compared.
+            ibzP=[]
+            ibzT=[]
+            for opᵢ=1:length(ibzSG)
+                tmp=reduce(hcat,[Array{Float64,1}([sympy.poly(ibzSG[opᵢ][i],
+                    x,y,z).coeff_monomial(var) for var=[x,y,z,1]])
+                    for i=1:3])
+                append!(ibzP,[tmp[1:3,1:3]])
+                append!(ibzT,[tmp[end,:]])
+            end
 
-            @test_throws ArgumentError calc_spacegroup(creal_latvecs,atom_types,
-                atom_pos,coords)
-
-            # SC
-            a=1
-            real_latvecs=lt.genlat_CUB(a)
-            atom_pos = Array([0 0 0; 0.25 0.25 0]')
-            # findsym FCC convention
-            creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
-                real_latvecs*[0,1,-1], real_latvecs*[0,-1,-1]])
-            catom_pos = Array([0 0 0; 0 0 0.75]')
-            atom_types=[0,1]
-            coords = "lattice"
-
-            findsymSG =
-            [[x,y,z],
-            [-x,-y,z],
-            [-x,y,z],
-            [x,-y,z]]
-
-            sctest = compareSG(creal_latvecs,atom_types,catom_pos,coords,
-                findsymSG)
-            @test sctest
-
-            # BCC
-            a=1
-            real_latvecs=lt.genlat_BCC(a)
-            # findsym BCC convention
-            creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,1],
-                real_latvecs*[1,-1,0],real_latvecs*[1,1,1]])
-            catom_pos = Array([0 0 0; 0 0 0.5]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-            findsymSG =
-            [[x,y,z],
-            [x-y,x,z],
-            [-y,x-y,z],
-            [-x,-y,z],
-            [-x+y,-x,z],
-            [y,-x+y,z],
-            [x-y,-y,-z],
-            [x,x-y,-z],
-            [y,x,-z],
-            [ -x+y,y,-z],
-            [ -x,-x+y,-z],
-            [ -y,-x,-z],
-            [ -x,-y,-z],
-            [ -x+y,-x,-z],
-            [ y,-x+y,-z],
-            [ x,y,-z],
-            [ x-y,x,-z],
-            [ -y,x-y,-z],
-            [ -x+y,y,z],
-            [ -x,-x+y,z],
-            [ -y,-x,z],
-            [ x-y,-y,z],
-            [ x,x-y,z],
-            [ y,x,z]]
-            bcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test bcctest
-
-            # FCC
-            a=1
-            real_latvecs=lt.genlat_FCC(a)
-            # findsym FCC convention
-            creal_latvecs=reduce(hcat,[real_latvecs*[0,0,1],
-                real_latvecs*[1,1,-1], real_latvecs*[-1,1,0]])
-            catom_pos = Array([0 0 0; 0.5 0 0]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-x,-y,-z],
-            [-x,y,z],
-            [x,-y,z],
-            [x,y,-z]]
-
-            fcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords, findsymSG)
-            @test fcctest
-
-            # BCT
-            a=2.2
-            c=1
-            real_latvecs=lt.genlat_BCT(a,c)
-            atom_pos=Array([0 0 0; 0.5 0 0]')
-            # findsym FCC convention
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,1,0],
-                real_latvecs*[-1,1,0], real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0 0.5 0.5]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-            findsymSG =
-            [[x,y,z],
-            [-x,y,-z],
-            [-x,-y,-z],
-            [x,-y,z]]
-
-            bcttest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test bcttest
-
-            # HEX
-            a=1.3
-            c=1.5
-            real_latvecs=lt.genlat_HEX(a,c)'
-            atom_pos=Array([0 0 0; 0 0.5 0.5]')
-            # findsym conventional lattice vectors
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
-                real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0.0 0.5 0.5]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-x,-y,-z],
-            [-x,y,z],
-            [x,-y,z],
-            [x,y,-z]]
-
-            hextest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test hextest
-
-            # MCL
-            a=1.3
-            b=2.4
-            c=3.5
-            α=0.3
-            real_latvecs=lt.genlat_MCL(a,b,c,α)
-            atom_pos=Array([0 0 0; 0.5 0 0.5]')
-            # findsym conventional lattice vectors
-            creal_latvecs=reduce(hcat,[real_latvecs*[0,-1,1],
-                real_latvecs*[-1,0,0],real_latvecs*[0,-2,1]])
-            catom_pos = Array([0 0 0; 0 0.5 0.5]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-            findsymSG =
-            [[x,y,z],
-            [-x,y,-z],
-            [-x,-y,-z],
-            [x,-y,z]]
-
-            mcltest = compareSG(creal_latvecs,atom_types,catom_pos,coords,
-                findsymSG)
-            @test mcltest
-
-            # MCLC
-            a=1.2
-            b=1.4
-            c=1.6
-            α=0.7
-            real_latvecs=lt.genlat_MCLC(a,b,c,α)
-            atom_pos=Array([0 0 0; 0 0.5 0]')
-            # findsym conventional lattice vectors
-            creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
-                real_latvecs*[0,-1,0],real_latvecs*[-1,-1,1]])
-            catom_pos = Array([0 0 0; 0 0.5 0]')
-            atom_types=[0,1]
-            coords = "lattice";
-
-            findsymSG =
-            [[x,y,z],
-            [-x,-y,-z]]
-
-            mclctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test mclctest
-
-            # ORC
-            a=1.2
-            b=1.3
-            c=1.5
-            real_latvecs=lt.genlat_ORC(a,b,c)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
-                real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-x,-y,-z],
-            [-x,y,z],
-            [x,-y,z],
-            [x,y,-z]]
-
-            orctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test orctest
-
-            # ORCC
-            a=1.2
-            b=1.3
-            c=1.5
-            real_latvecs=lt.genlat_ORCC(a,b,c)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[-1,1,0],
-                real_latvecs*[-1,-1,0],real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0.5 0 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-x,-y,-z],
-            [-x,y,z],
-            [x,-y,z],
-            [x,y,-z]]
-
-            orcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test orcctest
-
-            # ORCF
-            a=1.2
-            b=1.3
-            c=1.5
-            real_latvecs=lt.genlat_ORCF(a,b,c)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,-1,1],
-                real_latvecs*[-1,-1,1],real_latvecs*[1,-1,-1]])
-            catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-x,-y,-z],
-            [-x,y,z],
-            [x,-y,z],
-            [x,y,-z]]
-
-            orcftest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test orcftest
-
-            # ORCI
-            a=1.2
-            b=1.3
-            c=1.5
-            real_latvecs=lt.genlat_ORCI(a,b,c)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
-                real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [-x,-y,-z]]
-
-            orcitest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test orcitest
-
-            # RHL
-            a=1.2
-            α=0.8
-            real_latvecs=lt.genlat_RHL(a,α)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[0,1,-1],
-                real_latvecs*[-1,0,1],real_latvecs*[1,1,1]])
-            catom_pos = Array([0 0 0; 0 0 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [x-y,x,z],
-            [-y,x-y,z],
-            [-x,-y,z],
-            [-x+y,-x,z],
-            [y,-x+y,z],
-            [x-y,-y,-z],
-            [x,x-y,-z],
-            [y,x,-z],
-            [ -x+y,y,-z],
-            [ -x,-x+y,-z],
-            [ -y,-x,-z],
-            [ -x,-y,-z],
-            [ -x+y,-x,-z],
-            [ y,-x+y,-z],
-            [ x,y,-z],
-            [ x-y,x,-z],
-            [ -y,x-y,-z],
-            [ -x+y,y,z],
-            [ -x,-x+y,z],
-            [ -y,-x,z],
-            [ x-y,-y,z],
-            [ x,x-y,z],
-            [ y,x,z]]
-
-            rhltest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test rhltest
-
-            # TET
-            a=1.2
-            c=1.5
-            real_latvecs=lt.genlat_TET(a,c)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
-                real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
-            catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [x,-y,-z],
-            [-x,y,-z],
-            [-x,-y,z],
-            [-y,-x,-z],
-            [-y,x,z],
-            [y,-x,z],
-            [y,x,-z],
-            [-x,-y,-z],
-            [ -x,y,z],
-            [ x,-y,z],
-            [ x,y,-z],
-            [ y,x,z],
-            [ y,-x,-z],
-            [ -y,x,-z],
-            [ -y,-x,z]]
-
-            tettest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test tettest
-
-            # TRI
-            a=1.2
-            b=1.4
-            c=1.5
-            α=0.5
-            β=0.7
-            γ=0.85
-            real_latvecs=lt.genlat_TRI(a,b,c,α,β,γ)
-            atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
-            creal_latvecs=reduce(hcat,[real_latvecs*[0,-1,1],
-                real_latvecs*[-1,0,1],real_latvecs*[-1,-1,1]])
-            catom_pos = Array([0 0 0; 0 0 0.5]')
-
-            findsymSG =
-            [[x,y,z],
-            [-x,-y,-z]]
-
-            tritest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
-                findsymSG)
-            @test tritest
+            same = []
+            for i=1:length(ibzP), j=1:length(findsymP)
+                if isapprox(ibzP[i],findsymP[j],atol=atol,rtol=rtol) &&
+        		   isapprox(ibzT[i],findsymT[j],atol=atol,rtol=rtol)
+                    append!(same,i)
+                end
+            end
+            sort(same) == range(1,stop=length(ibzT)) &&
+                length(ibzP) == length(findsymP)
         end
+
+        # Number of atom types and positions are different.
+        a=1
+        real_latvecs=lt.genlat_CUB(a)
+        atom_pos = Array([0 0 0; 0.25 0.25 0]')
+        # findsym FCC convention
+        creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
+            real_latvecs*[0,1,-1], real_latvecs*[0,-1,-1]])
+        catom_pos = Array([0 0 0; 0 0 0.75]')
+        atom_types=[0]
+        coords = "lattice"
+
+        @test_throws ArgumentError calc_spacegroup(creal_latvecs,atom_types,
+            atom_pos,coords)
+
+        # SC
+        a=1
+        real_latvecs=lt.genlat_CUB(a)
+        atom_pos = Array([0 0 0; 0.25 0.25 0]')
+        # findsym FCC convention
+        creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
+            real_latvecs*[0,1,-1], real_latvecs*[0,-1,-1]])
+        catom_pos = Array([0 0 0; 0 0 0.75]')
+        atom_types=[0,1]
+        coords = "lattice"
+
+        findsymSG =
+        [[x,y,z],
+        [-x,-y,z],
+        [-x,y,z],
+        [x,-y,z]]
+
+        sctest = compareSG(creal_latvecs,atom_types,catom_pos,coords,
+            findsymSG)
+        @test sctest
+
+        # BCC
+        a=1
+        real_latvecs=lt.genlat_BCC(a)
+        # findsym BCC convention
+        creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,1],
+            real_latvecs*[1,-1,0],real_latvecs*[1,1,1]])
+        catom_pos = Array([0 0 0; 0 0 0.5]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+        findsymSG =
+        [[x,y,z],
+        [x-y,x,z],
+        [-y,x-y,z],
+        [-x,-y,z],
+        [-x+y,-x,z],
+        [y,-x+y,z],
+        [x-y,-y,-z],
+        [x,x-y,-z],
+        [y,x,-z],
+        [ -x+y,y,-z],
+        [ -x,-x+y,-z],
+        [ -y,-x,-z],
+        [ -x,-y,-z],
+        [ -x+y,-x,-z],
+        [ y,-x+y,-z],
+        [ x,y,-z],
+        [ x-y,x,-z],
+        [ -y,x-y,-z],
+        [ -x+y,y,z],
+        [ -x,-x+y,z],
+        [ -y,-x,z],
+        [ x-y,-y,z],
+        [ x,x-y,z],
+        [ y,x,z]]
+        bcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test bcctest
+
+        # FCC
+        a=1
+        real_latvecs=lt.genlat_FCC(a)
+        # findsym FCC convention
+        creal_latvecs=reduce(hcat,[real_latvecs*[0,0,1],
+            real_latvecs*[1,1,-1], real_latvecs*[-1,1,0]])
+        catom_pos = Array([0 0 0; 0.5 0 0]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-x,-y,-z],
+        [-x,y,z],
+        [x,-y,z],
+        [x,y,-z]]
+
+        fcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords, findsymSG)
+        @test fcctest
+
+        # BCT
+        a=2.2
+        c=1
+        real_latvecs=lt.genlat_BCT(a,c)
+        atom_pos=Array([0 0 0; 0.5 0 0]')
+        # findsym FCC convention
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,1,0],
+            real_latvecs*[-1,1,0], real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0 0.5 0.5]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+        findsymSG =
+        [[x,y,z],
+        [-x,y,-z],
+        [-x,-y,-z],
+        [x,-y,z]]
+
+        bcttest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test bcttest
+
+        # HEX
+        a=1.3
+        c=1.5
+        real_latvecs=lt.genlat_HEX(a,c)'
+        atom_pos=Array([0 0 0; 0 0.5 0.5]')
+        # findsym conventional lattice vectors
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
+            real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0.0 0.5 0.5]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-x,-y,-z],
+        [-x,y,z],
+        [x,-y,z],
+        [x,y,-z]]
+
+        hextest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test hextest
+
+        # MCL
+        a=1.3
+        b=2.4
+        c=3.5
+        α=0.3
+        real_latvecs=lt.genlat_MCL(a,b,c,α)
+        atom_pos=Array([0 0 0; 0.5 0 0.5]')
+        # findsym conventional lattice vectors
+        creal_latvecs=reduce(hcat,[real_latvecs*[0,-1,1],
+            real_latvecs*[-1,0,0],real_latvecs*[0,-2,1]])
+        catom_pos = Array([0 0 0; 0 0.5 0.5]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+        findsymSG =
+        [[x,y,z],
+        [-x,y,-z],
+        [-x,-y,-z],
+        [x,-y,z]]
+
+        mcltest = compareSG(creal_latvecs,atom_types,catom_pos,coords,
+            findsymSG)
+        @test mcltest
+
+        # MCLC
+        a=1.2
+        b=1.4
+        c=1.6
+        α=0.7
+        real_latvecs=lt.genlat_MCLC(a,b,c,α)
+        atom_pos=Array([0 0 0; 0 0.5 0]')
+        # findsym conventional lattice vectors
+        creal_latvecs=reduce(hcat,[real_latvecs*[-1,0,0],
+            real_latvecs*[0,-1,0],real_latvecs*[-1,-1,1]])
+        catom_pos = Array([0 0 0; 0 0.5 0]')
+        atom_types=[0,1]
+        coords = "lattice";
+
+        findsymSG =
+        [[x,y,z],
+        [-x,-y,-z]]
+
+        mclctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test mclctest
+
+        # ORC
+        a=1.2
+        b=1.3
+        c=1.5
+        real_latvecs=lt.genlat_ORC(a,b,c)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
+            real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-x,-y,-z],
+        [-x,y,z],
+        [x,-y,z],
+        [x,y,-z]]
+
+        orctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test orctest
+
+        # ORCC
+        a=1.2
+        b=1.3
+        c=1.5
+        real_latvecs=lt.genlat_ORCC(a,b,c)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[-1,1,0],
+            real_latvecs*[-1,-1,0],real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0.5 0 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-x,-y,-z],
+        [-x,y,z],
+        [x,-y,z],
+        [x,y,-z]]
+
+        orcctest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test orcctest
+
+        # ORCF
+        a=1.2
+        b=1.3
+        c=1.5
+        real_latvecs=lt.genlat_ORCF(a,b,c)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,-1,1],
+            real_latvecs*[-1,-1,1],real_latvecs*[1,-1,-1]])
+        catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-x,-y,-z],
+        [-x,y,z],
+        [x,-y,z],
+        [x,y,-z]]
+
+        orcftest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test orcftest
+
+        # ORCI
+        a=1.2
+        b=1.3
+        c=1.5
+        real_latvecs=lt.genlat_ORCI(a,b,c)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
+            real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [-x,-y,-z]]
+
+        orcitest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test orcitest
+
+        # RHL
+        a=1.2
+        α=0.8
+        real_latvecs=lt.genlat_RHL(a,α)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[0,1,-1],
+            real_latvecs*[-1,0,1],real_latvecs*[1,1,1]])
+        catom_pos = Array([0 0 0; 0 0 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [x-y,x,z],
+        [-y,x-y,z],
+        [-x,-y,z],
+        [-x+y,-x,z],
+        [y,-x+y,z],
+        [x-y,-y,-z],
+        [x,x-y,-z],
+        [y,x,-z],
+        [ -x+y,y,-z],
+        [ -x,-x+y,-z],
+        [ -y,-x,-z],
+        [ -x,-y,-z],
+        [ -x+y,-x,-z],
+        [ y,-x+y,-z],
+        [ x,y,-z],
+        [ x-y,x,-z],
+        [ -y,x-y,-z],
+        [ -x+y,y,z],
+        [ -x,-x+y,z],
+        [ -y,-x,z],
+        [ x-y,-y,z],
+        [ x,x-y,z],
+        [ y,x,z]]
+
+        rhltest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test rhltest
+
+        # TET
+        a=1.2
+        c=1.5
+        real_latvecs=lt.genlat_TET(a,c)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[1,0,0],
+            real_latvecs*[0,1,0],real_latvecs*[0,0,1]])
+        catom_pos = Array([0 0 0; 0.5 0.5 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [x,-y,-z],
+        [-x,y,-z],
+        [-x,-y,z],
+        [-y,-x,-z],
+        [-y,x,z],
+        [y,-x,z],
+        [y,x,-z],
+        [-x,-y,-z],
+        [ -x,y,z],
+        [ x,-y,z],
+        [ x,y,-z],
+        [ y,x,z],
+        [ y,-x,-z],
+        [ -y,x,-z],
+        [ -y,-x,z]]
+
+        tettest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test tettest
+
+        # TRI
+        a=1.2
+        b=1.4
+        c=1.5
+        α=0.5
+        β=0.7
+        γ=0.85
+        real_latvecs=lt.genlat_TRI(a,b,c,α,β,γ)
+        atom_pos=Array([0 0 0; 0.5 0.5 0.5]')
+        creal_latvecs=reduce(hcat,[real_latvecs*[0,-1,1],
+            real_latvecs*[-1,0,1],real_latvecs*[-1,-1,1]])
+        catom_pos = Array([0 0 0; 0 0 0.5]')
+
+        findsymSG =
+        [[x,y,z],
+        [-x,-y,-z]]
+
+        tritest = compareSG(creal_latvecs, atom_types, catom_pos, coords,
+            findsymSG)
+        @test tritest
     end
+
 
     @testset "make_primitive" begin
         import SymmetryReduceBZ.Lattices: genlat_CUB, genlat_BCC

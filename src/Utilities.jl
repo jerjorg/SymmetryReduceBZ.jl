@@ -5,6 +5,8 @@ import LinearAlgebra.BLAS: gemv
 import Distances: euclidean
 import Base.Iterators: flatten
 
+__revise_mode__ = :eval
+
 @doc """
     affine_trans(pts)
 
@@ -179,6 +181,7 @@ end
 Calculate the unique facets of a convex hull object.
 """
 function get_uniquefacets(ch)
+
     facets = ch.facets
     unique_facets = []
     removed=zeros(Int64,size(facets,1))
@@ -366,48 +369,6 @@ function shoelace(vertices)
 end
 
 @doc """
-    function sort_points_comparison(a,b,c)
-
-A "less than" function for sorting Cartesian points in 2D.
-
-# Arguments
-- `a::AbstractArray{<:Real,1}`: a point in Cartesian coordinates.
-- `b::AbstractArray{<:Real,1}`: a point in Cartesian coordinates.
-- `c::AbstractArray{<:Real,1}`: the position of the origin in Cartesian
-    coordinates.
-
-# Returns
-- `Bool`: a boolean that indicates if `a` is less than `b`.
-
-# Examples
-```jldoctest
-using SymmetryReduceBZ
-a=[0,0]
-b=[1,0]
-c=[0.5,0.5]
-SymmetryReduceBZ.Utilities.sort_points_comparison(a,b,c)
-# output
-true
-```
-"""
-function sort_points_comparison(a::AbstractArray{<:Real,1},
-    b::AbstractArray{<:Real,1},c::AbstractArray{<:Real,1})::Bool
-    (ax,ay)=a
-    (bx,by)=b
-    (cx,cy)=c
-
-    if ((ay - cy) > 0) & ((by - cy) < 0)
-        return true
-    elseif ((ay - cy) < 0) & ((by - cy) > 0)
-        return false
-    elseif ((ay - cy) >= 0) & ((by - cy) >= 0)
-        return ax > bx
-    else
-        return ax < bx
-    end
-end
-
-@doc """
     function sortpts_perm(pts)
 
 Calculate the permutation vector that sorts Cartesian points embedded in 3D that
@@ -436,53 +397,14 @@ pts[:,perm]
 """
 function sortpts_perm(pts::AbstractArray{<:Real,2})
     xypts=mapto_xyplane(pts)
-    middlept=[sum(xypts[i,:])/size(pts,2) for i=1:2]
-    sxypts=sortslices(xypts, lt=(x,y)->sort_points_comparison(x,y,middlept),
-        dims=2)
-    perm=sortslice_perm(xypts,sxypts)
-    return perm
-end
-
-@doc """
-    function sortslice_perm(xypts,sxypts)
-
-Return the permutation vector that maps Cartesian 2D points `xypts` to `sxypts`.
-
-# Arguments
-- `xypts::AbstractArray{<:Real,2}`: 2D Cartesian points as columns of a 2D
-    array.
-- `sxypts::AbstractArray{<:Real,2}`: sorted 2D Cartesian points as columns of a
-    2D array.
-
-# Returns
-- `perm::AbstractArray{<:Real,1}`: a permutation vector that sorts an array of
-    2D Cartesian coordinates.
-
-# Examples
-```jldoctest
-using SymmetryReduceBZ
-xypts = [0 0; 0 1; 1 0; 1 1]'
-sxypts = [0 1; 1 1; 1 0; 0 0]'
-perm=SymmetryReduceBZ.Utilities.sortslice_perm(xypts,sxypts)
-xypts[:,perm]
-# output
-2×4 Array{Int64,2}:
- 0  1  1  0
- 1  1  0  0
-```
-"""
-function sortslice_perm(xypts::AbstractArray{<:Real,2},
-    sxypts::AbstractArray{<:Real,2})::AbstractArray{<:Real,1}
-    perm = zeros(Int64,size(xypts,2))
+    c=sum(xypts,dims=2)/size(pts,2)
+    angles=zeros(size(xypts,2))
     for i=1:size(xypts,2)
-        for j=1:size(xypts,2)
-            if isapprox(xypts[:,i],sxypts[:,j])
-                perm[j]=i
-                continue
-            end
-        end
+        (x,y)=xypts[:,i] - c
+        angles[i] = atan(y,x)
     end
-    perm
+    perm = sortperm(angles)
+    return perm
 end
 
 @doc """

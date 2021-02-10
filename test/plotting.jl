@@ -14,9 +14,10 @@ import SymmetryReduceBZ.Plotting: plot_convexhulls
         atom_pos = Array([0 0 0]')
         convention = "ordinary"
         (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
-            convention,true)
+            true,convention)
+
         (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
-            convention,false)
+            false,convention)
         @test true
 
         sqr_latvecs = SymmetryReduceBZ.Lattices.genlat_SQR(1)
@@ -26,9 +27,9 @@ import SymmetryReduceBZ.Plotting: plot_convexhulls
         atom_pos = Array([0 0]')
         convention = "ordinary"
         (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
-            convention,true)
+            true,convention)
         (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
-            convention,false)
+            false,convention)
         @test true
     end
 end

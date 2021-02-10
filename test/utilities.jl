@@ -2,8 +2,7 @@ using Test
 
 import SymmetryReduceBZ.Utilities: affine_trans, contains, edgelengths,
 	get_uniquefacets, mapto_xyplane, remove_duplicates, sample_circle,
-	sample_sphere, shoelace, sort_points_comparison, sortpts_perm,
-	sortslice_perm
+	sample_sphere, shoelace, sortpts_perm
 
 import SymmetryReduceBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HXG,
     genlat_OBL, genlat_CUB
@@ -82,18 +81,25 @@ bzformat = "convex hull"
     @testset "get_uniquefacets" begin
         a=1
         real_latvecs=genlat_CUB(a)
+		atom_types = [0]
+		atom_pos = Array([0 0 0]')
         convention = "ordinary"
         bzformat = "convex hull"
-        bz = calc_bz(real_latvecs,convention, bzformat)
+		coords = "Cartesian"
+		makeprim = false
+
+		bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,
+			convention)
 
         facetsᵢ = get_uniquefacets(bz)
         facets = [bz.points[facetsᵢ[i],:] for i=1:length(facetsᵢ)]
-        truefacets = [[0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5; 0.5 -0.5 0.5],
-            [0.5 0.5 -0.5; -0.5 0.5 -0.5; -0.5 -0.5 -0.5; 0.5 -0.5 -0.5],
-            [0.5 0.5 -0.5; -0.5 0.5 -0.5; -0.5 0.5 0.5; 0.5 0.5 0.5],
-            [0.5 -0.5 -0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5; -0.5 -0.5 -0.5],
-            [0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5; -0.5 0.5 0.5],
-            [-0.5 0.5 -0.5; -0.5 0.5 0.5; -0.5 -0.5 0.5; -0.5 -0.5 -0.5]]
+		truefacets = [[0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5],
+			[-0.5 -0.5 -0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; -0.5 0.5 -0.5],
+			[-0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 0.5 -0.5; -0.5 0.5 -0.5],
+			[-0.5 -0.5 -0.5; 0.5 -0.5 -0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5],
+			[-0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5],
+			[-0.5 -0.5 0.5; -0.5 -0.5 -0.5; -0.5 0.5 -0.5; -0.5 0.5 0.5]]
+
         @test truefacets ≈ facets
     end
 
@@ -167,49 +173,24 @@ bzformat = "convex hull"
     @testset "shoelace" begin
         for (real_latvecs,convention)=Iterators.product(listreal_latvecs,
                 conventions)
-            bz = calc_bz(real_latvecs,convention,bzformat)
+			atom_types = [0]
+			atom_pos = Array([0 0 0]')
+			coords = "Cartesian"
+			makeprim = false
+			bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,
+				makeprim,convention)
+
             svol = shoelace(bz.points[bz.vertices,:]')
             @test svol ≈ bz.volume
         end
     end
 
-    @testset "sort_points_comparison" begin
-        a = [1,1]
-        b = [-1,1]
-        c = [0,0]
-        @test sort_points_comparison(a,b,c) == true
-
-        a = [1,1]
-        b = [-1,-1]
-        c = [0,0]
-        @test sort_points_comparison(a,b,c) == true
-
-        a = [1,1]
-        b = [1,-1]
-        c = [0,0]
-        @test sort_points_comparison(a,b,c) == true
-
-        a = [1,0]
-        b = [0.5,0]
-        c = [0,0]
-        @test sort_points_comparison(a,b,c) == true
-    end
-
     @testset "sortpts_perm" begin
         pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-        @test sortpts_perm(pts) == [3,4,1,2]
+        @test sortpts_perm(pts) == [1,2,3,4]
 
         pts = [-0.5 -0.5 0.5; -0.5 -0.5 -0.5; -0.5 0.5 -0.5; -0.5 0.5 0.5]'
-        @test sortpts_perm(pts) == [3,4,1,2]
+        @test sortpts_perm(pts) == [1,2,3,4]
     end
 
-    @testset "sortslice_perm" begin
-        pts = [π 0; 0 π; π π; -π 0; 0 -π]'
-        spts = [π π; -π 0; 0 π; π 0; 0 -π]'
-        @test sortslice_perm(pts,spts) == [3,4,2,1,5]
-
-        xypts = [0 0; 0 1; 1 0; 1 1]'
-        sxypts = [0 1; 1 1; 1 0; 0 0]'
-        @test sortslice_perm(xypts,sxypts) == [2,4,3,1]
-    end
 end

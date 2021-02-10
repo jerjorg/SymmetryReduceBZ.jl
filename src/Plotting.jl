@@ -4,7 +4,7 @@ ENV["MPLBACKEND"]="qt5agg"
 include("Symmetry.jl")
 include("Utilities.jl")
 import .Symmetry: calc_bz, calc_ibz
-import .Utilities: get_uniquefacets, sort_points_comparison
+import .Utilities: get_uniquefacets, sortpts_perm
 import QHull: Chull
 import PyCall: PyObject, pyimport
 import PyPlot: figaspect, figure, subplots
@@ -49,10 +49,14 @@ function plot_2Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
     collections=pyimport("matplotlib.collections")
 
     bzpts=Array(convexhull.points')
-    middlept=[sum(bzpts[i,:])/size(bzpts,2) for i=1:2]
-    bzpts=sortslices(bzpts, lt=(x,y)->sort_points_comparison(x,y,middlept),
-            dims=2)
-
+    c=[sum(bzpts[i,:])/size(bzpts,2) for i=1:2]
+    angles=zeros(size(bzpts,2))
+    for i=1:size(bzpts,2)
+        (x,y)=bzpts[:,i] - c
+        angles[i] = atan(y,x)
+    end
+    perm = sortperm(angles)
+    bzpts = bzpts[:,perm]
     (x,y)=[bzpts[i,:] for i=1:2]
     ax.fill(x,y, facecolor=color,edgecolor="black",linewidth=3)
     ax
@@ -92,6 +96,11 @@ ax = SymmetryReduceBZ.Plotting.plot_3Dconvexhull(bz,ax,"deepskyblue")
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
     color::String)
 
+    ϵ=0.1*(convexhull.volume)^1/3
+
+    plotrange=[[minimum(convexhull.points[:,i])-ϵ,
+        maximum(convexhull.points[:,i])+ϵ] for i=1:3]
+
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
 
     facesᵢ=get_uniquefacets(convexhull)
@@ -112,6 +121,7 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::PyObject,
 
     ax.add_collection3d(p)
     ax.add_collection3d(l)
+    ax.auto_scale_xyz(plotrange[1],plotrange[2],plotrange[3])
 
     return ax
 end
@@ -165,7 +175,7 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
         convention,rtol,atol)
     ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,format,primitive,
         convention,rtol,atol)
-
+     
     dim = size(real_latvecs,1)
     if dim == 2
         fig,ax=subplots(figsize=figaspect(1)*1.5)
@@ -174,7 +184,7 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
     elseif dim == 3
         fig = figure(figsize=figaspect(1)*1.5)
         ax = fig.add_subplot(111, projection="3d")
-        ϵ=0.1*bz.volume
+        ϵ=0.1*bz.volume^1/3
         plotrange=[[minimum(bz.points[:,i])-ϵ,
             maximum(bz.points[:,i])+ϵ] for i=1:3]
         ax = plot_3Dconvexhull(bz,ax,"blue")
