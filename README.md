@@ -52,7 +52,7 @@ The arguments for `calc_ibz` are as follows:
 - `coords`: the positions of the atoms in \"lattice\" or \"Cartesian\"
 	coordinates.
 - `ibzformat`: the format of the irreducible Brillouin zone. Options include
-	\"convex-hull\" and \"half-space\".
+	\"convex hull\" and \"half-space\".
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are \"ordinary\" (temporal) frequency and \"angular\"
 	frequency.
