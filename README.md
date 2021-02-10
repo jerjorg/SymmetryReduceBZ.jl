@@ -5,7 +5,7 @@ https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl.svg?branch=master)](
 https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl)
 [![Coverage Status](
 https://coveralls.io/repos/github/jerjorg/SymmetryReduceBZ.jl/badge.svg?branch=master)](
-https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master&service=github)
+https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master)
 
 
 # SymmetryReduceBZ
