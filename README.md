@@ -58,6 +58,7 @@ The arguments for `calc_ibz` are as follows:
 	frequency.
 - `primitive`: make the unit cell primitive before calculating the the IBZ if
 	true.
+	
 The vertices of the ibz are accessed with `ibz.points[ibz.vertices,:]`. The
 vertices of the IBZ and `ibz.points` should be the same. The rows of the array
 are the vertices of the IBZ in Cartesian coordinates. Other attributes of the
