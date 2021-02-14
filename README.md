@@ -5,7 +5,7 @@ https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl.svg?branch=master)](
 https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl)
 [![Coverage Status](
 https://coveralls.io/repos/github/jerjorg/SymmetryReduceBZ.jl/badge.svg?branch=master)](
-https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master)
+https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master&service=github)
 
 
 # SymmetryReduceBZ
@@ -52,7 +52,7 @@ The arguments for `calc_ibz` are as follows:
 - `coords`: the positions of the atoms in \"lattice\" or \"Cartesian\"
 	coordinates.
 - `ibzformat`: the format of the irreducible Brillouin zone. Options include
-	\"convex-hull\" and \"half-space\".
+	\"convex hull\" and \"half-space\".
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are \"ordinary\" (temporal) frequency and \"angular\"
 	frequency.
