@@ -46,8 +46,8 @@ in notebook cells.
 ```@example
 from julia import Julia
 jl = Julia(runtime="/usr/local/bin/julia")
-
-# In a separate cell
+```
+```@example
 %%julia
 using Pkg
 Pkg.add("SymmetryReduceBZ")

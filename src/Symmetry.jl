@@ -141,7 +141,7 @@ function mapto_unitcell(pt::AbstractArray{<:Real,1},
 end
 
 @doc """
-    mapto_BZ(kpoint,recip_latvecs,inv_latvecs,coords,rtol,atol)
+    mapto_bz(kpoint,recip_latvecs,inv_latvecs,coords,rtol,atol)
 
 Map a k-point to a translationally equivalent point within the Brillouin zone.
 
@@ -173,7 +173,7 @@ recip_latvecs = [1 0 0; 0 1 0; 0 0 1]
 inv_latvecs = inv(recip_latvecs)
 kpoint = [2, 3, 2]
 coords = "Cartesian"
-mapto_BZ(kpoint, recip_latvecs, inv_latvecs, coords)
+mapto_bz(kpoint, recip_latvecs, inv_latvecs, coords)
 # output
 3-element Array{Real,1}:
  0.0
@@ -181,10 +181,11 @@ mapto_BZ(kpoint, recip_latvecs, inv_latvecs, coords)
  0.0
 ```
 """
-function mapto_BZ(kpoint::AbstractArray{<:Real,1},
-	recip_latvecs::AbstractArray{<:Real,2},inv_rlatvecs::AbstractArray{<:Real,2},
-	coords::String,rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-    atol::Real=0.0)::Array{Float64,1}
+function mapto_bz(kpoint::AbstractArray{<:Real,1},
+	recip_latvecs::AbstractArray{<:Real,2},
+	inv_rlatvecs::AbstractArray{<:Real,2},coords::String,
+	rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
+	atol::Real=0.0)::Array{Float64,1}
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coords,rtol,
 		atol)
@@ -273,7 +274,7 @@ function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64},
 end
 
 """
-	mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords,rtol,atol)
+	mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords,rtol,atol)
 
 Map a point to a symmetrically equivalent point within the IBZ.
 
@@ -304,10 +305,11 @@ Map a point to a symmetrically equivalent point within the IBZ.
 	`kpoint` within the irreducible Brillouin zone in the same coordinates as
 	`coords`.
 
-#Examples
+# Examples
 ```jldoctest
 import SymmetryReduceBZ.Lattices: get_recip_latvecs
-import SymmetryReduceBZ.Symmetry: calc_pointgroup, calc_ibz, mapto_IBZ
+import SymmetryReduceBZ.Symmetry: calc_pointgroup, calc_ibz, mapto_ibz
+import LinearAlgebra: inv
 
 real_latvecs = [1 0; 0 2]
 convention="ordinary"
@@ -320,23 +322,23 @@ ibzformat="convex hull"
 makeprim=false
 
 ibz=calc_ibz(real_latvecs, atomtypes,atompos,coords,ibzformat,makeprim,convention)
-pg = calc_pointgroup(real_latvecs)
+(ftrans,pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 kpoint = [2,3]
-ibz_point = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coords)
+ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coords)
 # output
 2-element Array{Real,1}:
  0.0
  0.0
 ```
 """
-function mapto_IBZ(kpoint::AbstractArray{<:Real,1},
+function mapto_ibz(kpoint::AbstractArray{<:Real,1},
         recip_latvecs::AbstractArray{<:Real,2},
         inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
         pointgroup::Array{Array{Float64,2},1}, coords::String,
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=0.0)::AbstractArray{Real,1}
 
-    bzpoint = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords, rtol, atol)
+    bzpoint = mapto_bz(kpoint, recip_latvecs, inv_rlatvecs, coords, rtol, atol)
     for op in pointgroup
         rot_point = op*bzpoint
         if inhull(rot_point,ibz,rtol,atol)
@@ -473,7 +475,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 - `coords::String`: indicates the positions of the atoms are in \"lattice\" or
 	\"Cartesian\" coordinates.
 - `bzformat::String`: the format of the Brillouin zone. Options include
-	\"convex-hull\" and \"half-space\".
+	\"convex hull\" and \"half-space\".
 - `makeprim::Bool=false`: make the unit cell primitive before calculating the
 	the BZ if equal to `true`.
 - `convention::String="ordinary"`: the convention used to go between real and
@@ -568,7 +570,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 - `coords::String`: indicates the positions of the atoms are in \"lattice\" or
     \"Cartesian\" coordinates.
 - `ibzformat::String`: the format of the irreducible Brillouin zone. Options
-    include \"convex-hull\" and \"half-space\".
+    include \"convex hull\" and \"half-space\".
 - `convention::String="ordinary"`: the convention used to go between real and
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is

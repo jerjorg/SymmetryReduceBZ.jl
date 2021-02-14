@@ -435,15 +435,16 @@ SymmetryReduceBZ.Utilities.remove_duplicates(points)
 function remove_duplicates(points::AbstractArray,#::AbstractArray{<:Real,2},
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
     atol::Real=1e-15)::AbstractArray
-    uniquepts=[]
+    uniquepts=zeros(size(points))
+    numpts = 0
     for i=1:size(points,2)
-        pt=points[:,i]
-        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for
-                i=1:length(uniquepts)])
-            append!(uniquepts,[pt])
+        if !any([isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol)
+                for j=1:numpts])
+            numpts += 1
+            uniquepts[:,numpts] = points[:,i]
         end
     end
-    reduce(hcat,uniquepts)
+    uniquepts[:,1:numpts]
 end
 
 function remove_duplicates(points::AbstractArray{<:Real,1},
