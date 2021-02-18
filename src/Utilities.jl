@@ -5,8 +5,6 @@ import LinearAlgebra.BLAS: gemv
 import Distances: euclidean
 import Base.Iterators: flatten
 
-__revise_mode__ = :eval
-
 @doc """
     affine_trans(pts)
 
@@ -460,6 +458,5 @@ function remove_duplicates(points::AbstractArray{<:Real,1},
     end
     uniquepts
 end
-
 
 end # module
