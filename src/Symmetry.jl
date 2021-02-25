@@ -574,8 +574,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
 	end
 
-	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,
-		convention))
+	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention))
     if size(real_latvecs) == (2,2)
         latpts = reduce(hcat,[recip_latvecs*[i,j] for
             (i,j)=Iterators.product(-2:2,-2:2)])
@@ -674,7 +673,7 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
 	sizepg = size(pointgroup,1)
     bzformat = "half-space"
     bz = calc_bz(prim_latvecs,prim_types,prim_pos,coordinates,bzformat,false,
-		convention,rtol,atol)
+        convention,rtol,atol)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
     for v=bz_vertices
