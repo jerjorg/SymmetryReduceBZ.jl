@@ -48,7 +48,7 @@ function affine_trans(pts::AbstractArray{<:Real,2})::AbstractArray{<:Real,2}
 end
 
 @doc """
-    contains(pt,pts,rtol,atol)
+    contains(pt,pts;rtol,atol)
 
 Check if an array of points contains a point.
 
@@ -58,7 +58,7 @@ Check if an array of points contains a point.
     are the columns of the array.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
     point comparisons
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `Bool`: a boolean that indicates the presence or absence of `pt` in `pts`.
@@ -73,13 +73,13 @@ contains(pt,pts)
 true
 ```
 """
-function contains(pt::AbstractArray{<:Real,1},pts::AbstractArray{<:Real,2},
-        rtol::Real=sqrt(eps(float(maximum(pts)))),atol::Real=0.0)::Bool
+function contains(pt::AbstractArray{<:Real,1},pts::AbstractArray{<:Real,2};
+        rtol::Real=sqrt(eps(float(maximum(pts)))),atol::Real=1e-9)::Bool
     any(isapprox(pt,pts[:,i],rtol=rtol,atol=atol) for i=1:size(pts,2))
 end
 
 @doc """
-    contains(array,arrays,rtol,atol)
+    contains(array,arrays;rtol,atol)
 
 Check if an array of arrays contains an array.
 
@@ -88,7 +88,7 @@ Check if an array of arrays contains an array.
 - `arrays`: a abstract array of reals of arbitrary dimension.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
     point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `Bool`: a boolean that indicates the presence of absence of `array` in
@@ -104,14 +104,14 @@ contains(array, arrays)
 true
 ```
 """
-function contains(array::AbstractArray,arrays::AbstractArray,
+function contains(array::AbstractArray,arrays::AbstractArray;
     rtol::Real=sqrt(eps(float(maximum(Iterators.flatten(array))))),
-    atol::Real=0.0)::Bool
+    atol::Real=1e-9)::Bool
     any(isapprox(array,a,rtol=rtol,atol=atol) for a in arrays)
 end
 
 @doc """
-    edgelengths(basis,radius)
+    edgelengths(basis,radius;rtol,atol)
 
 Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 
@@ -121,7 +121,7 @@ Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 - `radius::Real`: the radius of the sphere.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
+- `atol::Real=1e-9`: an absolute tolerance for floating point
     comparisons.
 
 # Returns
@@ -140,8 +140,8 @@ SymmetryReduceBZ.Utilities.edgelengths(basis,radius)
  3.0
 ```
 """
-function edgelengths(basis::Array{<:Real,2}, radius::Real,
-        rtol::Real=sqrt(eps(float(radius))), atol::Real=0.0)::Array{Float64,1}
+function edgelengths(basis::Array{<:Real,2}, radius::Real;
+        rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::Array{Float64,1}
 
     if radius < 0
         throw(ArgumentError("The radius has to be a positive number."))
@@ -233,7 +233,7 @@ function mapto_xyplane(pts::AbstractArray{<:Real,2})::AbstractArray{<:Real,2}
 end
 
 @doc """
-    sample_circle(basis,radius,offset,rtol,atol)
+    sample_circle(basis,radius,offset;rtol,atol)
 
 Sample uniformly within a circle centered about a point.
 
@@ -245,7 +245,7 @@ Sample uniformly within a circle centered about a point.
     circle.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
+- `atol::Real=1e-9`: an absolute tolerance for floating point
     comparisons.
 
 ## Returns
@@ -266,8 +266,8 @@ SymmetryReduceBZ.Utilities.sample_circle(basis,radius,offset)
 ```
 """
 function sample_circle(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::AbstractArray{<:Real,1}=[0.,0.],
-    rtol::Real=sqrt(eps(float(radius))), atol::Real=0.0)::Array{Float64,2}
+    offset::AbstractArray{<:Real,1}=[0.,0.];
+    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::Array{Float64,2}
 
     # Put the offset in lattice coordinates and round.
     (o1,o2)=round.(inv(basis)*offset)
@@ -290,7 +290,7 @@ function sample_circle(basis::AbstractArray{<:Real,2}, radius::Real,
 end
 
 @doc """
-    sample_sphere(basis,radius,offset,rtol,atol)
+    sample_sphere(basis,radius,offset;rtol,atol)
 
 Sample uniformly within a circle centered about a point.
 
@@ -302,7 +302,7 @@ Sample uniformly within a circle centered about a point.
     circle.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point
+- `atol::Real=1e-9`: an absolute tolerance for floating point
     comparisons.
 
 # Returns
@@ -324,8 +324,8 @@ SymmetryReduceBZ.Utilities.sample_sphere(basis,radius,offset)
 ```
 """
 function sample_sphere(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::Array{<:Real,1}=[0.,0.,0.], rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=0.0)::Array{Float64,2}
+    offset::Array{<:Real,1}=[0.,0.,0.]; rtol::Real=sqrt(eps(float(radius))),
+    atol::Real=1e-9)::Array{Float64,2}
 
     # Put the offset in lattice coordinates and round.
     (o1,o2,o3)=round.(inv(basis)*offset)
@@ -406,7 +406,7 @@ function sortpts_perm(pts::AbstractArray{<:Real,2})
 end
 
 @doc """
-    remove_duplicates(points,rtol,atol)
+    remove_duplicates(points;rtol,atol)
 
 Remove duplicate points from an array.
 
@@ -414,7 +414,7 @@ Remove duplicate points from an array.
 - `points::AbstractArray{<:Real,2}`: the points are columns of a 2D array.
 - `rtol::Real=sqrt(eps(float(maximum(flatten(points)))))`: a relative tolerance
     for floating point comparisons.
-- `atol::Real=0.0`: an absolume tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolume tolerance for floating point comparisons.
 
 # Returns
 - `uniquepts::AbstractArray{<:Real,2}`: a 2D array of unique points as columns.
@@ -430,9 +430,9 @@ SymmetryReduceBZ.Utilities.remove_duplicates(points)
  2  3  4
 ```
 """
-function remove_duplicates(points::AbstractArray,#::AbstractArray{<:Real,2},
+function remove_duplicates(points::AbstractArray;
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-15)::AbstractArray
+    atol::Real=1e-9)::AbstractArray
     uniquepts=zeros(size(points))
     numpts = 0
     for i=1:size(points,2)
@@ -445,9 +445,14 @@ function remove_duplicates(points::AbstractArray,#::AbstractArray{<:Real,2},
     uniquepts[:,1:numpts]
 end
 
+@doc """
+    remove_duplicates(points;rtol,atol)
+
+Remove duplicates from a nested array.
+"""
 function remove_duplicates(points::AbstractArray{<:Real,1},
     rtol::Real=sqrt(eps(float(maximum(points)))),
-    atol::Real=1e-15)::AbstractArray
+    atol::Real=1e-9)::AbstractArray
     uniquepts=[]
     for i=1:length(points)
         pt=points[i]

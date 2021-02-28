@@ -13,7 +13,7 @@ import .Lattices: get_recip_latvecs, minkowski_reduce
 import .Utilities: sample_circle, sample_sphere, contains, remove_duplicates
 
 @doc """
-    calc_pointgroup(latvecs,rtol,atol)
+    calc_pointgroup(latvecs;rtol,atol)
 
 Calculate the point group of lattice in 2D or 3D.
 
@@ -23,7 +23,7 @@ Calculate the point group of lattice in 2D or 3D.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))`: a relative tolerance for
     floating point comparisons. It is used to compare lengths of vectors and the
     volumes of primitive cells.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons. It is
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons. It is
     used to compare lengths of vectors and the volumes of primitive cells.
 
 # Returns
@@ -47,17 +47,17 @@ SymmetryReduceBZ.Symmetry.calc_pointgroup(basis)
  [0.0 1.0; 1.0 0.0]
 ```
 """
-function calc_pointgroup(latvecs::AbstractArray{<:Real,2},
+function calc_pointgroup(latvecs::AbstractArray{<:Real,2};
     rtol::Real=sqrt(eps(float(maximum(latvecs)))),
-    atol::Real=0.0)::Array{Array{Float64,2},1}
+    atol::Real=1e-9)::Array{Array{Float64,2},1}
 
     dim=size(latvecs,1)
     latvecs = minkowski_reduce(latvecs)
     radius = maximum([norm(latvecs[:,i]) for i=1:dim])
     if size(latvecs) == (2,2)
-        pts=sample_circle(latvecs,radius,[0,0],rtol,atol)
+        pts=sample_circle(latvecs,radius,[0,0],rtol=rtol,atol=atol)
     elseif size(latvecs) == (3,3)
-        pts=sample_sphere(latvecs,radius,[0,0,0],rtol,atol)
+        pts=sample_sphere(latvecs,radius,[0,0,0],rtol=rtol,atol=atol)
     else
         throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 array."))
     end
@@ -86,7 +86,7 @@ end
 
 
 @doc """
-    mapto_unitcell(pt,latvecs,inv_latvecs,coordinates,rtol,atol)
+    mapto_unitcell(pt,latvecs,inv_latvecs,coordinates;rtol,atol)
 
 Map a point to the first unit cell.
 
@@ -103,7 +103,7 @@ Map a point to the first unit cell.
     transformed to lattice coordinates because the transformation requires
     calculating a matrix inverse. The components of the point in lattice
     coordinates are checked to ensure that values close to 1 are equal to 1.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `AbstractArray{<:Real,1}`: a translationally equivalent point to `pt` in the
@@ -127,7 +127,7 @@ SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
 """
 function mapto_unitcell(pt::AbstractArray{<:Real,1},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
-    coordinates::String,rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
+    coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
     atol::Real=0.0)::Array{Real,1}
     if coordinates == "Cartesian"
         Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
@@ -142,21 +142,21 @@ function mapto_unitcell(pt::AbstractArray{<:Real,1},
 end
 
 @doc """
-    mapto_unitcell(points,latvecs,inv_latvecs,coordinates,rtol,atol)
+    mapto_unitcell(points,latvecs,inv_latvecs,coordinates;rtol,atol)
 
 Map points as columns of a 2D array to the unitcell.
 """
 function mapto_unitcell(points::AbstractArray{<:Real,2},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
-    coordinates::String,rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
+    coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
     atol::Real=0.0)::Array{Real,2}
 
-	reduce(hcat,[mapto_unitcell(points[:,i],latvecs,inv_latvecs,coordinates,rtol
-		,atol) for i=1:size(points,2)])
+	reduce(hcat,[mapto_unitcell(points[:,i],latvecs,inv_latvecs,coordinates,
+        rtol=rtol,atol=atol) for i=1:size(points,2)])
 end
 
 @doc """
-    mapto_bz(kpoint,recip_latvecs,inv_latvecs,coordinates,rtol,atol)
+    mapto_bz(kpoint,recip_latvecs,inv_latvecs,coordinates;rtol,atol)
 
 Map a k-point to a translationally equivalent point within the Brillouin zone.
 
@@ -174,7 +174,7 @@ Map a k-point to a translationally equivalent point within the Brillouin zone.
 	is transformed to lattice coordinates because the transformation requires
     calculating a matrix inverse. The components of the *k*-point in lattice
     coordinates are checked to ensure that values close to 1 are equal to 1.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `bz_point::AbtractArray{<:Real,1}`: the symmetrically equivalent *k*-point
@@ -198,12 +198,12 @@ mapto_bz(kpoint, recip_latvecs, inv_latvecs, coordinates)
 """
 function mapto_bz(kpoint::AbstractArray{<:Real,1},
 	recip_latvecs::AbstractArray{<:Real,2},
-	inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String,
+	inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String;
 	rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-	atol::Real=0.0)::Array{Float64,1}
+	atol::Real=1e-9)::Array{Float64,1}
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
-		rtol,atol)
+		rtol=rtol,atol=atol)
     if coordinates == "lattice"
 		bz_point = recip_latvecs*uc_point
 	else
@@ -237,22 +237,22 @@ function mapto_bz(kpoint::AbstractArray{<:Real,1},
 end
 
 @doc """
-    mapto_bz(kpoints,recip_latvecs,inv_latvecs,coordinates,rtol,atol)
+    mapto_bz(kpoints,recip_latvecs,inv_latvecs,coordinates;rtol,atol)
 
 Map points as columns of a 2D array to the Brillouin zone.
 """
 function mapto_bz(kpoints::AbstractArray{<:Real,2},
 	recip_latvecs::AbstractArray{<:Real,2},
-	inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String,
+	inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String;
 	rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
 	atol::Real=0.0)::Array{Float64,2}
 
 	reduce(hcat,[mapto_bz(kpoints[:,i],recip_latvecs,inv_latvecs,coordinates,
-		rtol, atol) for i=1:size(kpoints,2)])
+		rtol=rtol, atol=atol) for i=1:size(kpoints,2)])
 end
 
 @doc """
-	inhull(point, chull, rtol, atol)
+	inhull(point, chull; rtol, atol)
 
 Check if a point lies within a convex hull (including the boundaries).
 
@@ -262,7 +262,7 @@ Check if a point lies within a convex hull (including the boundaries).
 - `rtol::Real=sqrt(eps(float(maximum(flatten(chull.points)))))`: a relative
 	tolerance for floating point comparisons. Needed when a point is on the
 	boundary of the convex hull.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `inside::Bool`: if true, the point lies within the convex hull.
@@ -284,9 +284,9 @@ inhull(point,bz)
 true
 ```
 """
-function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64},
+function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64};
     rtol::Real=sqrt(eps(float(maximum(flatten(chull.points))))),
-    atol::Real=0.0)::Bool
+    atol::Real=1e-9)::Bool
 
     hullpts = Array(chull.points')
     distances = chull.facets[:,end]
@@ -304,7 +304,7 @@ function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64},
 end
 
 """
-	mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coordinates,rtol,
+	mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coordinates;rtol,
 		atol)
 
 Map a point to a symmetrically equivalent point within the IBZ.
@@ -328,7 +328,7 @@ Map a point to a symmetrically equivalent point within the IBZ.
 	and `rtol` is used when comparing components of the *k*-point to 1. It is
 	also used for comparing floats to zero when checking if the point lies
 	within `ibz`.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons. This
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons. This
 	is used everywhere `rtol` is used.
 
 # Returns
@@ -366,14 +366,15 @@ ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 function mapto_ibz(kpoint::AbstractArray{<:Real,1},
         recip_latvecs::AbstractArray{<:Real,2},
         inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
-        pointgroup::Array{Array{Float64,2},1}, coordinates::String,
+        pointgroup::Array{Array{Float64,2},1}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=0.0)::AbstractArray{Real,1}
+        atol::Real=1e-9)::AbstractArray{Real,1}
 
-    bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,rtol,atol)
+    bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
+        rtol=rtol,atol=atol)
     for op in pointgroup
         rot_point = op*bzpoint
-        if inhull(rot_point,ibz,rtol,atol)
+        if inhull(rot_point,ibz,rtol=rtol,atol=atol)
 			if coordinates == "lattice"
 				rot_point = inv_rlatvecs*rot_point
 			end
@@ -384,7 +385,7 @@ function mapto_ibz(kpoint::AbstractArray{<:Real,1},
 end
 
 """
-	mapto_ibz(kpoints,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coordinates,
+	mapto_ibz(kpoints,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coordinates;
 		rtol,atol)
 
 Map an array of points to the IBZ and then remove duplicate points.
@@ -394,16 +395,16 @@ function mapto_ibz(kpoints::AbstractArray{<:Real,2},
         inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
         pointgroup::Array{Array{Float64,2},1}, coordinates::String,
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=0.0)::AbstractArray{Real,2}
+        atol::Real=1e-9)::AbstractArray{Real,2}
 
 	ibzpts = reduce(hcat,[mapto_ibz(kpoints[:,i],recip_latvecs,
 		inv_rlatvecs,ibz,pointgroup,coordinates) for i=1:size(kpoints,2)])
 
-	remove_duplicates(ibzpts,rtol,atol)
+	remove_duplicates(ibzpts,rtol=rtol,atol=atol)
 end
 
 @doc """
-    calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,rtol,atol)
+    calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates;rtol,atol)
 
 Calculate the space group of a crystal structure.
 
@@ -417,7 +418,7 @@ Calculate the space group of a crystal structure.
 	or \"Cartesian\" coordinates.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `spacegroup`: the space group of the crystal structure. The first element of
@@ -443,8 +444,8 @@ SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
 """
 function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
     atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
-    coordinates::String,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-    atol::Real=0.0)
+    coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
+    atol::Real=1e-9)
 
     if length(atom_types) != size(atom_pos,2)
         throw(ArgumentError("The number of atom types and positions must be the
@@ -458,12 +459,12 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
 
     real_latvecs = minkowski_reduce(real_latvecs)
     inv_latvecs = inv(real_latvecs)
-    pointgroup = calc_pointgroup(real_latvecs,rtol,atol)
+    pointgroup = calc_pointgroup(real_latvecs,rtol=rtol,atol=atol)
     numatoms = length(atom_types)
 
     # Map points to the primitive cell.
     atom_pos = reduce(hcat,[mapto_unitcell(atom_pos[:,i],real_latvecs,
-                inv_latvecs,"Cartesian",rtol,atol) for i=1:numatoms])
+                inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:numatoms])
 
     ops_spacegroup=[]
     trans_spacegroup=[]
@@ -480,7 +481,7 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
         for atomᵢ=same_atoms
             # Calculate a candidate fractional translation.
             ftrans = mapto_unitcell(atom_pos[:,atomᵢ]-posᵣ,real_latvecs,
-                inv_latvecs,"Cartesian",rtol,atol)
+                inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
             if !contains(ftrans, opts)
                 append!(opts, [ftrans])
@@ -492,7 +493,7 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
             for atomⱼ = 1:numatoms
                 kindⱼ = atom_types[atomⱼ]
                 posⱼ = mapto_unitcell(op*atom_pos[:,atomⱼ] + ftrans,
-                    real_latvecs,inv_latvecs,"Cartesian",rtol,atol)
+                    real_latvecs,inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
                 mapped = any([kindⱼ == atom_types[i] &&
                         isapprox(posⱼ,atom_pos[:,i],rtol=rtol,atol=atol) ?
@@ -513,7 +514,7 @@ end
 
 @doc """
     calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,
-		convention,rtol,atol)
+		convention;rtol,atol)
 
 Calculate the Brillouin zone for the given real-space lattice basis.
 
@@ -535,7 +536,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 	unitary if the convention is ordinary.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
 	floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `bz`: the vertices or half-space representation of the Brillouin zone
@@ -564,12 +565,12 @@ Points on convex hull in original order:
 function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
 	coordinates::String,bzformat::String,makeprim::Bool=false,
-	convention::String="ordinary",
+	convention::String="ordinary";
 	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
 
 	if makeprim
     	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
-			atom_types,atom_pos,coordinates,rtol,atol)
+			atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
 	else
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
 	end
@@ -607,7 +608,7 @@ end
 
 @doc """
     calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,makeprim,
-		convention,rtol,atol)
+		convention;rtol,atol)
 
 Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
@@ -629,7 +630,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 	IBZ if true.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `ibz`: the irreducible Brillouin zone as a convex hull or intersection of
@@ -659,21 +660,21 @@ Points on convex hull in original order:
 function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
 	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
 	coordinates::String,ibzformat::String,makeprim::Bool=false,
-	convention::String="ordinary",
-	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
+	convention::String="ordinary";
+	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
 	if makeprim
     	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
-			atom_types,atom_pos,coordinates,rtol,atol)
+			atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
 	else
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
 	end
 	pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coordinates,
-		rtol,atol)[2]
+		rtol=rtol,atol=atol)[2]
 	sizepg = size(pointgroup,1)
     bzformat = "half-space"
     bz = calc_bz(prim_latvecs,prim_types,prim_pos,coordinates,bzformat,false,
-        convention,rtol,atol)
+        convention,rtol=rtol,atol=atol)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
     for v=bz_vertices
@@ -722,7 +723,7 @@ lat_types = ["square", "rectangular", "triangular", "oblique", "triclinic",
 pointgroup_size = Dict{String,Integer}(i=>j for (i,j)=zip(lat_types, num_ops))
 
 @doc """
-    make_primitive(real_latvecs,atom_types,atom_pos,coordinates,rtol,atol)
+    make_primitive(real_latvecs,atom_types,atom_pos,coordinates;rtol,atol)
 
 Make a given unit cell primitive.
 
@@ -739,7 +740,7 @@ This is a Julia translation of the function by the same in
 	or \"Cartesian\" coordinates.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `prim_types::AbstractArray{<:Int,1}`: a list of atom types as integers in the
@@ -767,11 +768,11 @@ make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 """
 function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
-    coordinates::String,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
+    coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=0.0)
 
     (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
-		rtol,atol)
+		rtol=rtol,atol=atol)
     # Unique fractional translations
     ftrans = remove_duplicates(reduce(hcat, ftrans))
     # No need to consider the origin.
@@ -800,7 +801,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
                 inv_latvecs = inv(prim_latvecs)
                 # Move all translations into the potential primitive unit cell.
                 test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                        inv_latvecs,"Cartesian",rtol,atol) for
+                        inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for
 						i=1:size(ftrans,2)]
 
                 # Check if all coordinates of all fractional translations are
@@ -818,7 +819,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
                 inv_latvecs = inv(prim_latvecs)
                 # Move all translations into the potential primitive unit cell.
                 test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                        inv_latvecs,"Cartesian",rtol,atol)
+                        inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 						for i=1:size(ftrans,2)]
 
                 # Check if all coordinates of all fractional translations are
@@ -839,7 +840,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
         all_prim_pos = real_latvecs*all_prim_pos
     end
     all_prim_pos = reduce(hcat,[mapto_unitcell(all_prim_pos[:,i], prim_latvecs,
-        inv_latvecs,"Cartesian",rtol,atol) for i=1:length(atom_types)])
+        inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:length(atom_types)])
 
     # Remove atoms at the same positions that are the same type.
     tmp = remove_duplicates(vcat(all_prim_pos,atom_types'))

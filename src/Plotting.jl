@@ -130,7 +130,7 @@ end
 
 @doc """
     plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
-        convention,rtol,atol)
+        convention;rtol,atol)
 
 Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 
@@ -150,7 +150,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
     unitary if the convention is ordinary.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
-- `atol::Real=0.0`: an absolute tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `(fig,ax)`: the figure and axes Python objects.
@@ -167,16 +167,16 @@ convention = "ordinary"
 ```
 """
 function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,primitive,
-    convention,rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
+    convention;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=0.0)
 
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
     format = "convex hull"
     primitive = false
     bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,format,primitive,
-        convention,rtol,atol)
+        convention,rtol=rtol,atol=atol)
     ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,format,primitive,
-        convention,rtol,atol)
+        convention,rtol=rtol,atol=atol)
     dim = size(real_latvecs,1)
     if dim == 2
         fig,ax=subplots(figsize=figaspect(1)*1.5)
