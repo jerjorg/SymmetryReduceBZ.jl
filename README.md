@@ -56,7 +56,7 @@ The arguments for `calc_ibz` are as follows:
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are \"ordinary\" (temporal) frequency and \"angular\"
 	frequency.
-- `primitive`: make the unit cell primitive before calculating the the IBZ if
+- `makeprim`: make the unit cell primitive before calculating the the IBZ if
 	true.
 	
 The vertices of the ibz are accessed with `ibz.points[ibz.vertices,:]`. The
