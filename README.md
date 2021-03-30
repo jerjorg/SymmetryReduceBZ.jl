@@ -71,10 +71,10 @@ facets = [ibz.points[ind] for ind=indices]
 ```
 `facets` is a list of points at the corners of each facet.The function
 `get_uniquefacets` returns the indices of points that lie on the same facet. The
-facets are available to through `ibz` as simplices, but often multiple simplices
+facets are also available through `ibz.simplices` as simplices, but often multiple simplices
 lie on the same facet.
 
-The functions `plot_convexhulls` is useful for visualizing the Brillouin zone
+The function `plot_convexhulls` is useful for visualizing the Brillouin zone
 and irreducible Brillouin zone. The arguments are the same as those from
 `calc_ibz`.
 ```@example
