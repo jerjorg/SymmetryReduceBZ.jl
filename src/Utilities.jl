@@ -292,7 +292,7 @@ end
 @doc """
     sample_sphere(basis,radius,offset;rtol,atol)
 
-Sample uniformly within a circle centered about a point.
+Sample uniformly within a sphere centered about a point.
 
 # Arguments
 - `basis::Array{<:Real,2}`: a 3x3 matrix whose columns are the grid generating

@@ -4,7 +4,7 @@ import SymmetryReduceBZ.Lattices
 const lt = Lattices
 
 import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
-    calc_ibz, mapto_unitcell, make_primitive, inhull, mapto_BZ, mapto_IBZ
+    calc_ibz, mapto_unitcell, make_primitive, inhull, mapto_bz, mapto_ibz
 import SymmetryReduceBZ.Utilities: remove_duplicates
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
@@ -242,13 +242,13 @@ ibzformat="convex hull"
                            Array([0 0 0; 0 0 0.5; 0.5 0.5 0.5]')]
             end
             for (atom_types,atom_pos)=zip(atype_list,apos_list)
-                for primitive=[true,false]
+                for makeprim=[true,false]
                     for convention=["ordinary","angular"]
 
                         bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
-                            bzformat,primitive,convention)
-
-                        if primitive
+                            bzformat,makeprim,convention)
+                        
+                        if makeprim
                         	(prim_types,prim_pos,prim_latvecs) = make_primitive(
                                 real_latvecs,atom_types,atom_pos,coords)
                     	else
@@ -281,6 +281,7 @@ ibzformat="convex hull"
     end
 
     @testset "calc_ibz" begin
+        convention = "ordinary"
         coords="Cartesian"
         ibzformat="convex hull"
         bzformat="convex hull"
@@ -299,9 +300,9 @@ ibzformat="convex hull"
                            Array([0 0 0; 0 0 0.5; 0.5 0.5 0.5]')]
             end
             for (atom_types,atom_pos)=zip(atype_list,apos_list)
-                for primitive=[true,false]
+                for makeprim=[true,false]
 
-                    if primitive
+                    if makeprim
                     	(prim_types,prim_pos,prim_latvecs) = make_primitive(
                             real_latvecs,atom_types,atom_pos,coords)
                 	else
@@ -312,15 +313,16 @@ ibzformat="convex hull"
                     pointgroup = calc_spacegroup(prim_latvecs,prim_types,
                         prim_pos,coords)[2]
 
-                    bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
-                        bzformat,primitive,convention)
+                    bz=calc_bz(prim_latvecs,prim_types,prim_pos,coords,
+                        bzformat,makeprim,convention)
 
-                    ibz=calc_ibz(real_latvecs,atom_types,atom_pos,coords,
-                        ibzformat,primitive,convention)
+                    ibz=calc_ibz(prim_latvecs,prim_types,prim_pos,coords,
+                        ibzformat,makeprim,convention)
 
                     # Unfold IBZ
                     unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
                                 for i=1:size(ibz.points,1)])
+                    unfoldpts = remove_duplicates(unfoldpts)
                     unfold_chull = chull(Array(unfoldpts'))
                     unfoldpts=unfold_chull.points[unfold_chull.vertices,:]
                     @test size(unfoldpts,1) == size(bz.points[bz.vertices,:],1)
@@ -363,7 +365,7 @@ ibzformat="convex hull"
         @test_throws ArgumentError mapto_unitcell(pt,basis,inv_basis,coords)
     end
 
-    @testset "mapto_BZ" begin
+    @testset "mapto_bz" begin
         kpoint = [3.3, 4.4]
         real_latvecs = [1 0; 0 1]
         atom_types = [0]
@@ -378,13 +380,13 @@ ibzformat="convex hull"
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
-        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+        bz_point = mapto_bz(kpoint, recip_latvecs, inv_rlatvecs, coords)
 
         @test inhull(bz_point,bz)
         @test bz_point ≈ [.3,.4]
 
         coords = "lattice"
-        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+        bz_point = mapto_bz(kpoint, recip_latvecs, inv_rlatvecs, coords)
 
         @test inhull(bz_point,bz)
         @test bz_point ≈ [.3,.4]
@@ -403,13 +405,13 @@ ibzformat="convex hull"
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
-        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+        bz_point = mapto_bz(kpoint, recip_latvecs, inv_rlatvecs, coords)
 
         @test inhull(bz_point,bz)
         @test bz_point ≈ [.3, .4, .5]
 
         coords = "lattice"
-        bz_point = mapto_BZ(kpoint, recip_latvecs, inv_rlatvecs, coords)
+        bz_point = mapto_bz(kpoint, recip_latvecs, inv_rlatvecs, coords)
 
         @test inhull(bz_point,bz)
         @test bz_point ≈ [.3, .4, .5]
@@ -441,7 +443,7 @@ ibzformat="convex hull"
         kpoint = [1.00000000001,0]
         rtol=1e-9
         atol=1e-9
-        @test inhull(kpoint,bz,rtol,atol) == true
+        @test inhull(kpoint,bz,rtol=rtol,atol=atol) == true
 
         # 3D
         real_latvecs = [0.5 0 0; 0 0.5 0; 0 0 0.5]
@@ -470,11 +472,11 @@ ibzformat="convex hull"
         kpoint = [1.000000001,1,0]
         rtol=1e-7
         atol=1e-7
-        @test inhull(kpoint,bz,rtol,atol) == true
+        @test inhull(kpoint,bz,rtol=rtol,atol=atol) == true
 
     end
 
-    @testset "mapto_IBZ" begin
+    @testset "mapto_ibz" begin
 
         real_latvecs = [0.5 0; 0 0.5]
         atom_types = [0]
@@ -491,13 +493,13 @@ ibzformat="convex hull"
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0]
-        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
 
         @test inhull(ibzpoint, ibz)
         @test ibzpoint ≈ [0.8, 0.0]
 
         kpoint = [3.4,1.7]
-        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
         @test inhull(ibzpoint, ibz)
         @test ibzpoint ≈ [0.6, -0.3]
 
@@ -515,20 +517,20 @@ ibzformat="convex hull"
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0,0]
-        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
 
         @test inhull(ibzpoint, ibz)
         @test ibzpoint ≈ [0.8,0,0]
 
         kpoint = [1.2,3.6,8.9]
-        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
 
         @test inhull(ibzpoint, ibz)
         @test ibzpoint ≈ [0.9, -0.8, -0.4]
 
         kpoint = [1.2,3.6,8.9]
         coords = "lattice"
-        ibzpoint = mapto_IBZ(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
+        ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
         @test ibzpoint ≈ [0.225, -0.15, -0.05]
         ibzpoint = convert(Array{Float64,1},recip_latvecs*ibzpoint)
         @test inhull(ibzpoint, ibz)

@@ -94,7 +94,7 @@ function get_latparams(latvecs)
 end
 
 """
-    reduce_basis!(basis,k)
+    reduce_basis!(basis,k;rtol,atol)
 
 Reduces the `k`th lattice vector. This is accomplished by locating the
 lattice point closest to the projection of the `k`th lattice vector onto
@@ -105,6 +105,8 @@ lattice vectors by increasing Euclidean norms.
 # Arguments
 - `basis::AbstractArray{<:Real,2}`: the lattice basis as columns of an array.
 - `k::Int`: Keeps track of which lattice vector needs to be reduced.
+- `rtol::Real=sqrt(eps(float(maximum(basis))))`: a relative tolerance.
+- `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
 - `basis::AbstractArray{<:Real,2}`: the partially reduced lattice basis as
@@ -125,13 +127,14 @@ basis
  0  0  1
 ```
 """
-function reduce_basis!(basis::AbstractArray{<:Real,2},k::Int)::Int
+function reduce_basis!(basis::AbstractArray{<:Real,2},k::Int;
+    rtol::Real=sqrt(eps(float(maximum(basis)))),atol::Real=1e-9)::Int
     if k == 2
         v1,v2=[basis[:,i] for i=1:k]
         i = round(Int64,dot(v1,v2)/dot(v1,v1))
         vecs = [v2-j*v1 for j=i-1:i+1]
         v2 = vecs[sortperm(norm.(vecs))[1]]
-        if norm(v1) <= norm(v2)
+        if norm(v1) < norm(v2) || isapprox(norm(v1),norm(v2),atol=atol,rtol=rtol)
             basis[:,k] = v2
             k=3
         else
@@ -152,7 +155,7 @@ function reduce_basis!(basis::AbstractArray{<:Real,2},k::Int)::Int
             basis[:,k] = v3
             k=4
         else
-            if norm(v1) <= norm(v3)
+            if norm(v1) < norm(v3) || isapprox(norm(v1),norm(v3),atol=atol,rtol=rtol)
                 k=3
                 basis[:,2] = v3
                 basis[:,3] = v2
@@ -170,7 +173,7 @@ function reduce_basis!(basis::AbstractArray{<:Real,2},k::Int)::Int
 end
 
 @doc """
-        minkowski_reduce(basis)
+    minkowski_reduce(basis;rtol,atol)
 
 Minkowski reduce a lattice basis. Follows the logic of Fig. 4 in
 \"Low-Dimensional Lattice Basis Reduction Revisited\" by Nguyen, 2009.
@@ -178,7 +181,9 @@ Minkowski reduce a lattice basis. Follows the logic of Fig. 4 in
 # Arguments
 - `basis::AbstractArray{<:Real,2}`: the lattice basis given by the columns
     of a 2x2 or 3x3 array.
-
+- `rtol::Real=sqrt(eps(float(maximum(basis))))`: a relative tolerance.
+- `atol::Real=1e-9`: an absolute tolerance.
+    
 # Returns
 - `rbasis:: the Minkowski reduced lattice basis as columns of an array.
 
@@ -194,8 +199,8 @@ SymmetryReduceBZ.Lattices.minkowski_reduce(basis)
  1  0  0
 ```
 """
-function minkowski_reduce(
-    basis::AbstractArray{<:Real,2})::AbstractArray{<:Real,2}
+function minkowski_reduce(basis::AbstractArray{<:Real,2};
+    rtol::Real=sqrt(eps(float(maximum(basis)))),atol::Real=1e-9)::AbstractArray{<:Real,2}
 
     # Sort the lattice vectors by increasing norm.
     order = sortperm([basis[:,i] for i=1:size(basis,1)])
@@ -203,7 +208,7 @@ function minkowski_reduce(
 
     k=2
     while k <= size(rbasis,1)
-        k=reduce_basis!(rbasis,k)
+        k=reduce_basis!(rbasis,k,rtol=rtol,atol=atol)
     end
     rbasis
 end

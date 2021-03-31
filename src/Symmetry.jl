@@ -15,7 +15,7 @@ import .Utilities: sample_circle, sample_sphere, contains, remove_duplicates
 @doc """
     calc_pointgroup(latvecs;rtol,atol)
 
-Calculate the point group of lattice in 2D or 3D.
+Calculate the point group of a lattice in 2D or 3D.
 
 # Arguments
 - `latvecs::AbstractArray{<:Real,2}`: the basis of the lattice as columns of an
@@ -52,7 +52,7 @@ function calc_pointgroup(latvecs::AbstractArray{<:Real,2};
     atol::Real=1e-9)::Array{Array{Float64,2},1}
 
     dim=size(latvecs,1)
-    latvecs = minkowski_reduce(latvecs)
+    latvecs = minkowski_reduce(latvecs,rtol=rtol,atol=atol)
     radius = maximum([norm(latvecs[:,i]) for i=1:dim])
     if size(latvecs) == (2,2)
         pts=sample_circle(latvecs,radius,[0,0],rtol=rtol,atol=atol)
@@ -71,7 +71,7 @@ function calc_pointgroup(latvecs::AbstractArray{<:Real,2};
         normsᵣ=[norm(latvecsᵣ[:,i]) for i=1:dim]
         sizeᵣ=abs(det(latvecsᵣ))
         # Point operation preserves length of lattice vectors and
-        # volume on primitive cell.
+        # volume of primitive cell.
         if (isapprox(normsᵢ,normsᵣ,rtol=rtol,atol=atol) &
             isapprox(sizeᵢ,sizeᵣ,rtol=rtol,atol=atol))
             op=latvecsᵣ*inv_latvecs
@@ -128,7 +128,7 @@ SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
 function mapto_unitcell(pt::AbstractArray{<:Real,1},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=0.0)::Array{Real,1}
+    atol::Real=1e-9)::Array{Real,1}
     if coordinates == "Cartesian"
         Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
             for c=inv_latvecs*pt])
@@ -149,7 +149,7 @@ Map points as columns of a 2D array to the unitcell.
 function mapto_unitcell(points::AbstractArray{<:Real,2},
     latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=0.0)::Array{Real,2}
+    atol::Real=1e-9)::Array{Real,2}
 
 	reduce(hcat,[mapto_unitcell(points[:,i],latvecs,inv_latvecs,coordinates,
         rtol=rtol,atol=atol) for i=1:size(points,2)])
@@ -237,7 +237,7 @@ function mapto_bz(kpoint::AbstractArray{<:Real,1},
 end
 
 @doc """
-    mapto_bz(kpoints,recip_latvecs,inv_latvecs,coordinates;rtol,atol)
+    mapto_bz(kpoints,recip_latvecs,inv_rlatvecs,coordinates;rtol,atol)
 
 Map points as columns of a 2D array to the Brillouin zone.
 """
@@ -245,9 +245,9 @@ function mapto_bz(kpoints::AbstractArray{<:Real,2},
 	recip_latvecs::AbstractArray{<:Real,2},
 	inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String;
 	rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-	atol::Real=0.0)::Array{Float64,2}
+	atol::Real=1e-9)::Array{Float64,2}
 
-	reduce(hcat,[mapto_bz(kpoints[:,i],recip_latvecs,inv_latvecs,coordinates,
+	reduce(hcat,[mapto_bz(kpoints[:,i],recip_latvecs,inv_rlatvecs,coordinates,
 		rtol=rtol, atol=atol) for i=1:size(kpoints,2)])
 end
 
@@ -457,7 +457,7 @@ function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
         atom_pos = real_latvecs*atom_pos
     end
 
-    real_latvecs = minkowski_reduce(real_latvecs)
+    real_latvecs = minkowski_reduce(real_latvecs,rtol=rtol,atol=atol)
     inv_latvecs = inv(real_latvecs)
     pointgroup = calc_pointgroup(real_latvecs,rtol=rtol,atol=atol)
     numatoms = length(atom_types)
@@ -566,7 +566,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 	atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
 	coordinates::String,bzformat::String,makeprim::Bool=false,
 	convention::String="ordinary";
-	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=0.0)
+	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
 	if makeprim
     	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
@@ -575,13 +575,16 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
 	end
 
-	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention))
+	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention),
+        rtol=rtol,atol=atol)
     if size(real_latvecs) == (2,2)
         latpts = reduce(hcat,[recip_latvecs*[i,j] for
             (i,j)=Iterators.product(-2:2,-2:2)])
-    else
+    elseif size(real_latvecs) == (3,3)
         latpts = reduce(hcat,[recip_latvecs*[i,j,k] for
             (i,j,k)=Iterators.product(-2:2,-2:2,-2:2)])
+    else
+        throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 array."))
     end
 
     distances = [norm(latpts[:,i]) for i=1:size(latpts,2)] .^2 ./2
@@ -589,6 +592,8 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
     for i=3:size(latpts,2)
         bz = bz ∩ HalfSpace(latpts[:,i],distances[i])
     end
+
+    @show polyhedron(bz,Library())
     verts = reduce(hcat,points(polyhedron(bz,Library())))
     bzvolume = chull(Array(verts')).volume
 
@@ -668,12 +673,16 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
 			atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
 	else
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
+        if coordinates == "lattice"
+            prim_pos = real_latvecs*prim_pos
+        end
 	end
-	pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,coordinates,
+
+	pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,"Cartesian",
 		rtol=rtol,atol=atol)[2]
 	sizepg = size(pointgroup,1)
     bzformat = "half-space"
-    bz = calc_bz(prim_latvecs,prim_types,prim_pos,coordinates,bzformat,false,
+    bz = calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian",bzformat,false,
         convention,rtol=rtol,atol=atol)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
@@ -769,7 +778,7 @@ make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-    atol::Real=0.0)
+    atol::Real=1e-9)
 
     (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
 		rtol=rtol,atol=atol)
@@ -843,7 +852,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
         inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:length(atom_types)])
 
     # Remove atoms at the same positions that are the same type.
-    tmp = remove_duplicates(vcat(all_prim_pos,atom_types'))
+    tmp = remove_duplicates(vcat(all_prim_pos,atom_types'),rtol=rtol,atol=atol)
     prim_types = Int.(tmp[dim + 1,:])
     prim_pos = tmp[1:dim,:]
 
