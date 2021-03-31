@@ -56,7 +56,7 @@ The arguments for `calc_ibz` are as follows:
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are \"ordinary\" (temporal) frequency and \"angular\"
 	frequency.
-- `primitive`: make the unit cell primitive before calculating the the IBZ if
+- `makeprim`: make the unit cell primitive before calculating the the IBZ if
 	true.
 	
 The vertices of the ibz are accessed with `ibz.points[ibz.vertices,:]`. The
@@ -71,10 +71,10 @@ facets = [ibz.points[ind] for ind=indices]
 ```
 `facets` is a list of points at the corners of each facet.The function
 `get_uniquefacets` returns the indices of points that lie on the same facet. The
-facets are available to through `ibz` as simplices, but often multiple simplices
+facets are also available through `ibz.simplices` as simplices, but often multiple simplices
 lie on the same facet.
 
-The functions `plot_convexhulls` is useful for visualizing the Brillouin zone
+The function `plot_convexhulls` is useful for visualizing the Brillouin zone
 and irreducible Brillouin zone. The arguments are the same as those from
 `calc_ibz`.
 ```@example
