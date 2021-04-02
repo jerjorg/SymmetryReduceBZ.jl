@@ -569,7 +569,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
 	if makeprim
-    	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
+    	(prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
 			atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
 	else
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
@@ -578,11 +578,9 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
 	recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention),
         rtol=rtol,atol=atol)
     if size(real_latvecs) == (2,2)
-        latpts = reduce(hcat,[recip_latvecs*[i,j] for
-            (i,j)=Iterators.product(-2:2,-2:2)])
+        latpts = reduce(hcat,[recip_latvecs*[i,j] for (i,j)=product(-2:2,-2:2)])
     elseif size(real_latvecs) == (3,3)
-        latpts = reduce(hcat,[recip_latvecs*[i,j,k] for
-            (i,j,k)=Iterators.product(-2:2,-2:2,-2:2)])
+        latpts = reduce(hcat,[recip_latvecs*[i,j,k] for (i,j,k)=product(-2:2,-2:2,-2:2)])
     else
         throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 array."))
     end
@@ -593,7 +591,6 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
         bz = bz ∩ HalfSpace(latpts[:,i],distances[i])
     end
 
-    @show polyhedron(bz,Library())
     verts = reduce(hcat,points(polyhedron(bz,Library())))
     bzvolume = chull(Array(verts')).volume
 
@@ -669,7 +666,7 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
 	rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
 	if makeprim
-    	(prim_types,prim_pos,prim_latvecs) = make_primitive(real_latvecs,
+    	(prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
 			atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
 	else
 		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
@@ -752,12 +749,12 @@ This is a Julia translation of the function by the same in
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
+- `prim_latvecs::AbstractArray{<:Real,2}`: the primitive lattice vectors as
+    columns of an array.
 - `prim_types::AbstractArray{<:Int,1}`: a list of atom types as integers in the
     primitive unit cell.
 - `prim_pos::AbstractArray{<:Real,2}`: the positions of the atoms in in the
     crystal structure as columns of an array.
-- `prim_latvecs::AbstractArray{<:Real,2}`: the primitive lattice vectors as
-    columns of an array.
 
 # Examples
 ```jldoctest
@@ -772,7 +769,7 @@ coordinates = "Cartesian"
 convention = "ordinary"
 make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 # output
-([0], [0.0; 0.0; 0.0], [1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5])
+([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0]) 
 ```
 """
 function make_primitive(real_latvecs::AbstractArray{<:Real,2},
@@ -780,14 +777,24 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=1e-9)
 
+    if length(atom_types) == 1
+        return (real_latvecs, atom_types, atom_pos)
+    end
+
     (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
 		rtol=rtol,atol=atol)
     # Unique fractional translations
-    ftrans = remove_duplicates(reduce(hcat, ftrans))
+    ftrans = remove_duplicates(reduce(hcat, ftrans),rtol=rtol,atol=atol)
+
     # No need to consider the origin.
     dim = size(real_latvecs,1)
-    if dim==2 origin=[0.,0.] else origin=[0.,0.,0.] end
-
+    if dim==2 
+        origin=[0.,0.]
+    elseif dim==3 
+        origin=[0.,0.,0.]
+    else
+        throw(ArgumentError("Can only make 2D or 3D unit cells primitive."))
+    end
     for i = 1:size(ftrans,2)
         if isapprox(ftrans[:,i],origin,rtol=rtol,atol=atol)
             ftrans  = ftrans[:,1:end .!= i]
@@ -797,50 +804,42 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
 
     prim_latvecs = real_latvecs
     inv_latvecs = inv(real_latvecs)
-
+    mapped = false
     if size(ftrans,2)!=0
         # Number of lattice vector options
-        nopts = size(ftrans,2)+3
-
+        nopts = size(ftrans,2)+dim
         # Lattice vector options
         opts = hcat(real_latvecs, ftrans)
         if dim == 2
-            for i=1:nopts-2, j=i+1:nopts-1
-                prim_latvecs = opts[:,[i,j]]
-                inv_latvecs = inv(prim_latvecs)
-                # Move all translations into the potential primitive unit cell.
-                test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                        inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for
-						i=1:size(ftrans,2)]
-
-                # Check if all coordinates of all fractional translations are
-                # integers in lattice coordinates.
-                test = [inv_latvecs*t for t=test]
-                test = isapprox(mod.(collect(Iterators.flatten(test)),1)
-                            ,zeros(2*length(test)),rtol=rtol,atol=atol)
-                if test
-                    break
-                end
-            end
+            iters = [[(i,j) for j=i+1:nopts-1] for i=1:nopts-2] |> flatten
         else
-            for i=1:nopts-2, j=i+1:nopts-1, k=j+1:nopts
-                prim_latvecs = opts[:,[i,j,k]]
-                inv_latvecs = inv(prim_latvecs)
-                # Move all translations into the potential primitive unit cell.
-                test = [mapto_unitcell(ftrans[:,i],real_latvecs,
-                        inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
-						for i=1:size(ftrans,2)]
+            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for i=1:nopts-2] |> flatten |> flatten
+        end
 
-                # Check if all coordinates of all fractional translations are
-                # integers in lattice coordinates.
-                test = [inv_latvecs*t for t=test]
-                test = isapprox(mod.(collect(Iterators.flatten(test)),1)
-                            ,zeros(3*length(test)))
-                if test
-                    break
-                end
+        for iter=iters
+            prim_latvecs = opts[:,[iter...]]
+            if isapprox(det(prim_latvecs),0,atol=atol)
+                continue
+            end
+            inv_latvecs = inv(prim_latvecs)
+            # Move all lattice points into the potential primitive unit cell.
+            test = [mapto_unitcell(opts[:,i],prim_latvecs,
+                    inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:nopts]
+            # Check if all coordinates of all fractional translations are
+            # integers in lattice coordinates.
+            test = [inv_latvecs*t for t=test]
+            test = isapprox(mod.(collect(flatten(test)),1)
+                        ,zeros(dim*length(test)),rtol=rtol,atol=atol)
+            if test
+                mapped = true
+                break
             end
         end
+    end
+    
+    if !mapped
+        prim_latvecs = real_latvecs
+        inv_latvecs = inv(real_latvecs)
     end
 
     # Map all atoms into the primitive cell.
@@ -856,7 +855,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     prim_types = Int.(tmp[dim + 1,:])
     prim_pos = tmp[1:dim,:]
 
-    (prim_types,prim_pos,prim_latvecs)
+    (prim_latvecs,prim_types,prim_pos)
 end
 
 end #module

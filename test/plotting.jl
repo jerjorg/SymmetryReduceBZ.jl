@@ -13,10 +13,10 @@ import SymmetryReduceBZ.Plotting: plot_convexhulls
         coords = "Cartesian"
         atom_pos = Array([0 0 0]')
         convention = "ordinary"
-        (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
+        ax = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
             true,convention)
 
-        (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
+        ax = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
             false,convention)
         @test true
 
@@ -26,9 +26,9 @@ import SymmetryReduceBZ.Plotting: plot_convexhulls
         coords = "Cartesian"
         atom_pos = Array([0 0]')
         convention = "ordinary"
-        (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
+        ax = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
             true,convention)
-        (fig,ax) = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
+        ax = plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,
             false,convention)
         @test true
     end
