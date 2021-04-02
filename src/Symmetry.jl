@@ -10,7 +10,7 @@ import Base.Iterators: product, flatten
 include("Lattices.jl")
 include("Utilities.jl")
 import .Lattices: get_recip_latvecs, minkowski_reduce
-import .Utilities: sample_circle, sample_sphere, contains, remove_duplicates
+import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove_duplicates
 
 @doc """
     calc_pointgroup(latvecs;rtol,atol)
@@ -119,7 +119,7 @@ coordinates = "Cartesian"
 SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
 	coordinates)
 # output
-3-element Array{Float64,1}:
+3-element Array{Real,1}:
  0.0
  0.0
  0.20000000000000018
@@ -183,6 +183,7 @@ Map a k-point to a translationally equivalent point within the Brillouin zone.
 
 # Examples
 ```jldoctest
+import SymmetryReduceBZ.Symmetry: mapto_bz
 import LinearAlgebra: inv
 recip_latvecs = [1 0 0; 0 1 0; 0 0 1]
 inv_latvecs = inv(recip_latvecs)
@@ -190,7 +191,7 @@ kpoint = [2, 3, 2]
 coordinates = "Cartesian"
 mapto_bz(kpoint, recip_latvecs, inv_latvecs, coordinates)
 # output
-3-element Array{Real,1}:
+3-element Array{Float64,1}:
  0.0
  0.0
  0.0
@@ -269,17 +270,12 @@ Check if a point lies within a convex hull (including the boundaries).
 
 # Examples
 ```jldoctest
-real_latvecs = [1 0; 0 2]
-atomtypes=[0]
-atompos=Array([0 0]')
-bzformat="convex hull"
-coordinates="Cartesian"
-convention="ordinary"
-makeprim=false
-bz=calc_bz(real_latvecs, atomtypes,atompos,coordinates,bzformat,makeprim,
-	convention)
-point = [0,0]
-inhull(point,bz)
+import QHull: chull
+import SymmetryReduceBZ.Symmetry: inhull
+pts = [0.5 0.25; 0.5 -0.25; -0.5 -0.25; -0.5 0.25]
+pt = [0,0]
+convexhull = chull(pts)
+inhull(pt,convexhull)
 # output
 true
 ```
@@ -339,22 +335,18 @@ Map a point to a symmetrically equivalent point within the IBZ.
 # Examples
 ```jldoctest
 import SymmetryReduceBZ.Lattices: get_recip_latvecs
-import SymmetryReduceBZ.Symmetry: calc_pointgroup, calc_ibz, mapto_ibz
+import SymmetryReduceBZ.Symmetry: calc_spacegroup, mapto_ibz
 import LinearAlgebra: inv
-
+import QHull: chull
 real_latvecs = [1 0; 0 2]
+atom_types=[0]
+atom_pos=Array([0 0]')
+coordinates="Cartesian"
 convention="ordinary"
 recip_latvecs = get_recip_latvecs(real_latvecs,convention)
 inv_rlatvecs = inv(recip_latvecs)
-atomtypes=[0]
-atompos=Array([0 0]')
-coordinates="Cartesian"
-ibzformat="convex hull"
-makeprim=false
-
-ibz=calc_ibz(real_latvecs, atomtypes,atompos,coordinates,ibzformat,makeprim,
-	convention)
 (ftrans,pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates)
+ibz = chull([0.0 0.25; 0.0 0.0; 0.5 0.0; 0.5 0.25])
 kpoint = [2,3]
 ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 # output
@@ -400,7 +392,7 @@ function mapto_ibz(kpoints::AbstractArray{<:Real,2},
 	ibzpts = reduce(hcat,[mapto_ibz(kpoints[:,i],recip_latvecs,
 		inv_rlatvecs,ibz,pointgroup,coordinates) for i=1:size(kpoints,2)])
 
-	remove_duplicates(ibzpts,rtol=rtol,atol=atol)
+	unique_points(ibzpts,rtol=rtol,atol=atol)
 end
 
 @doc """
@@ -436,10 +428,7 @@ coordinates = "Cartesian"
 SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
 	coordinates)
 # output
-(Any[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0],
-[0.0, 0.0], [0.0, 0.0]], Any[[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0],
-[-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0],
-[1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
+([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
 """
 function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
@@ -544,6 +533,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Examples
 ```jldoctest
+using SymmetryReduceBZ
 real_latvecs = [1 0; 0 1]
 convention="ordinary"
 atom_types=[0]
@@ -675,11 +665,10 @@ function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
         end
 	end
 
-	pointgroup = calc_spacegroup(prim_latvecs,prim_types,prim_pos,"Cartesian",
-		rtol=rtol,atol=atol)[2]
+	pointgroup = remove_duplicates(calc_spacegroup(prim_latvecs,prim_types,
+        prim_pos,"Cartesian",rtol=rtol,atol=atol)[2],rtol=rtol,atol=atol)
 	sizepg = size(pointgroup,1)
-    bzformat = "half-space"
-    bz = calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian",bzformat,false,
+    bz = calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian","half-space",false,
         convention,rtol=rtol,atol=atol)
     bz_vertices = collect(points(polyhedron(bz,Library())))
     ibz = bz
@@ -784,7 +773,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
 		rtol=rtol,atol=atol)
     # Unique fractional translations
-    ftrans = remove_duplicates(reduce(hcat, ftrans),rtol=rtol,atol=atol)
+    ftrans = unique_points(reduce(hcat, ftrans),rtol=rtol,atol=atol)
 
     # No need to consider the origin.
     dim = size(real_latvecs,1)
@@ -813,7 +802,8 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
         if dim == 2
             iters = [[(i,j) for j=i+1:nopts-1] for i=1:nopts-2] |> flatten
         else
-            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for i=1:nopts-2] |> flatten |> flatten
+            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for 
+                i=1:nopts-2] |> flatten |> flatten
         end
 
         for iter=iters
@@ -851,7 +841,7 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
         inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:length(atom_types)])
 
     # Remove atoms at the same positions that are the same type.
-    tmp = remove_duplicates(vcat(all_prim_pos,atom_types'),rtol=rtol,atol=atol)
+    tmp = unique_points(vcat(all_prim_pos,atom_types'),rtol=rtol,atol=atol)
     prim_types = Int.(tmp[dim + 1,:])
     prim_pos = tmp[1:dim,:]
 

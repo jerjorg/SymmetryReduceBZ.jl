@@ -26,7 +26,8 @@ Plot a 2D convex hull
 
 # Examples
 ```jldoctest
-using SymmetryReduceBZ
+import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
 real_latvecs = [1 0; 0 1]
 convention="ordinary"
 atom_types=[0]
@@ -34,17 +35,16 @@ atom_pos = Array([0 0]')
 coords = "Cartesian"
 ibzformat = "convex hull"
 makeprim=false
-ibz = SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coords,
-	ibzformat,makeprim,convention)
-color="deepskyblue"
-ax = SymmetryReduceBZ.Plotting.plot_2Dconvexhull(ibz,ax,color);
-ax = SymmetryReduceBZ.Plotting.plot_2Dconvexhull(bz,ax;color=color)
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
+ax = plot_2Dconvexhull(bz,color="deepskyblue");
+ax = plot_2Dconvexhull(ibz,ax;color="coral")
 # output
-
+PyObject <AxesSubplot:>
 ```
 """
 function plot_2Dconvexhull(convexhull::Chull{<:Real},
-    ax::Union{PyObject,Nothing}=nothing;color::String)::PyObject
+    ax::Union{PyObject,Nothing}=nothing;color::String="blue")::PyObject
 
     patch=pyimport("matplotlib.patches")
     collections=pyimport("matplotlib.collections")
@@ -81,23 +81,28 @@ Plot a 3D convex hull
 
 # Examples
 ```jldoctest
-using SymmetryReduceBZ
-real_latvecs = [1 0; 0 1]
+import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
+using PyPlot
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 convention="ordinary"
 atom_types=[0]
-atom_pos = Array([0 0]')
+atom_pos = Array([0 0 0]')
 coords = "Cartesian"
 bzformat = "convex hull"
 makeprim=false
-bz = SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coords,
-    bzformat,makeprim,convention)
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
+fig = figure()
 ax = fig.add_subplot(111, projection="3d")
-ax = SymmetryReduceBZ.Plotting.plot_3Dconvexhull(bz,ax,color="deepskyblue")
+ax = plot_3Dconvexhull(ibz,ax,color="coral")
+ax = plot_3Dconvexhull(bz,ax,color="deepskyblue")
 # output
+PyObject <Axes3DSubplot:>
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing}=nothing;
-    color::String)
+    color::String="blue")
 
     ϵ=0.1*(convexhull.volume)^1/3
     plotrange=[[minimum(convexhull.points[:,i])-ϵ,
@@ -172,7 +177,7 @@ makeprim = true
 convention = "ordinary"
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
 # output
-
+PyObject <AxesSubplot:>
 ```
 """
 function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
@@ -203,8 +208,8 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
         ax = plot_2Dconvexhull(bz,ax,color="deepskyblue")
         ax = plot_2Dconvexhull(ibz,ax,color="coral")
     else # dim == 3
-        ax = plot_3Dconvexhull(ibz,ax,color="yellow")
-        ax = plot_3Dconvexhull(bz,ax,color="blue")
+        ax = plot_3Dconvexhull(ibz,ax,color="lightcoral")
+        ax = plot_3Dconvexhull(bz,ax,color="deepskyblue")
     end
     ax
 end

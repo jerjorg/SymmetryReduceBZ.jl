@@ -2,10 +2,12 @@ using Test
 
 import SymmetryReduceBZ.Utilities: affine_trans, contains, edgelengths,
 	get_uniquefacets, mapto_xyplane, remove_duplicates, sample_circle,
-	sample_sphere, shoelace, sortpts_perm
+	sample_sphere, shoelace, sortpts_perm, unique_points
 
 import SymmetryReduceBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HXG,
     genlat_OBL, genlat_CUB
+
+import SymmetryReduceBZ.Symmetry: calc_bz
 
 # Lattice vectors
 # 2D
@@ -59,7 +61,7 @@ bzformat = "convex hull"
         rtol = 1e-6
         pt = [1+1e-6,2,3]
         pts = Array([1 2 3; 1.1 2.2 3.3; 2 3 4]')
-        @test contains(pt,pts,rtol) == true
+        @test contains(pt,pts,rtol=rtol) == true
     end
 
     @testset "edgelengths" begin
@@ -116,19 +118,24 @@ bzformat = "convex hull"
             i=1:length(facets)])
         end
 
-    @testset "remove_duplicates" begin
+    @testset "unique_points" begin
         pts = Array([1.1 1.2 1.3; 1.1+1e-10 1.2+1e-11 1.3+1e-9; 0.1 0.2 0.3]')
-        upts = remove_duplicates(pts)
+        upts = unique_points(pts)
         @test size(upts) == (3,2)
 
         pts = Array([1.1 1.2 1.3; 1.1+1e-7 1.2+1e-11 1.3+1e-10; 0.1 0.2 0.3]')
-        upts = remove_duplicates(pts)
+        upts = unique_points(pts)
         @test size(upts) == (3,3)
 
         rtol=1e-7
         pts = Array([1.1 1.2 1.3; 1.1+1e-7 1.2+1e-11 1.3+1e-10; 0.1 0.2 0.3]')
-        upts = remove_duplicates(pts,rtol)
+        upts = unique_points(pts,rtol=rtol)
         @test size(upts) == (3,2)
+    end
+
+    @testset "remove_duplicates" begin
+        pts = [1,1,2,2,3,3,4,4]
+        @test isapprox(remove_duplicates(pts),[1,2,3,4])
     end
 
     @testset "sample_circle" begin

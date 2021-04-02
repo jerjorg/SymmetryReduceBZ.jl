@@ -4,6 +4,7 @@ import LinearAlgebra: cross, dot, norm
 import LinearAlgebra.BLAS: gemv
 import Distances: euclidean
 import Base.Iterators: flatten
+import QHull: Chull
 
 @doc """
     affine_trans(pts)
@@ -176,9 +177,40 @@ end
 @doc """
     get_uniquefacets(ch)
 
-Calculate the unique facets of a convex hull object.
+Calculate the unique facets of a convex hull.
+
+# Arguments
+- `ch::Chull{<:Real}`: a convex hull in 3D from `QHull`.
+
+# Returns
+- `unique_facets::Array{Array{Int,1}}`: a nested list of the indices of points
+    that lie on each face. For example, the points that lie on the first face
+    are `ch.points[unique_facets[1],:]`.
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Utilities: get_uniquefacets
+import SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+bzformat = "convex hull"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,convention)
+get_uniquefacets(bz)
+# output
+6-element Array{Array{Int64,1},1}:
+ [1, 2, 3, 4]
+ [7, 2, 3, 5]
+ [6, 4, 3, 5]
+ [7, 2, 1, 8]
+ [6, 4, 1, 8]
+ [8, 7, 5, 6]
+```
 """
-function get_uniquefacets(ch)
+function get_uniquefacets(ch::Chull{<:Real})::Array{Array{Int,1}}
 
     facets = ch.facets
     unique_facets = []
@@ -200,6 +232,7 @@ function get_uniquefacets(ch)
             append!(unique_facets,[face])
         end
     end
+    unique_facets = convert(Array{Array{Int,1}},unique_facets)
     unique_facets
 end
 
@@ -358,6 +391,15 @@ Calculate the area of a polygon with the shoelace algorithm.
 
 # Returns
 - `<:Real`: the area of the polygon.
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Utilities: shoelace
+pts = [0 0 1; -1 1 0]
+shoelace(pts)
+# output
+1.0
+````
 """
 function shoelace(vertices)
     xs = vertices[1,:]
@@ -382,15 +424,15 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
 
 # Examples
 ```jldoctest
-using SymmetryReduceBZ
+import SymmetryReduceBZ.Utilities: sortpts_perm
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
-perm=SymmetryReduceBZ.Utilities.sortpts_perm(pts)
+perm=sortpts_perm(pts)
 pts[:,perm]
 # output
 3×4 Array{Float64,2}:
-  0.5  0.5   0.5   0.5
-  0.5  0.5  -0.5  -0.5
- -0.5  0.5   0.5  -0.5
+  0.5   0.5   0.5  0.5
+ -0.5  -0.5   0.5  0.5
+  0.5  -0.5  -0.5  0.5
 ```
 """
 function sortpts_perm(pts::AbstractArray{<:Real,2})
@@ -406,15 +448,15 @@ function sortpts_perm(pts::AbstractArray{<:Real,2})
 end
 
 @doc """
-    remove_duplicates(points;rtol,atol)
+    unique_points(points;rtol,atol)
 
-Remove duplicate points from an array.
+Remove duplicate points.
 
 # Arguments
 - `points::AbstractArray{<:Real,2}`: the points are columns of a 2D array.
 - `rtol::Real=sqrt(eps(float(maximum(flatten(points)))))`: a relative tolerance
     for floating point comparisons.
-- `atol::Real=1e-9`: an absolume tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
 - `uniquepts::AbstractArray{<:Real,2}`: a 2D array of unique points as columns.
@@ -423,16 +465,17 @@ Remove duplicate points from an array.
 ```jldoctest
 using SymmetryReduceBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
-SymmetryReduceBZ.Utilities.remove_duplicates(points)
+SymmetryReduceBZ.Utilities.unique_points(points)
 # output
-2×3 Array{Int64,2}:
- 1  2  3
- 2  3  4
+2×3 Array{Float64,2}:
+ 1.0  2.0  3.0
+ 2.0  3.0  4.0
 ```
 """
-function remove_duplicates(points::AbstractArray;
+function unique_points(points::AbstractArray{<:Real,2};
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
     atol::Real=1e-9)::AbstractArray
+    
     uniquepts=zeros(size(points))
     numpts = 0
     for i=1:size(points,2)
@@ -448,20 +491,41 @@ end
 @doc """
     remove_duplicates(points;rtol,atol)
 
-Remove duplicates from a nested array.
+Remove duplicates from an array.
+
+# Arguments
+- points
+- `rtol::Real=sqrt(eps(float(maximum(points))))`: relative tolerance.
+- `atol::Real=1e-9`: absolute tolerance. 
+
+# Returns
+- `uniquepts::AbstractArray`: an array with only unique elements. 
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Utilities: remove_duplicates
+test = [1.,1.,2,2,]
+remove_duplicates(test)
+# output
+2-element Array{Any,1}:
+ 1.0
+ 2.0
+```
 """
-function remove_duplicates(points::AbstractArray{<:Real,1},
-    rtol::Real=sqrt(eps(float(maximum(points)))),
+function remove_duplicates(points::AbstractArray;
+    rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
     atol::Real=1e-9)::AbstractArray
-    uniquepts=[]
-    for i=1:length(points)
+    uniquepts=Array{Any}(undef, length(points))
+    uniquepts[1] = points[1]
+    npts = 1
+    for i=2:length(points)
         pt=points[i]
-        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for
-                i=1:length(uniquepts)])
-            append!(uniquepts,pt)
+        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for i=1:npts])
+            npts += 1
+            uniquepts[npts] = pt
         end
     end
-    uniquepts
+    uniquepts[1:npts]
 end
 
 end # module

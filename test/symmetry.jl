@@ -5,7 +5,7 @@ const lt = Lattices
 
 import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
     calc_ibz, mapto_unitcell, make_primitive, inhull, mapto_bz, mapto_ibz
-import SymmetryReduceBZ.Utilities: remove_duplicates
+import SymmetryReduceBZ.Utilities: unique_points
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
 import LinearAlgebra: inv
@@ -262,7 +262,7 @@ ibzformat="convex hull"
                             op=pointgroup for i=1:size(bz.points,1)])
                         # BZ vertices should map to other BZ vertices under
                         # point group operations
-                        @test (size(remove_duplicates(bzverts),2) ==
+                        @test (size(unique_points(bzverts),2) ==
                             size(bz.points,1))
                     end
                 end
@@ -321,7 +321,7 @@ ibzformat="convex hull"
                     # Unfold IBZ
                     unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
                                 for i=1:size(ibz.points,1)])
-                    unfoldpts = remove_duplicates(unfoldpts)
+                    unfoldpts = unique_points(unfoldpts)
                     unfold_chull = chull(Array(unfoldpts'))
                     unfoldpts=unfold_chull.points[unfold_chull.vertices,:]
                     @test size(unfoldpts,1) == size(bz.points[bz.vertices,:],1)
