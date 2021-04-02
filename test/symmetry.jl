@@ -249,11 +249,11 @@ ibzformat="convex hull"
                             bzformat,makeprim,convention)
                         
                         if makeprim
-                        	(prim_types,prim_pos,prim_latvecs) = make_primitive(
+                        	(prim_latvecs,prim_types,prim_pos) = make_primitive(
                                 real_latvecs,atom_types,atom_pos,coords)
                     	else
-                    		(prim_types,prim_pos,prim_latvecs)=(
-                                atom_types,atom_pos,real_latvecs)
+                    		(prim_latvecs,prim_types,prim_pos)=(
+                                real_latvecs,atom_types,atom_pos)
                     	end
 
                         pointgroup=calc_pointgroup(prim_latvecs)
@@ -303,11 +303,10 @@ ibzformat="convex hull"
                 for makeprim=[true,false]
 
                     if makeprim
-                    	(prim_types,prim_pos,prim_latvecs) = make_primitive(
+                    	(prim_latvecs,prim_types,prim_pos) = make_primitive(
                             real_latvecs,atom_types,atom_pos,coords)
                 	else
-                		(prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,
-                            real_latvecs)
+                		(prim_latvecs,prim_types,prim_pos)=(real_latvecs,atom_types,atom_pos)
                 	end
 
                     pointgroup = calc_spacegroup(prim_latvecs,prim_types,
@@ -972,7 +971,7 @@ ibzformat="convex hull"
         ibzformat = "convex hull"
         coords = "lattice"
         convention = "ordinary"
-        (prim_types, prim_pos, prim_latvecs) = make_primitive(real_latvecs,
+        (prim_latvecs,prim_types, prim_pos) = make_primitive(real_latvecs,
             atom_types, atom_pos, coords)
         @test prim_types == [0]
         @test isapprox(prim_pos, [0,0,0])
@@ -985,7 +984,7 @@ ibzformat="convex hull"
         ibzformat = "convex hull"
         coords = "Cartesian"
         convention = "ordinary"
-        (prim_types, prim_pos, prim_latvecs) = make_primitive(real_latvecs,
+        (prim_latvecs, prim_types, prim_pos) = make_primitive(real_latvecs,
             atom_types, atom_pos, coords)
         @test prim_types == [0]
         @test isapprox(prim_pos, [0,0,0])
