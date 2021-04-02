@@ -69,7 +69,7 @@ import SymmetryReduceBZ.Utilities: get_uniquefacets
 indices = get_uniquefacets(ibz)
 facets = [ibz.points[ind] for ind=indices]
 ```
-`facets` is a list of points at the corners of each facet.The function
+`facets` is a list of points at the corners of each facet. The function
 `get_uniquefacets` returns the indices of points that lie on the same facet. The
 facets are also available through `ibz.simplices` as simplices, but often multiple simplices
 lie on the same facet.
