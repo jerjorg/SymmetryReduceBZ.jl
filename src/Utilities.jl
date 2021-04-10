@@ -528,4 +528,49 @@ function remove_duplicates(points::AbstractArray;
     uniquepts[1:npts]
 end
 
+@doc """
+    points₋in₋ball(points,radius,offset,rtol=sqrt(eps(float(radius))),atol=1e-9)
+
+Calculate the points within a ball (circle, sphere, ...).
+
+# Arguments
+- `points::AbstractArray{<:Real,2}`: points in Cartesian coordinates as columns of a 2D array.
+- `radius::Real`: the radius of the ball.
+- `offset::AbstractArray{<:Real,1}`: the location of the center of the ball in Cartesian coordinates.
+- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerance for floating point comparisons.
+- `atol::Real=1e-9`: an absolute tolerance.
+
+# Returns
+- `ball_points::AbstractArray{Int,1}`: the indices of points in `points` within the ball.
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Utilities: points₋in₋ball
+points = [0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.25 0.3 0.35 0.4 0.45 0.5 0.3 0.35 0.4 0.45 0.5 0.35 0.4 0.45 0.5 0.4 0.45 0.5 0.45 0.5 0.5; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.25 0.25 0.25 0.25 0.25 0.25 0.3 0.3 0.3 0.3 0.3 0.35 0.35 0.35 0.35 0.4 0.4 0.4 0.45 0.45 0.5]
+radius = 0.1
+offset = [0,0]
+pts₋in₋ball(points,radius,offset)
+# output
+4-element Array{Int64,1}:
+  1
+  2
+  3
+ 12
+```
+"""
+function points₋in₋ball(points::AbstractArray{<:Real,2},radius::Real,offset::AbstractArray{<:Real,1};
+        rtol::Real=sqrt(eps(float(radius))),atol::Real=1e-9)::AbstractArray{Int,1}
+
+    ball_points = zeros(Int,size(points,2))
+    count = 0
+    for i=1:size(points,2)
+        if (norm(points[:,i] - offset) < radius) || 
+            isapprox(norm(points[:,i] - offset),radius,rtol=rtol,atol=atol)
+            count+=1
+            ball_points[count] = i
+        end
+    end
+    ball_points[1:count]
+end
+
 end # module

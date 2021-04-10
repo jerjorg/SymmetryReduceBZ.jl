@@ -19,7 +19,10 @@ Plot a 2D convex hull
 # Arguments
 - `convexhull::Chull{<:Real}`: a convex hull object.
 - `ax::PyObject`: an axes object from matplotlib.
-- `color::String`: the face color of the convex hull.
+- `facecolor::String="blue"`: the color of the area within the convex hull.
+- `alpha::Real=0.3`: the transparency of the convex hull.
+- `linewidth::Real=3`: the width of the edges.
+- `edgecolor::String="black"`: the color of the edges.
 
 # Returns
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
@@ -37,14 +40,15 @@ ibzformat = "convex hull"
 makeprim=false
 bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
 ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
-ax = plot_2Dconvexhull(bz,color="deepskyblue");
-ax = plot_2Dconvexhull(ibz,ax;color="coral")
+ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",alpha=0.2)
+ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 # output
 PyObject <AxesSubplot:>
 ```
 """
 function plot_2Dconvexhull(convexhull::Chull{<:Real},
-    ax::Union{PyObject,Nothing}=nothing;color::String="blue")::PyObject
+    ax::Union{PyObject,Nothing}=nothing;facecolor::String="blue",
+    alpha::Real=0.3,linewidth::Real=3,edgecolor::String="black")::PyObject
 
     patch=pyimport("matplotlib.patches")
     collections=pyimport("matplotlib.collections")
@@ -61,7 +65,8 @@ function plot_2Dconvexhull(convexhull::Chull{<:Real},
     (x,y)=[bzpts[i,:] for i=1:2]
 
     if ax == nothing fig,ax = subplots() end
-    ax.fill(x,y, facecolor=color,edgecolor="black",linewidth=3)
+    ax.fill(x,y, facecolor=facecolor,edgecolor=edgecolor,
+        linewidth=linewidth,alpha=alpha)
     ax.set_aspect(1)
     ax
 end
@@ -74,7 +79,10 @@ Plot a 3D convex hull
 # Arguments
 - `convexhull::Chull{<:Real}`: a convex hull object.
 - `ax::PyObject`: an axes object from matplotlib.
-- `color::String`: the face color of the convex hull.
+- `facecolors::String="blue"`: the color of the faces of the convex hull.
+- `alpha::Real=0.3`: the transparency of the faces of the convex hull.
+- `linewidths::Real=1`: the width of the edges of the convex hull.
+- `edgecolors::String="black"`: the color of the edges of the convex hull.
 
 # Returns
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
@@ -95,14 +103,14 @@ bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,conventio
 ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
 fig = figure()
 ax = fig.add_subplot(111, projection="3d")
-ax = plot_3Dconvexhull(ibz,ax,color="coral")
-ax = plot_3Dconvexhull(bz,ax,color="deepskyblue")
+ax = plot_3Dconvexhull(ibz,ax,facecolors="coral",alpha=1,edgecolors="black",linewidths = 1)
+ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
 # output
 PyObject <Axes3DSubplot:>
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing}=nothing;
-    color::String="blue")
+    facecolors::String="blue",alpha::Real=0.3,linewidths::Real=1,edgecolors::String="black")::PyObject
 
     ϵ=0.1*(convexhull.volume)^1/3
     plotrange=[[minimum(convexhull.points[:,i])-ϵ,
@@ -123,8 +131,8 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing
     faces=[[faces[j][i,:] for i=1:size(faces[j],1)] for j=1:length(faces)]
     edges=[[edges[j][i,:] for i=1:size(edges[j],1)] for j=1:length(edges)]
 
-    p=art3d.Poly3DCollection(faces, alpha=0.2, facecolors=color)
-    l=art3d.Line3DCollection(edges, colors="black", linewidths=1)
+    p=art3d.Poly3DCollection(faces, alpha=alpha, facecolors=facecolors)
+    l=art3d.Line3DCollection(edges, colors=edgecolors,linewidths=linewidths)
 
     if ax == nothing 
         fig = figure()
@@ -164,7 +172,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `(fig,ax)`: the figure and axes Python objects.
+- `ax::PyObject`: an updated `ax` with plots of the BZ and IBZ.
 
 # Examples
 ```jldoctest
@@ -182,7 +190,7 @@ PyObject <AxesSubplot:>
 """
 function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
     convention,ax::Union{PyObject,Nothing}=nothing;
-    rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
+    rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)::PyObject
 
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
     format = "convex hull"
@@ -205,11 +213,11 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
     end
 
     if dim == 2
-        ax = plot_2Dconvexhull(bz,ax,color="deepskyblue")
-        ax = plot_2Dconvexhull(ibz,ax,color="coral")
+        ax = plot_2Dconvexhull(bz,ax,facecolor="deepskyblue")
+        ax = plot_2Dconvexhull(ibz,ax,facecolor="coral")
     else # dim == 3
-        ax = plot_3Dconvexhull(ibz,ax,color="lightcoral")
-        ax = plot_3Dconvexhull(bz,ax,color="deepskyblue")
+        ax = plot_3Dconvexhull(ibz,ax,facecolors="lightcoral")
+        ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue")
     end
     ax
 end

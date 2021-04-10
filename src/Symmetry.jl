@@ -848,4 +848,74 @@ function make_primitive(real_latvecs::AbstractArray{<:Real,2},
     (prim_latvecs,prim_types,prim_pos)
 end
 
+@doc """
+    complete_orbit(pt,pointgroup,rtol=sqrt(eps(float(maximum(pt)))),atol=1e-9)
+
+Complete the orbit of a point.
+
+# Arguments
+- `pt::AbstractArray{<:Real,1}`: the Cartesian coordinates of a point in a 1D array.
+- `pointgroup::Array{Array{<:Real,2},1}`: the point group operators in a nested list. The
+    operators operate on points in Cartesian coordinates from the right.
+- `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
+- `atol::Real=1e-9`: an absolute tolerance. 
+
+# Returns
+- `::AbstractArray{<:Real,2}`: the points of the orbit in Cartesian coordinates as
+    columns of a 2D array.
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Symmetry: complete_orbit
+pt = [0.05, 0.0]
+pointgroup = [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]]
+complete_orbit(pt,pointgroup)
+# output
+2×4 Array{Float64,2}:
+  0.0   0.0   -0.05  0.05
+ -0.05  0.05   0.0   0.0
+```
+"""
+function complete_orbit(pt::AbstractArray{<:Real,1},
+        pointgroup::Array{Array{Float64,2},1};
+        rtol::Real=sqrt(eps(float(maximum(pt)))),
+        atol::Real=1e-9)::AbstractArray{<:Real,2}
+    unique_points(reduce(hcat,map(op->op*pt,pointgroup)),rtol=rtol,atol=atol)
+end
+
+@doc """
+    complete_orbit(pt,pointgroup,rtol=sqrt(eps(float(maximum(pt)))),atol=1e-9)
+
+Complete the orbits of multiple points.
+
+# Arguments
+- `pt::AbstractArray{<:Real,2}`: the Cartesian coordinates of a points as columns of
+    a 2D array.
+- `pointgroup::Array{Array{<:Real,2},1}`: the point group operators in a nested list. The
+    operators operate on points in Cartesian coordinates from the right.
+- `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
+- `atol::Real=1e-9`: an absolute tolerance. 
+
+# Returns
+- `::AbstractArray{<:Real,2}`: the unique points of the orbits in Cartesian coordinates as
+    columns of a 2D array.
+
+# Examples
+```jldoctest
+import SymmetryReduceBZ.Symmetry: complete_orbit
+pts = [0.0 0.05 0.1; 0.0 0.0 0.0]
+pointgroup = [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]]
+complete_orbit(pts,pointgroup)
+# output
+2×9 Array{Float64,2}:
+ 0.0   0.0   0.0   -0.05  0.05   0.0  0.0  -0.1  0.1
+ 0.0  -0.05  0.05   0.0   0.0   -0.1  0.1   0.0  0.0
+```
+"""
+function complete_orbit(pts::AbstractArray{<:Real,2},
+    pointgroup::Array{Array{Float64,2},1};
+    rtol::Real=sqrt(eps(float(maximum(pts)))),
+    atol::Real=1e-9)::AbstractArray{<:Real,2}
+    unique_points(reduce(hcat,reduce(hcat,[map(op->op*pts[:,i],pointgroup) for i=1:size(pts,2)])))
+ end
 end #module
