@@ -16,7 +16,7 @@ Hull segment vertex indices:
 Points on convex hull in original order:
 
 [0.25 0.0 0.0; 0.0 0.0 0.0; … ; 0.0 -0.25 0.0; 0.25 -0.25 0.25]
-</pre><p>The columns of <code>real_latvecs</code> are the lattice generating vectors, the columns of <code>atom_pos</code> are the positions of the atoms in Cartesian coordinates (in this case), <code>coordinates</code> are the coordinates of the atom positions, and <code>convention</code> gives the convention for going from real to reciprocal space (whether or not to multiply by 2π). There is a simple function for visualizing the IBZ along with the Brillouin zone (BZ).</p><pre><code class="language-julia">import SymmetryReduceBZ.Plotting: plot_convexhulls
+</pre><p>The columns of <code>real_latvecs</code> are the lattice generating vectors, the columns of <code>atom_pos</code> are the positions of the atoms in Cartesian coordinates (in this case), <code>coordinates</code> are the coordinates of the atom positions, and <code>convention</code> gives the convention for going from real to reciprocal space (whether or not to multiply by 2π). There is a simple function for visualizing the IBZ along with the Brillouin zone (BZ).</p><pre><code class="language-">import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 2.0
 real_latvecs = genlat_CUB(a)
@@ -26,11 +26,8 @@ coordinates = &quot;Cartesian&quot;
 makeprim = false
 convention = &quot;ordinary&quot;
 (fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
-  makeprim,convention)</code></pre><pre class="documenter-example-output">(PyPlot.Figure(PyObject &lt;Figure size 720x720 with 1 Axes&gt;), PyObject &lt;Axes3DSubplot:&gt;)</pre><h2 id="Python"><a class="docs-heading-anchor" href="#Python">Python</a><a id="Python-1"></a><a class="docs-heading-anchor-permalink" href="#Python" title="Permalink"></a></h2><p>It is possible to call <code>SymmetryReduceBZ</code> from Python using <a href=" https:/pyjulia.readthedocs.io/en/latest/index.html">PyJulia</a>. In a Jupyter notebook, IPython magic can be used to directly evaluate Julia commands in notebook cells.</p><pre><code class="language-julia">from julia import Julia
-jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)
-
-# In a separate cell
-%%julia
+  makeprim,convention)</code></pre><h2 id="Python"><a class="docs-heading-anchor" href="#Python">Python</a><a id="Python-1"></a><a class="docs-heading-anchor-permalink" href="#Python" title="Permalink"></a></h2><p>It is possible to call <code>SymmetryReduceBZ</code> from Python using <a href=" https:/pyjulia.readthedocs.io/en/latest/index.html">PyJulia</a>. In a Jupyter notebook, IPython magic can be used to directly evaluate Julia commands in notebook cells.</p><pre><code class="language-julia">from julia import Julia
+jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)</code></pre><pre><code class="language-julia">%%julia
 using Pkg
 Pkg.add(&quot;SymmetryReduceBZ&quot;)
 import SymmetryReduceBZ.Plotting: plot_convexhulls
@@ -64,4 +61,4 @@ convention = &quot;ordinary&quot;
 (fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
    convention)
 fig.show()
-&quot;&quot;&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Documentation/">« Documentation</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 10 February 2021 08:37">Wednesday 10 February 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+&quot;&quot;&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Documentation/">« Documentation</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 10 April 2021 22:18">Saturday 10 April 2021</span>. Using Julia version 1.5.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
