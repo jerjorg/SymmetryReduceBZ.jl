@@ -509,22 +509,22 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Arguments
 - `real_latvecs::AbstractArray{<:Real,2}`: the real-space lattice vectors or
-	primitive translation vectors as columns of a 2x2 or 3x3 array.
+    primitive translation vectors as columns of a 2x2 or 3x3 array.
 - `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-	structure as columns of an array.
+- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal 
+    structure as columns of an array.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
-	or \"Cartesian\" coordinates.
+    or \"Cartesian\" coordinates.
 - `bzformat::String`: the format of the Brillouin zone. Options include
-	\"convex hull\" and \"half-space\".
+    \"convex hull\" and \"half-space\".
 - `makeprim::Bool=false`: make the unit cell primitive before calculating the
-	the BZ if equal to `true`.
+    the BZ if equal to `true`.
 - `convention::String="ordinary"`: the convention used to go between real and
-	reciprocal space. The two conventions are ordinary (temporal) frequency and
-	angular frequency. The transformation from real to reciprocal space is
-	unitary if the convention is ordinary.
+    reciprocal space. The two conventions are ordinary (temporal) frequency and
+    angular frequency. The transformation from real to reciprocal space is
+    unitary if the convention is ordinary.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
-	floating point comparisons.
+    floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns

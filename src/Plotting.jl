@@ -148,8 +148,7 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing
 end
 
 @doc """
-    plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
-        convention;rtol,atol)
+    plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,convention;rtol,atol)
 
 Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 

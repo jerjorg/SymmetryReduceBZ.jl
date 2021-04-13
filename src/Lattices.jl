@@ -185,7 +185,7 @@ Minkowski reduce a lattice basis. Follows the logic of Fig. 4 in
 - `atol::Real=1e-9`: an absolute tolerance.
     
 # Returns
-- `rbasis:: the Minkowski reduced lattice basis as columns of an array.
+- `rbasis`:: the Minkowski reduced lattice basis as columns of an array.
 
 # Examples
 ```jldoctest
