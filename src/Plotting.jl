@@ -153,11 +153,11 @@ end
 Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the basis of a real-space lattice as
-    columns of an array.
-- `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-    structure as columns of an array.
+- `real_latvecs::AbstractMatrix{<:Real}`: the basis of a real-space lattice as
+    columns of a matrix.
+- `atom_types:AbstractVector{<:Int}`: a list of atom types as integers.
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
+    structure as columns of a matrix.
 - `coords::String`: indicates the positions of the atoms are in \"lattice\" or
     \"Cartesian\" coordinates.
 - `makeprim::Bool=false`: make the unit cell primitive before calculating the
@@ -187,8 +187,10 @@ ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
 PyObject <AxesSubplot:>
 ```
 """
-function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
-    convention,ax::Union{PyObject,Nothing}=nothing;
+function plot_convexhulls(real_latvecs::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
+    coords::String,makeprim::Bool,
+    convention::String,ax::Union{PyObject,Nothing}=nothing;
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)::PyObject
 
     art3d=pyimport("mpl_toolkits.mplot3d.art3d")
@@ -207,7 +209,7 @@ function plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,
             ax = fig.add_subplot(111, projection="3d")
         else
             throw(ArgumentError("The lattice vectors must be in a 2x2 or 3x3
-                array."))
+                matrix."))
         end
     end
 

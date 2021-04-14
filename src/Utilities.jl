@@ -12,11 +12,11 @@ import QHull: Chull
 Calculate the affine transformation that maps the points to the xy-plane.
 
 # Arguments
-- `pts::AbstractArray{<:Real,2}`: an array of Cartesian points as the columns
-    of a 2D array. The points must all lie on a plane in 3D.
+- `pts::AbstractMatrix{<:Real}`: Cartesian points as the columns of a matrix.
+    The points must all lie on a plane in 3D.
 
 # Returns
-- `M::AbstractArray{<:Real,2}`: the affine transformation matrix that operates
+- `M::AbstractMatrix{<:Real}`: the affine transformation matrix that operates
     on points in homogeneous coordinates from the left.
 
 # Examples
@@ -25,14 +25,14 @@ using SymmetryReduceBZ
 pts = [0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 0.5 0.5; -0.5 -0.5 0.5]'
 SymmetryReduceBZ.Utilities.affine_trans(pts)
 # output
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
   0.0  -1.0   0.0  0.5
  -1.0   0.0   0.0  0.5
   0.0   0.0  -1.0  0.5
   0.0   0.0   0.0  1.0
 ```
 """
-function affine_trans(pts::AbstractArray{<:Real,2})::AbstractArray{<:Real,2}
+function affine_trans(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
     a,b,c = [pts[:,i] for i=1:3]
 
     # Create a coordinate system with two vectors lying on the plane the points
@@ -51,12 +51,12 @@ end
 @doc """
     contains(pt,pts;rtol,atol)
 
-Check if an array of points contains a point.
+Check if a point is contained in a matrix of points as columns.
 
 # Arguments
-- `pt::AbstractArray{<:Real,1}`: a 1D array of reals
-- `pts::AbstractArray{<:Real,2}`: a 2D array of reals. Coordinates of points
-    are the columns of the array.
+- `pt::AbstractVector{<:Real}`: a point whose coordinates are the components of 
+    a vector.
+- `pts::AbstractMatrix{<:Real}`: coordinates of points as columns of a matrix.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
     point comparisons
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -74,7 +74,7 @@ contains(pt,pts)
 true
 ```
 """
-function contains(pt::AbstractArray{<:Real,1},pts::AbstractArray{<:Real,2};
+function contains(pt::AbstractVector{<:Real},pts::AbstractMatrix{<:Real};
         rtol::Real=sqrt(eps(float(maximum(pts)))),atol::Real=1e-9)::Bool
     any(isapprox(pt,pts[:,i],rtol=rtol,atol=atol) for i=1:size(pts,2))
 end
@@ -85,8 +85,8 @@ end
 Check if an array of arrays contains an array.
 
 # Arguments
-- `array`: an array of reals or arbitrary dimension.
-- `arrays`: a abstract array of reals of arbitrary dimension.
+- `array::AbstractArray`: an array of reals of arbitrary dimension.
+- `arrays::AbstractArray`: a nested array of arrays of arbitrary dimension.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
     point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -117,7 +117,7 @@ end
 Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
 
 # Arguments
-- `basis::Array{<:Real,2}`: a 2x2 or 3x3 matrix whose columns give the
+- `basis::AbstractMatrix{<:Real}`: a 2x2 or 3x3 matrix whose columns give the
     parallelogram or parallelepiped directions, respectively.
 - `radius::Real`: the radius of the sphere.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
@@ -126,7 +126,7 @@ Calculate the edge lengths of a parallelepiped circumscribed by a sphere.
     comparisons.
 
 # Returns
-- `[la,lb,lc]::Array{Float64,1}`: a list of parallelepiped lengths.
+- `[la,lb,lc]::AbstractVector{<:Real}`: a list of parallelepiped lengths.
 
 # Examples
 ```jldoctest
@@ -135,14 +135,14 @@ basis=Array([1. 0. 0.; 0. 1. 0.; 0. 0. 1.])
 radius=3.0
 SymmetryReduceBZ.Utilities.edgelengths(basis,radius)
 # output
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  3.0
  3.0
  3.0
 ```
 """
-function edgelengths(basis::Array{<:Real,2}, radius::Real;
-        rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::Array{Float64,1}
+function edgelengths(basis::AbstractMatrix{<:Real}, radius::Real;
+        rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::AbstractVector{<:Real}
 
     if radius < 0
         throw(ArgumentError("The radius has to be a positive number."))
@@ -183,9 +183,9 @@ Calculate the unique facets of a convex hull.
 - `ch::Chull{<:Real}`: a convex hull in 3D from `QHull`.
 
 # Returns
-- `unique_facets::Array{Array{Int,1}}`: a nested list of the indices of points
-    that lie on each face. For example, the points that lie on the first face
-    are `ch.points[unique_facets[1],:]`.
+- `unique_facets::Vector{Vector{Int64}}`: a nested list of the
+    indices of points that lie on each face. For example, the points that lie on
+    the first face are `ch.points[unique_facets[1],:]`.
 
 # Examples
 ```jldoctest
@@ -201,7 +201,7 @@ convention = "ordinary"
 bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,convention)
 get_uniquefacets(bz)
 # output
-6-element Array{Array{Int64,1},1}:
+6-element Vector{Vector{Int64}}:
  [1, 2, 3, 4]
  [7, 2, 3, 5]
  [6, 4, 3, 5]
@@ -210,8 +210,7 @@ get_uniquefacets(bz)
  [8, 7, 5, 6]
 ```
 """
-function get_uniquefacets(ch::Chull{<:Real})::Array{Array{Int,1}}
-
+function get_uniquefacets(ch::Chull{<:Real})::Vector{Vector{<:Int}}
     facets = ch.facets
     unique_facets = []
     removed=zeros(Int64,size(facets,1))
@@ -232,7 +231,7 @@ function get_uniquefacets(ch::Chull{<:Real})::Array{Array{Int,1}}
             append!(unique_facets,[face])
         end
     end
-    unique_facets = convert(Array{Array{Int,1}},unique_facets)
+    # unique_facets = convert(Array{Array{Int,1}},unique_facets)
     unique_facets
 end
 
@@ -242,11 +241,11 @@ end
 Map Cartesian points embedded in 3D on a plane to the xy-plane embedded in 2D.
 
 # Arguments
-- `pts::AbstractArray{<:Real,2}`: Cartesian points in 3D as columns of a 2D
-    array.
+- `pts::AbstractMatrix{<:Real}`: Cartesian points embedded in 3D as columns of a
+    matrix.
 
 # Returns
-- `AbstractArray{<:Real,2}`: Cartesian points in 2D as columns of a 2D array.
+- `AbstractMatrix{<:Real}`: Cartesian points in 2D as columns of a matrix.
 
 # Examples
 ```jldoctest
@@ -254,12 +253,12 @@ using SymmetryReduceBZ
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
 SymmetryReduceBZ.Utilities.mapto_xyplane(pts)
 # output
-2×4 Array{Float64,2}:
+2×4 Matrix{Float64}:
  0.0  1.0  1.0  0.0
  0.0  0.0  1.0  1.0
 ```
 """
-function mapto_xyplane(pts::AbstractArray{<:Real,2})::AbstractArray{<:Real,2}
+function mapto_xyplane(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
 
     M = affine_trans(pts)
     reduce(hcat,[(M*[pts[:,i]..., 1])[1:2] for i=1:size(pts,2)])
@@ -271,18 +270,17 @@ end
 Sample uniformly within a circle centered about a point.
 
 ## Arguments
-- `basis::Array{<:Real,2}`: a 2x2 matrix whose columns are the grid generating
-    vectors.
+- `basis::AbstractMatrix{<:Real}`: a 2x2 matrix whose columns are the grid 
+    generating vectors.
 - `radius::Real`: the radius of the circle.
-- `offset::Array{<:Real,1}=[0.,0.]`: the xy-coordinates of the center of the
-    circle.
-- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
-    floating point comparisons.
-- `atol::Real=1e-9`: an absolute tolerance for floating point
+- `offset::AbstractVector{<:Real}=[0.,0.]`: the xy-coordinates of the center of
+    the circle.
+- `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for floating point
     comparisons.
+- `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 ## Returns
-- `pts::Array{Float64,2}` a matrix whose columns are sample points in Cartesian
+- `pts::AbstractMatrix{<:Real}` a matrix whose columns are sample points in Cartesian
     coordinates.
 
 ## Examples
@@ -293,14 +291,14 @@ radius=1.0
 offset=[0.,0.]
 SymmetryReduceBZ.Utilities.sample_circle(basis,radius,offset)
 # output
-2×5 Array{Float64,2}:
+2×5 Matrix{Float64}:
   0.0  -1.0  0.0  1.0  0.0
  -1.0   0.0  0.0  0.0  1.0
 ```
 """
-function sample_circle(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::AbstractArray{<:Real,1}=[0.,0.];
-    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::Array{Float64,2}
+function sample_circle(basis::AbstractMatrix{<:Real}, radius::Real,
+    offset::AbstractVector{<:Real}=[0.,0.];
+    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     # Put the offset in lattice coordinates and round.
     (o1,o2)=round.(inv(basis)*offset)
@@ -328,10 +326,10 @@ end
 Sample uniformly within a sphere centered about a point.
 
 # Arguments
-- `basis::Array{<:Real,2}`: a 3x3 matrix whose columns are the grid generating
+- `basis::AbstractMatrix{<:Real}`: a 3x3 matrix whose columns are the grid generating
     vectors.
 - `radius::Real`: the radius of the sphere.
-- `offset::Array{<:Real,1}=[0.,0.]`: the xy-coordinates of the center of the
+- `offset::AbstractVector{<:Real}=[0.,0.]`: the xy-coordinates of the center of the
     circle.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerace for
     floating point comparisons.
@@ -339,7 +337,7 @@ Sample uniformly within a sphere centered about a point.
     comparisons.
 
 # Returns
-- `pts::Array{Float64,2}` a matrix whose columns are sample points in Cartesian
+- `pts::AbstractMatrix{<:Real}` a matrix whose columns are sample points in Cartesian
     coordinates.
 
 # Examples
@@ -350,15 +348,15 @@ radius=1.0
 offset=[0.,0.,0.]
 SymmetryReduceBZ.Utilities.sample_sphere(basis,radius,offset)
 # output
-3×7 Array{Float64,2}:
+3×7 Matrix{Float64}:
   0.0   0.0  -1.0  0.0  1.0  0.0  0.0
   0.0  -1.0   0.0  0.0  0.0  1.0  0.0
  -1.0   0.0   0.0  0.0  0.0  0.0  1.0
 ```
 """
-function sample_sphere(basis::AbstractArray{<:Real,2}, radius::Real,
-    offset::Array{<:Real,1}=[0.,0.,0.]; rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=1e-9)::Array{Float64,2}
+function sample_sphere(basis::AbstractMatrix{<:Real}, radius::Real,
+    offset::AbstractVector{<:Real}=[0.,0.,0.]; rtol::Real=sqrt(eps(float(radius))),
+    atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     # Put the offset in lattice coordinates and round.
     (o1,o2,o3)=round.(inv(basis)*offset)
@@ -386,8 +384,8 @@ end
 Calculate the area of a polygon with the shoelace algorithm.
 
 # Arguments
-- `vertices::AbstractArray{<:Real,2}`: the xy-coordinates of the vertices
-    of the polygon as the columns of a 2D array.
+- `vertices::AbstractMatrix{<:Real}`: the xy-coordinates of the vertices
+    of the polygon as the columns of a matrix.
 
 # Returns
 - `<:Real`: the area of the polygon.
@@ -415,11 +413,11 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
     lie on a plane (counter)clockwise with respect to the average of all points.
 
 # Arguments
-- `pts::AbstractArray{<:Real,2}`: Cartesian points embedded in 3D that all lie
-    on a plane. The points are columns of a 2D array.
+- `pts::AbstractMatrix{<:Real}`: Cartesian points embedded in 3D that all lie
+    on a plane. The points are columns of a matrix.
 
 # Returns
-- `perm::AbstractArray{<:Real,1}`: the permutation vector that orders the points
+- `perm::AbstractVector{<:Real}`: the permutation vector that orders the points
     clockwise or counterclockwise.
 
 # Examples
@@ -429,13 +427,13 @@ pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
 perm=sortpts_perm(pts)
 pts[:,perm]
 # output
-3×4 Array{Float64,2}:
+3×4 Matrix{Float64}:
   0.5   0.5   0.5  0.5
  -0.5  -0.5   0.5  0.5
   0.5  -0.5  -0.5  0.5
 ```
 """
-function sortpts_perm(pts::AbstractArray{<:Real,2})
+function sortpts_perm(pts::AbstractMatrix{<:Real})
     xypts=mapto_xyplane(pts)
     c=sum(xypts,dims=2)/size(pts,2)
     angles=zeros(size(xypts,2))
@@ -453,13 +451,13 @@ end
 Remove duplicate points.
 
 # Arguments
-- `points::AbstractArray{<:Real,2}`: the points are columns of a 2D array.
+- `points::AbstractMatrix{<:Real}`: the points are columns of a matrix.
 - `rtol::Real=sqrt(eps(float(maximum(flatten(points)))))`: a relative tolerance
     for floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `uniquepts::AbstractArray{<:Real,2}`: a 2D array of unique points as columns.
+- `uniquepts::AbstractMatrix{<:Real}`: the unique points as columns of a matrix.
 
 # Examples
 ```jldoctest
@@ -467,14 +465,14 @@ using SymmetryReduceBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
 SymmetryReduceBZ.Utilities.unique_points(points)
 # output
-2×3 Array{Float64,2}:
+2×3 Matrix{Float64}:
  1.0  2.0  3.0
  2.0  3.0  4.0
 ```
 """
-function unique_points(points::AbstractArray{<:Real,2};
+function unique_points(points::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractArray
+    atol::Real=1e-9)::AbstractMatrix
     
     uniquepts=zeros(size(points))
     numpts = 0
@@ -494,12 +492,12 @@ end
 Remove duplicates from an array.
 
 # Arguments
-- points
+- `points::AbstractVector`: items in a vector, which can be floats or arrays.
 - `rtol::Real=sqrt(eps(float(maximum(points))))`: relative tolerance.
 - `atol::Real=1e-9`: absolute tolerance. 
 
 # Returns
-- `uniquepts::AbstractArray`: an array with only unique elements. 
+- `uniquepts::AbstractVector`: an vector with only unique elements. 
 
 # Examples
 ```jldoctest
@@ -507,14 +505,14 @@ import SymmetryReduceBZ.Utilities: remove_duplicates
 test = [1.,1.,2,2,]
 remove_duplicates(test)
 # output
-2-element Array{Any,1}:
+2-element Vector{Any}:
  1.0
  2.0
 ```
 """
-function remove_duplicates(points::AbstractArray;
+function remove_duplicates(points::AbstractVector;
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractArray
+    atol::Real=1e-9)::AbstractVector
     uniquepts=Array{Any}(undef, length(points))
     uniquepts[1] = points[1]
     npts = 1
@@ -534,14 +532,14 @@ end
 Calculate the points within a ball (circle, sphere, ...).
 
 # Arguments
-- `points::AbstractArray{<:Real,2}`: points in Cartesian coordinates as columns of a 2D array.
+- `points::AbstractMatrix{<:Real}`: points in Cartesian coordinates as columns of a matrix.
 - `radius::Real`: the radius of the ball.
-- `offset::AbstractArray{<:Real,1}`: the location of the center of the ball in Cartesian coordinates.
+- `offset::AbstractVector{<:Real}`: the location of the center of the ball in Cartesian coordinates.
 - `rtol::Real=sqrt(eps(float(radius)))`: a relative tolerance for floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
-- `ball_points::AbstractArray{Int,1}`: the indices of points in `points` within the ball.
+- `ball_points::AbstractVector{<:Int}`: the indices of points in `points` within the ball.
 
 # Examples
 ```jldoctest
@@ -549,17 +547,18 @@ import SymmetryReduceBZ.Utilities: points₋in₋ball
 points = [0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.25 0.3 0.35 0.4 0.45 0.5 0.3 0.35 0.4 0.45 0.5 0.35 0.4 0.45 0.5 0.4 0.45 0.5 0.45 0.5 0.5; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.25 0.25 0.25 0.25 0.25 0.25 0.3 0.3 0.3 0.3 0.3 0.35 0.35 0.35 0.35 0.4 0.4 0.4 0.45 0.45 0.5]
 radius = 0.1
 offset = [0,0]
-pts₋in₋ball(points,radius,offset)
+points₋in₋ball(points,radius,offset)
 # output
-4-element Array{Int64,1}:
+4-element Vector{Int64}:
   1
   2
   3
  12
 ```
 """
-function points₋in₋ball(points::AbstractArray{<:Real,2},radius::Real,offset::AbstractArray{<:Real,1};
-        rtol::Real=sqrt(eps(float(radius))),atol::Real=1e-9)::AbstractArray{Int,1}
+function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
+    offset::AbstractVector{<:Real};rtol::Real=sqrt(eps(float(radius))),
+    atol::Real=1e-9)::AbstractVector{<:Int}
 
     ball_points = zeros(Int,size(points,2))
     count = 0

@@ -16,7 +16,7 @@ export genlat_CUB, genlat_FCC, genlat_BCC, genlat_TET, genlat_BCT, genlat_ORC,
 Calculate the reciprocal lattice vectors.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the real-space lattice vectors or
+- `real_latvecs::AbstractMatrix{<:Real}`: the real-space lattice vectors or
     primitive translation vectors as columns of a 2x2 or 3x3 array.
 - `convention::String="ordinary"`: the convention used to go between real and
     reciprocal space. The two conventions are ordinary (temporal) frequency and
@@ -40,7 +40,7 @@ SymmetryReduceBZ.Lattices.get_recip_latvecs(real_latvecs,convention)
  0.0      0.0      6.28319
 ```
 """
-function get_recip_latvecs(real_latvecs::AbstractArray{<:Real,2},
+function get_recip_latvecs(real_latvecs::AbstractMatrix{<:Real},
         convention::String="ordinary")::Array{Float64,2}
     if convention == "ordinary"
         recip_latvecs = Array(inv(real_latvecs)')
@@ -59,7 +59,7 @@ end
 Calculate the lattice constants and angles of a lattice basis.
 
 # Arguments
-- `latvecs::AbstractArray{<:Real,2}`: the lattice basis as columns of an array.
+- `latvecs::AbstractMatrix{<:Real}`: the lattice basis as columns of an array.
 
 # Returns
 - A list where the first element is a list lattice constants `(a,b,c)` and second
@@ -76,7 +76,7 @@ SymmetryReduceBZ.Lattices.get_latparams(latvecs)
  [1.5707963267948966, 1.5707963267948966]
 ```
 """
-function get_latparams(latvecs)
+function get_latparams(latvecs::AbstractMatrix{<:Real})
 
     if size(latvecs) == (2,2)
         (a,b)=[latvecs[:,i] for i=1:2]
@@ -103,13 +103,13 @@ closest lattice point from the `k`th lattice vector, and reordering the
 lattice vectors by increasing Euclidean norms.
 
 # Arguments
-- `basis::AbstractArray{<:Real,2}`: the lattice basis as columns of an array.
+- `basis::AbstractMatrix{<:Real}`: the lattice basis as columns of an array.
 - `k::Int`: Keeps track of which lattice vector needs to be reduced.
 - `rtol::Real=sqrt(eps(float(maximum(basis))))`: a relative tolerance.
 - `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
-- `basis::AbstractArray{<:Real,2}`: the partially reduced lattice basis as
+- `basis::AbstractMatrix{<:Real}`: the partially reduced lattice basis as
     columns of an array.
 - `k::Int`: The index of the lattice vector that needs to be reduced next.
 
@@ -127,7 +127,7 @@ basis
  0  0  1
 ```
 """
-function reduce_basis!(basis::AbstractArray{<:Real,2},k::Int;
+function reduce_basis!(basis::AbstractMatrix{<:Real},k::Int;
     rtol::Real=sqrt(eps(float(maximum(basis)))),atol::Real=1e-9)::Int
     if k == 2
         v1,v2=[basis[:,i] for i=1:k]
@@ -179,7 +179,7 @@ Minkowski reduce a lattice basis. Follows the logic of Fig. 4 in
 \"Low-Dimensional Lattice Basis Reduction Revisited\" by Nguyen, 2009.
 
 # Arguments
-- `basis::AbstractArray{<:Real,2}`: the lattice basis given by the columns
+- `basis::AbstractMatrix{<:Real}`: the lattice basis given by the columns
     of a 2x2 or 3x3 array.
 - `rtol::Real=sqrt(eps(float(maximum(basis))))`: a relative tolerance.
 - `atol::Real=1e-9`: an absolute tolerance.
@@ -199,8 +199,8 @@ SymmetryReduceBZ.Lattices.minkowski_reduce(basis)
  1  0  0
 ```
 """
-function minkowski_reduce(basis::AbstractArray{<:Real,2};
-    rtol::Real=sqrt(eps(float(maximum(basis)))),atol::Real=1e-9)::AbstractArray{<:Real,2}
+function minkowski_reduce(basis::AbstractMatrix{<:Real};
+    rtol::Real=sqrt(eps(float(maximum(basis)))),atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     # Sort the lattice vectors by increasing norm.
     order = sortperm([basis[:,i] for i=1:size(basis,1)])
@@ -219,7 +219,7 @@ end
 Verify a lattice basis is Minkowski reduced
 
 # Arguments
-- `basis::AbstractArray{<:Real,2}`: the lattice basis given by the columns
+- `basis::AbstractMatrix{<:Real}`: the lattice basis given by the columns
     of a 2x2 or 3x3 matrix.
 
 # Returns
@@ -234,7 +234,7 @@ SymmetryReduceBZ.Lattices.check_reduced(basis)
 true
 ```
 """
-function check_reduced(basis::AbstractArray{<:Real,2})::Bool
+function check_reduced(basis::AbstractMatrix{<:Real})::Bool
     if size(basis) == (2,2)
         (a,b) = [basis[:,i] for i=1:2]
         all([norm(a) <= norm(b),
@@ -274,7 +274,7 @@ Generate a square lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -288,7 +288,7 @@ SymmetryReduceBZ.Lattices.genlat_SQR(a)
  0  1
 ```
 """
-function genlat_SQR(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+function genlat_SQR(a::Real,type::String="primitive")::AbstractMatrix{<:Real}
     [a 0; 0 a]
 end
 
@@ -302,7 +302,7 @@ Generate a 2D hexagonal lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -316,7 +316,7 @@ SymmetryReduceBZ.Lattices.genlat_HXG(a)
  0.0   0.866025
 ```
 """
-function genlat_HXG(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+function genlat_HXG(a::Real,type::String="primitive")::AbstractMatrix{<:Real}
     Array([a 0; -a/2 a*√3/2]')
 end
 
@@ -330,7 +330,7 @@ Generate a rectangular lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -346,7 +346,7 @@ SymmetryReduceBZ.Lattices.genlat_REC(a,b)
 ```
 """
 function genlat_REC(a::Real,b::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     Array([a 0; 0 b]')
 end
 
@@ -360,7 +360,7 @@ Generate a body-centered rectangular lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -376,7 +376,7 @@ SymmetryReduceBZ.Lattices.genlat_RECI(a,b)
 ```
 """
 function genlat_RECI(a::Real,b::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b
         throw(ArgumentError("The lattice constant must be different sizes for a
             rectangular lattice."))
@@ -404,7 +404,7 @@ Generate an oblique lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -421,7 +421,7 @@ SymmetryReduceBZ.Lattices.genlat_OBL(a,b,θ)
 ```
 """
 function genlat_OBL(a::Real,b::Real,θ::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b
         throw(ArgumentError("The lattice constant must be different sizes for an
             oblique lattice."))
@@ -443,7 +443,7 @@ Generate a simple cubic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -458,7 +458,7 @@ SymmetryReduceBZ.Lattices.genlat_CUB(a)
  0  0  1
 ```
 """
-function genlat_CUB(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+function genlat_CUB(a::Real,type::String="primitive")::AbstractMatrix{<:Real}
     [a 0 0; 0 a 0; 0 0 a]
 end
 
@@ -472,7 +472,7 @@ Generate a face-centered cubic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -487,7 +487,7 @@ SymmetryReduceBZ.Lattices.genlat_FCC(a)
  0.5  0.5  0.0
 ```
 """
-function genlat_FCC(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+function genlat_FCC(a::Real,type::String="primitive")::AbstractMatrix{<:Real}
     if type == "primitive"
         Array([0 a/2 a/2; a/2 0 a/2; a/2 a/2 0]')
     elseif type=="conventional"
@@ -508,7 +508,7 @@ Generate a body-centered cubic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -523,7 +523,7 @@ SymmetryReduceBZ.Lattices.genlat_BCC(a)
   0.5   0.5  -0.5
 ```
 """
-function genlat_BCC(a::Real,type::String="primitive")::AbstractArray{<:Real,2}
+function genlat_BCC(a::Real,type::String="primitive")::AbstractMatrix{<:Real}
     if type == "primitive"
         a/2*Array([-1 1 1; 1 -1 1; 1 1 -1]')
     elseif type=="conventional"
@@ -545,7 +545,7 @@ Generate a simple tetragonal lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -562,7 +562,7 @@ SymmetryReduceBZ.Lattices.genlat_TET(a,c)
 ```
 """
 function genlat_TET(a::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             tetragonal lattice."))
@@ -581,7 +581,7 @@ Generate a body-centered tetragonal lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -598,7 +598,7 @@ SymmetryReduceBZ.Lattices.genlat_BCT(a,c)
 ```
 """
 function genlat_BCT(a::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             tetragonal lattice."))
@@ -625,7 +625,7 @@ Generate an orthorhombic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -643,7 +643,7 @@ SymmetryReduceBZ.Lattices.genlat_ORC(a,b,c)
 ```
 """
 function genlat_ORC(a::Real,b::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
@@ -663,7 +663,7 @@ Generate a face-centered orthorhombic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -681,7 +681,7 @@ SymmetryReduceBZ.Lattices.genlat_ORCF(a,b,c)
 ```
 """
 function genlat_ORCF(a::Real,b::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
@@ -709,7 +709,7 @@ Generate a body-centered orthorhombic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -727,7 +727,7 @@ SymmetryReduceBZ.Lattices.genlat_ORCI(a,b,c)
 ```
 """
 function genlat_ORCI(a::Real,b::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
@@ -755,7 +755,7 @@ Generate a base-centered orthorhombic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -773,7 +773,7 @@ SymmetryReduceBZ.Lattices.genlat_ORCC(a,b,c)
 ```
 """
 function genlat_ORCC(a::Real,b::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for an
             orthorhombic lattice."))
@@ -800,7 +800,7 @@ Generate a hexagonal lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -817,7 +817,7 @@ SymmetryReduceBZ.Lattices.genlat_HEX(a,c)
 ```
 """
 function genlat_HEX(a::Real,c::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ c
         throw(ArgumentError("The lattices constants must be different for a
             hexagonal lattice."))
@@ -836,7 +836,7 @@ Generate a rhombohedral lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -853,7 +853,7 @@ SymmetryReduceBZ.Lattices.genlat_RHL(a,α)
 ```
 """
 function genlat_RHL(a::Real,α::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if α ≈ π/2
         throw(ArgumentError("The lattice angle cannot be π/2 for a rhombohedral
             lattice."))
@@ -875,7 +875,7 @@ Generate a monoclinic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -894,7 +894,7 @@ SymmetryReduceBZ.Lattices.genlat_MCL(a,b,c,α)
 ```
 """
 function genlat_MCL(a::Real,b::Real,c::Real,α::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             monoclinic lattice."))
@@ -918,7 +918,7 @@ Generate a base-centered monoclinic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -937,7 +937,7 @@ SymmetryReduceBZ.Lattices.genlat_MCLC(a,b,c,α)
 ```
 """
 function genlat_MCLC(a::Real,b::Real,c::Real,α::Real,
-        type::String="primitive")::AbstractArray{<:Real,2}
+        type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             monoclinic lattice."))
@@ -970,7 +970,7 @@ Generate a triclinic lattice.
 - `type::String="primitive"`: the lattice type: "primitive" or "conventional".
 
 # Returns
-- `AbstractArray{<:Real,2}`: the basis of the lattice as
+- `AbstractMatrix{<:Real}`: the basis of the lattice as
     columns of an array.
 
 # Examples
@@ -991,7 +991,7 @@ SymmetryReduceBZ.Lattices.genlat_TRI(a,b,c,α,β,γ)
 ```
 """
 function genlat_TRI(a::Real,b::Real,c::Real,α::Real,β::Real,
-    γ::Real,type::String="primitive")::AbstractArray{<:Real,2}
+    γ::Real,type::String="primitive")::AbstractMatrix{<:Real}
     if a ≈ b || a ≈ c || b ≈ c
         throw(ArgumentError("The lattices constants must all be different for a
             triclinic lattice."))

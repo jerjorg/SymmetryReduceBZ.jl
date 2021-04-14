@@ -18,8 +18,8 @@ import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove
 Calculate the point group of a lattice in 2D or 3D.
 
 # Arguments
-- `latvecs::AbstractArray{<:Real,2}`: the basis of the lattice as columns of an
-    array.
+- `latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns of a 
+    matrix.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))`: a relative tolerance for
     floating point comparisons. It is used to compare lengths of vectors and the
     volumes of primitive cells.
@@ -27,8 +27,8 @@ Calculate the point group of a lattice in 2D or 3D.
     used to compare lengths of vectors and the volumes of primitive cells.
 
 # Returns
-- `pointgroup::Array{Array{Float64,2},1}`: the point group of the lattice. The
-    operators operate on points in Cartesian coordinates.
+- `pointgroup::Vector{Matrix{Float64}}`: the point group of the lattice. The
+    operators operate on points in Cartesian coordinates from the right.
 
 # Examples
 ```jldoctest
@@ -36,7 +36,7 @@ using SymmetryReduceBZ
 basis = [1 0; 0 1]
 SymmetryReduceBZ.Symmetry.calc_pointgroup(basis)
 # output
-8-element Array{Array{Float64,2},1}:
+8-element Vector{Matrix{Float64}}:
  [0.0 -1.0; -1.0 0.0]
  [0.0 -1.0; 1.0 0.0]
  [-1.0 0.0; 0.0 -1.0]
@@ -47,9 +47,9 @@ SymmetryReduceBZ.Symmetry.calc_pointgroup(basis)
  [0.0 1.0; 1.0 0.0]
 ```
 """
-function calc_pointgroup(latvecs::AbstractArray{<:Real,2};
+function calc_pointgroup(latvecs::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(latvecs)))),
-    atol::Real=1e-9)::Array{Array{Float64,2},1}
+    atol::Real=1e-9)::AbstractVector{AbstractMatrix{<:Real}}
 
     dim=size(latvecs,1)
     latvecs = minkowski_reduce(latvecs,rtol=rtol,atol=atol)
@@ -59,7 +59,7 @@ function calc_pointgroup(latvecs::AbstractArray{<:Real,2};
     elseif size(latvecs) == (3,3)
         pts=sample_sphere(latvecs,radius,[0,0,0],rtol=rtol,atol=atol)
     else
-        throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 array."))
+        throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 matrix."))
     end
 
     normsᵢ=[norm(latvecs[:,i]) for i=1:dim]
@@ -91,10 +91,10 @@ end
 Map a point to the first unit cell.
 
 # Arguments
-- `pt::AbstractArray{<:Real,1}`: a point in lattice or Cartesian coordinates.
-- `latvecs::AbstractArray{<:Real,2}`: the basis vectors of the lattice as
-    columns of an array.
-- `inv_latvecs::AbstractArray{<:Real,2}`: the inverse of the matrix of that
+- `pt::AbstractVector{<:Real}`: a point in lattice or Cartesian coordinates.
+- `latvecs::AbstractMatrix{<:Real}`: the basis vectors of the lattice as
+    columns of a matrix.
+- `inv_latvecs::AbstractMatrix{<:Real}`: the inverse of the matrix of that
     contains the lattice vectors.
 - `coordinates::String`: indicates whether `pt` is in \"Cartesian\" or
     \"lattice\" coordinates.
@@ -106,7 +106,7 @@ Map a point to the first unit cell.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `AbstractArray{<:Real,1}`: a translationally equivalent point to `pt` in the
+- `AbstractVector{<:Real}`: a translationally equivalent point to `pt` in the
     first unit cell in the same coordinates.
 
 # Examples
@@ -119,16 +119,16 @@ coordinates = "Cartesian"
 SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
     coordinates)
 # output
-3-element Array{Real,1}:
+3-element Vector{Real}:
  0.0
  0.0
  0.20000000000000018
 ```
 """
-function mapto_unitcell(pt::AbstractArray{<:Real,1},
-    latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
+function mapto_unitcell(pt::AbstractVector{<:Real},
+    latvecs::AbstractMatrix{<:Real},inv_latvecs::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=1e-9)::Array{Real,1}
+    atol::Real=1e-9)::AbstractVector{<:Real}
     if coordinates == "Cartesian"
         Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
             for c=inv_latvecs*pt])
@@ -144,12 +144,12 @@ end
 @doc """
     mapto_unitcell(points,latvecs,inv_latvecs,coordinates;rtol,atol)
 
-Map points as columns of a 2D array to the unitcell.
+Map points as columns of a matrix to the unitcell.
 """
-function mapto_unitcell(points::AbstractArray{<:Real,2},
-    latvecs::AbstractArray{<:Real,2},inv_latvecs::AbstractArray{<:Real,2},
+function mapto_unitcell(points::AbstractMatrix{<:Real},
+    latvecs::AbstractMatrix{<:Real},inv_latvecs::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=1e-9)::Array{Real,2}
+    atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     reduce(hcat,[mapto_unitcell(points[:,i],latvecs,inv_latvecs,coordinates,
         rtol=rtol,atol=atol) for i=1:size(points,2)])
@@ -161,11 +161,11 @@ end
 Map a k-point to a translationally equivalent point within the Brillouin zone.
 
 # Arguments
-- `kpoint::AbstractArray{<:Real,1}`: a single *k*-point in lattice or Cartesian
+- `kpoint::AbstractVector{<:Real}`: a single *k*-point in lattice or Cartesian
     coordinates.
-- `recip_latvecs::AbstractArray{<:Real,2}`: the reciprocal lattice vectors as
-    columns of an array.
-- `inv_latvecs::AbstractArray{<:Real,2}`: the inverse matrix of the reciprocal
+- `recip_latvecs::AbstractMatrix{<:Real}`: the reciprocal lattice vectors as
+    columns of a matrix.
+- `inv_latvecs::AbstractMatrix{<:Real}`: the inverse matrix of the reciprocal
     lattice vectors.
 - `coordinates::String`: the coordinates of the given point, either \"lattice\"
     or \"Cartesian\". The point returned will be in the same coordinates.
@@ -177,7 +177,7 @@ Map a k-point to a translationally equivalent point within the Brillouin zone.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `bz_point::AbtractArray{<:Real,1}`: the symmetrically equivalent *k*-point
+- `bz_point::AbstractVector{<:Real}`: the symmetrically equivalent *k*-point
     within the Brillouin zone in either lattice or Cartesian coordinates,
     depending on the coordinates specified.
 
@@ -191,17 +191,17 @@ kpoint = [2, 3, 2]
 coordinates = "Cartesian"
 mapto_bz(kpoint, recip_latvecs, inv_latvecs, coordinates)
 # output
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  0.0
  0.0
  0.0
 ```
 """
-function mapto_bz(kpoint::AbstractArray{<:Real,1},
-    recip_latvecs::AbstractArray{<:Real,2},
-    inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String;
+function mapto_bz(kpoint::AbstractVector{<:Real},
+    recip_latvecs::AbstractMatrix{<:Real},
+    inv_rlatvecs::AbstractMatrix{<:Real},coordinates::String;
     rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-    atol::Real=1e-9)::Array{Float64,1}
+    atol::Real=1e-9)::AbstractVector{<:Real}
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
@@ -240,13 +240,13 @@ end
 @doc """
     mapto_bz(kpoints,recip_latvecs,inv_rlatvecs,coordinates;rtol,atol)
 
-Map points as columns of a 2D array to the Brillouin zone.
+Map points as columns of a matrix to the Brillouin zone.
 """
-function mapto_bz(kpoints::AbstractArray{<:Real,2},
-    recip_latvecs::AbstractArray{<:Real,2},
-    inv_rlatvecs::AbstractArray{<:Real,2},coordinates::String;
+function mapto_bz(kpoints::AbstractMatrix{<:Real},
+    recip_latvecs::AbstractMatrix{<:Real},
+    inv_rlatvecs::AbstractMatrix{<:Real},coordinates::String;
     rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-    atol::Real=1e-9)::Array{Float64,2}
+    atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     reduce(hcat,[mapto_bz(kpoints[:,i],recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol, atol=atol) for i=1:size(kpoints,2)])
@@ -258,7 +258,7 @@ end
 Check if a point lies within a convex hull (including the boundaries).
 
 # Arguments
-- `point::AbstractArray{<:Real,1}`: a point in Cartesian coordinates.
+- `point::AbstractVector{<:Real}`: a point in Cartesian coordinates.
 - `chull::Chull{Float64}`: a convex hull in 2D or 3D.
 - `rtol::Real=sqrt(eps(float(maximum(flatten(chull.points)))))`: a relative
     tolerance for floating point comparisons. Needed when a point is on the
@@ -280,7 +280,7 @@ inhull(pt,convexhull)
 true
 ```
 """
-function inhull(point::AbstractArray{<:Real,1}, chull::Chull{Float64};
+function inhull(point::AbstractVector{<:Real}, chull::Chull{Float64};
     rtol::Real=sqrt(eps(float(maximum(flatten(chull.points))))),
     atol::Real=1e-9)::Bool
 
@@ -306,15 +306,15 @@ end
 Map a point to a symmetrically equivalent point within the IBZ.
 
 # Arguments
-- `kpoint::AbstractArray{<:Real,1}`: a *k*-point in 2D or 3D in Cartesian
+- `kpoint::AbstractVector{<:Real}`: a *k*-point in 2D or 3D in Cartesian
     coordinates.
-- `recip_latvecs::AbstractArray{<:Real,2}`: the reciprocal lattice vectors as
-    columns of a an array.
-- `inv_rlatvecs::AbstractArray{<:Real,2}`: the inverse of the square array
+- `recip_latvecs::AbstractMatrix{<:Real}`: the reciprocal lattice vectors as
+    columns of a a matrix.
+- `inv_rlatvecs::AbstractMatrix{<:Real}`: the inverse of the square matrix
     `recip_latvecs`.
 - `ibz::Chull{Float64}`: the irreducible Brillouin zone as as a convex hull
     objects from `QHull`.
-- `pointgroup::Array{Array{Float64,2},1}`: a list of point symmetry operators
+- `pointgroup::Vector{Matrix{Float64}}`: a list of point symmetry operators
     in matrix form that operate on points from the left.
 - `coordinates::String`: the coordinates the *k*-point is in. Options are
     \"lattice\" and \"Cartesian\". The *k*-point within the IBZ is returned in
@@ -328,7 +328,7 @@ Map a point to a symmetrically equivalent point within the IBZ.
     is used everywhere `rtol` is used.
 
 # Returns
-- `rot_point::AbstractArray{Real,1}`: a symmetrically equivalent *k*-point to
+- `rot_point::AbstractVector{<:Real}`: a symmetrically equivalent *k*-point to
     `kpoint` within the irreducible Brillouin zone in the same coordinates as
     `coordinates`.
 
@@ -350,17 +350,17 @@ ibz = chull([0.0 0.25; 0.0 0.0; 0.5 0.0; 0.5 0.25])
 kpoint = [2,3]
 ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 # output
-2-element Array{Real,1}:
+2-element Vector{Real}:
  0.0
  0.0
 ```
 """
-function mapto_ibz(kpoint::AbstractArray{<:Real,1},
-        recip_latvecs::AbstractArray{<:Real,2},
-        inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
-        pointgroup::Array{Array{Float64,2},1}, coordinates::String;
+function mapto_ibz(kpoint::AbstractVector{<:Real},
+        recip_latvecs::AbstractMatrix{<:Real},
+        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
+        pointgroup::Vector{Matrix{Float64}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=1e-9)::AbstractArray{Real,1}
+        atol::Real=1e-9)::AbstractVector{<:Real}
 
     bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
@@ -380,14 +380,14 @@ end
     mapto_ibz(kpoints,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coordinates;
         rtol,atol)
 
-Map an array of points to the IBZ and then remove duplicate points.
+Map points as columns of a matrix to the IBZ and then remove duplicate points.
 """
-function mapto_ibz(kpoints::AbstractArray{<:Real,2},
-        recip_latvecs::AbstractArray{<:Real,2},
-        inv_rlatvecs::AbstractArray{<:Real,2}, ibz::Chull{Float64},
-        pointgroup::Array{Array{Float64,2},1}, coordinates::String,
+function mapto_ibz(kpoints::AbstractMatrix{<:Real},
+        recip_latvecs::AbstractMatrix{<:Real},
+        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
+        pointgroup::Vector{Matrix{Float64}}, coordinates::String,
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=1e-9)::AbstractArray{Real,2}
+        atol::Real=1e-9)::AbstractMatrix{<:Real}
 
     ibzpts = reduce(hcat,[mapto_ibz(kpoints[:,i],recip_latvecs,
         inv_rlatvecs,ibz,pointgroup,coordinates) for i=1:size(kpoints,2)])
@@ -401,11 +401,11 @@ end
 Calculate the space group of a crystal structure.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the basis of the lattice as columns
-    of an array.
-- `atom_types::AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-    structure as columns of an array.
+- `real_latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns
+    of a matrix.
+- `atom_types::AbstractVector{<:Int}`: a list of atom types as integers.
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
+    structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
@@ -413,7 +413,7 @@ Calculate the space group of a crystal structure.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `spacegroup`: the space group of the crystal structure. The first element of
+- `spacegroup::Tuple`: the space group of the crystal structure. The first element of
     `spacegroup` is a list of fractional translations, and the second element is
     a list of point operators. The translations are in Cartesian coordinates,
     and the operators operate on points in Cartesian coordinates.
@@ -431,10 +431,10 @@ SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
 ([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]])
 ```
 """
-function calc_spacegroup(real_latvecs::AbstractArray{<:Real,2},
-    atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-    atol::Real=1e-9)
+    atol::Real=1e-9)::Tuple
 
     if length(atom_types) != size(atom_pos,2)
         throw(ArgumentError("The number of atom types and positions must be the
@@ -508,11 +508,11 @@ end
 Calculate the Brillouin zone for the given real-space lattice basis.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the real-space lattice vectors or
-    primitive translation vectors as columns of a 2x2 or 3x3 array.
-- `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal 
-    structure as columns of an array.
+- `real_latvecs::AbstractMatrix{<:Real}`: the real-space lattice vectors or
+    primitive translation vectors as columns of a 2x2 or 3x3 matrix.
+- `atom_typesAbstractVector{<:Int}`: a list of atom types as integers.
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal 
+    structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
 - `bzformat::String`: the format of the Brillouin zone. Options include
@@ -552,8 +552,8 @@ Points on convex hull in original order:
 [0.5 0.5; 0.5 -0.5; -0.5 -0.5; -0.5 0.5]
 ```
 """
-function calc_bz(real_latvecs::AbstractArray{<:Real,2},
-    atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+function calc_bz(real_latvecs::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,bzformat::String,makeprim::Bool=false,
     convention::String="ordinary";
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
@@ -572,7 +572,7 @@ function calc_bz(real_latvecs::AbstractArray{<:Real,2},
     elseif size(real_latvecs) == (3,3)
         latpts = reduce(hcat,[recip_latvecs*[i,j,k] for (i,j,k)=product(-2:2,-2:2,-2:2)])
     else
-        throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 array."))
+        throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 matrix."))
     end
 
     distances = [norm(latpts[:,i]) for i=1:size(latpts,2)] .^2 ./2
@@ -605,11 +605,11 @@ end
 Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the basis of a real-space lattice as
-    columns of an array.
-- `atom_types:AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-    structure as columns of an array.
+- `real_latvecs::AbstractMatrix{<:Real}`: the basis of a real-space lattice as
+    columns of a matrix.
+- `atom_types:AbstractVector{<:Int}`: a list of atom types as integers.
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
+    structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
 - `ibzformat::String`: the format of the irreducible Brillouin zone. Options
@@ -649,8 +649,8 @@ Points on convex hull in original order:
 [0.0 0.0; 0.5 0.0; 0.5 0.5]
 ```
 """
-function calc_ibz(real_latvecs::AbstractArray{<:Real,2},
-    atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,ibzformat::String,makeprim::Bool=false,
     convention::String="ordinary";
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
@@ -726,11 +726,11 @@ This is a Julia translation of the function by the same in
     https://github.com/msg-byu/symlib.
 
 # Arguments
-- `real_latvecs::AbstractArray{<:Real,2}`: the basis of the lattice as columns
-    of an array.
-- `atom_types::AbstractArray{<:Int,1}`: a list of atom types as integers.
-- `atom_pos::AbstractArray{<:Real,2}`: the positions of atoms in the crystal
-    structure as columns of an array.
+- `real_latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns
+    of a matrix.
+- `atom_types::AbstractVector{<:Int}`: a list of atom types as integers.
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
+    structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
@@ -738,12 +738,12 @@ This is a Julia translation of the function by the same in
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `prim_latvecs::AbstractArray{<:Real,2}`: the primitive lattice vectors as
-    columns of an array.
-- `prim_types::AbstractArray{<:Int,1}`: a list of atom types as integers in the
+- `prim_latvecs::AbstractMatrix{<:Real}`: the primitive lattice vectors as
+    columns of a matrix.
+- `prim_types::AbstractVector{<:Int}`: a list of atom types as integers in the
     primitive unit cell.
-- `prim_pos::AbstractArray{<:Real,2}`: the positions of the atoms in in the
-    crystal structure as columns of an array.
+- `prim_pos::AbstractMatrix{<:Real}`: the positions of the atoms in in the
+    crystal structure as columns of a matrix in Cartesian coordinates.
 
 # Examples
 ```jldoctest
@@ -761,8 +761,8 @@ make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 ([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0]) 
 ```
 """
-function make_primitive(real_latvecs::AbstractArray{<:Real,2},
-    atom_types::AbstractArray{<:Int,1},atom_pos::AbstractArray{<:Real,2},
+function make_primitive(real_latvecs::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=1e-9)
 
@@ -854,15 +854,16 @@ end
 Complete the orbit of a point.
 
 # Arguments
-- `pt::AbstractArray{<:Real,1}`: the Cartesian coordinates of a point in a 1D array.
-- `pointgroup::Array{Array{<:Real,2},1}`: the point group operators in a nested list. The
-    operators operate on points in Cartesian coordinates from the right.
+- `pt::AbstractVector{<:Real}`: the Cartesian coordinates of a point.
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
+    in a nested list. The operators operate on points in Cartesian coordinates 
+    from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
 - `atol::Real=1e-9`: an absolute tolerance. 
 
 # Returns
-- `::AbstractArray{<:Real,2}`: the points of the orbit in Cartesian coordinates as
-    columns of a 2D array.
+- `::AbstractMatrix{<:Real}`: the points of the orbit in Cartesian coordinates as
+    columns of a matrix.
 
 # Examples
 ```jldoctest
@@ -871,15 +872,15 @@ pt = [0.05, 0.0]
 pointgroup = [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]]
 complete_orbit(pt,pointgroup)
 # output
-2×4 Array{Float64,2}:
+2×4 Matrix{Float64}:
   0.0   0.0   -0.05  0.05
  -0.05  0.05   0.0   0.0
 ```
 """
-function complete_orbit(pt::AbstractArray{<:Real,1},
-        pointgroup::Array{Array{Float64,2},1};
+function complete_orbit(pt::AbstractVector{<:Real},
+        pointgroup::Vector{Matrix{Float64}};
         rtol::Real=sqrt(eps(float(maximum(pt)))),
-        atol::Real=1e-9)::AbstractArray{<:Real,2}
+        atol::Real=1e-9)::AbstractMatrix{<:Real}
     unique_points(reduce(hcat,map(op->op*pt,pointgroup)),rtol=rtol,atol=atol)
 end
 
@@ -889,16 +890,16 @@ end
 Complete the orbits of multiple points.
 
 # Arguments
-- `pt::AbstractArray{<:Real,2}`: the Cartesian coordinates of a points as columns of
-    a 2D array.
-- `pointgroup::Array{Array{<:Real,2},1}`: the point group operators in a nested list. The
-    operators operate on points in Cartesian coordinates from the right.
+- `pt::AbstractMatrix{<:Real}`: the Cartesian coordinates of a points as columns of
+    a matrix.
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
+    in a nested list. The operators operate on points in Cartesian coordinates from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
 - `atol::Real=1e-9`: an absolute tolerance. 
 
 # Returns
-- `::AbstractArray{<:Real,2}`: the unique points of the orbits in Cartesian coordinates as
-    columns of a 2D array.
+- `::AbstractMatrix{<:Real}`: the unique points of the orbits in Cartesian coordinates as
+    columns of a matrix.
 
 # Examples
 ```jldoctest
@@ -907,15 +908,15 @@ pts = [0.0 0.05 0.1; 0.0 0.0 0.0]
 pointgroup = [[0.0 -1.0; -1.0 0.0], [0.0 -1.0; 1.0 0.0], [-1.0 0.0; 0.0 -1.0], [1.0 0.0; 0.0 -1.0], [-1.0 0.0; 0.0 1.0], [1.0 0.0; 0.0 1.0], [0.0 1.0; -1.0 0.0], [0.0 1.0; 1.0 0.0]]
 complete_orbit(pts,pointgroup)
 # output
-2×9 Array{Float64,2}:
+2×9 Matrix{Float64}:
  0.0   0.0   0.0   -0.05  0.05   0.0  0.0  -0.1  0.1
  0.0  -0.05  0.05   0.0   0.0   -0.1  0.1   0.0  0.0
 ```
 """
-function complete_orbit(pts::AbstractArray{<:Real,2},
-    pointgroup::Array{Array{Float64,2},1};
+function complete_orbit(pts::AbstractMatrix{<:Real},
+    pointgroup::Vector{Matrix{Float64}};
     rtol::Real=sqrt(eps(float(maximum(pts)))),
-    atol::Real=1e-9)::AbstractArray{<:Real,2}
+    atol::Real=1e-9)::AbstractMatrix{<:Real}
     unique_points(reduce(hcat,reduce(hcat,[map(op->op*pts[:,i],pointgroup) for i=1:size(pts,2)])))
  end
 end #module
