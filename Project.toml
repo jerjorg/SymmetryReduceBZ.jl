@@ -24,15 +24,13 @@ Polyhedra = "0.6"
 PyCall = "1.9"
 PyPlot = "2.9"
 QHull = "0.2"
-RegistryCI = "6.3"
 SymPy = "1.0"
 julia = "1.5"
 
 [extras]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-RegistryCI = "0c95cc5f-2f7e-43fe-82dd-79dbcba86b32"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 
 [targets]
-test = ["SymPy", "RegistryCI"]
+test = ["SymPy"]
