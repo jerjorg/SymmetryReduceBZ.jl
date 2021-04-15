@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>User guide · SymmetryReduceBZ</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">SymmetryReduceBZ</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../Documentation/">Documentation</a></li><li class="is-active"><a class="tocitem" href>User guide</a><ul class="internal"><li><a class="tocitem" href="#Julia"><span>Julia</span></a></li><li><a class="tocitem" href="#Python"><span>Python</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>User guide</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>User guide</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/docs/src/Usage.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="User-guide"><a class="docs-heading-anchor" href="#User-guide">User guide</a><a id="User-guide-1"></a><a class="docs-heading-anchor-permalink" href="#User-guide" title="Permalink"></a></h1><h2 id="Julia"><a class="docs-heading-anchor" href="#Julia">Julia</a><a id="Julia-1"></a><a class="docs-heading-anchor-permalink" href="#Julia" title="Permalink"></a></h2><p>To calculate the IBZ, simply provide the lattice and atomic basis to <code>calc_ibz</code>. The IBZ will be returned as either a convex hull or intersection of half spaces.</p><pre><code class="language-julia">import SymmetryReduceBZ.Lattices: genlat_CUB
+import SymmetryReduceBZ.Symmetry: calc_ibz
+a = 2.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,0]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]&#39;)
+ibzformat = &quot;convex hull&quot;
+coordinates = &quot;Cartesian&quot;
+makeprim = false
+convention = &quot;ordinary&quot;
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,
+  makeprim,convention)</code></pre><pre class="documenter-example-output">Convex Hull of 6 points in 3 dimensions
+Hull segment vertex indices:
+[1, 2, 3, 4, 5, 6]
+Points on convex hull in original order:
+
+[0.25 0.0 0.0; 0.0 0.0 0.0; … ; 0.0 -0.25 0.0; 0.25 -0.25 0.25]
+</pre><p>The columns of <code>real_latvecs</code> are the lattice generating vectors, the columns of <code>atom_pos</code> are the positions of the atoms in Cartesian coordinates (in this case), <code>coordinates</code> are the coordinates of the atom positions, and <code>convention</code> gives the convention for going from real to reciprocal space (whether or not to multiply by 2π). There is a simple function for visualizing the IBZ along with the Brillouin zone (BZ).</p><pre><code class="language-">import SymmetryReduceBZ.Plotting: plot_convexhulls
+import SymmetryReduceBZ.Lattices: genlat_CUB
+a = 2.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,0]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]&#39;)
+coordinates = &quot;Cartesian&quot;
+makeprim = false
+convention = &quot;ordinary&quot;
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
+  makeprim,convention)</code></pre><h2 id="Python"><a class="docs-heading-anchor" href="#Python">Python</a><a id="Python-1"></a><a class="docs-heading-anchor-permalink" href="#Python" title="Permalink"></a></h2><p>It is possible to call <code>SymmetryReduceBZ</code> from Python using <a href=" https:/pyjulia.readthedocs.io/en/latest/index.html">PyJulia</a>. In a Jupyter notebook, IPython magic can be used to directly evaluate Julia commands in notebook cells.</p><pre><code class="language-julia">from julia import Julia
+jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)</code></pre><pre><code class="language-julia">%%julia
+using Pkg
+Pkg.add(&quot;SymmetryReduceBZ&quot;)
+import SymmetryReduceBZ.Plotting: plot_convexhulls
+import SymmetryReduceBZ.Lattices: genlat_CUB
+
+a = 1.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,1]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]&#39;)
+coordinates = &quot;Cartesian&quot;
+primitive = true
+makeprim = false
+convention = &quot;ordinary&quot;
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+   convention)
+fig.show()</code></pre><p>Without IPython magic, Julia commands can be called with the <code>eval</code> method of <code>PyJulia</code>.</p><pre><code class="language-julia">from julia import Julia
+jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)
+
+jl.eval(&quot;&quot;&quot;
+using Pkg
+Pkg.add(\&quot;SymmetryReduceBZ\&quot;)
+import SymmetryReduceBZ.Plotting: plot_convexhulls
+import SymmetryReduceBZ.Lattices: genlat_CUB
+a = 1.0
+real_latvecs = genlat_CUB(a)
+atom_types = [0,1]
+atom_pos = Array([0 0 0; 0.5 0.5 0.5]&#39;)
+coordinates = &quot;Cartesian&quot;
+makeprim = true
+convention = &quot;ordinary&quot;
+(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+   convention)
+fig.show()
+&quot;&quot;&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Documentation/">« Documentation</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 15 April 2021 00:25">Thursday 15 April 2021</span>. Using Julia version 1.5.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
