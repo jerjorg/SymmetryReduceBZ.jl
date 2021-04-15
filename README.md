@@ -14,7 +14,7 @@ Brillouin zone (IBZ) for crystal structures in 2D or 3D provided the real-space
 lattice vectors, atomic positions, and atom types. It also contains methods for
 making unit cells primitive and lattice reduction. See the User Guide in the
 [documentation](https://jerjorg.github.io/SymmetryReduceBZ.jl/) for more details
-and usage examples.
+and usage examples in Python.
 
 ## Installation
 
@@ -89,5 +89,45 @@ convention = "ordinary"
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   makeprim,convention)
 ```
+![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz.png)
+
 The functions `plot_2Dconvexhull` and `plot_3Dconvexhull` allow greater customization of 
-the appearance of the convex hull, examples of which are provided in the documentation.
+the appearance of the convex hull.
+
+```@example
+import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
+using PyPlot
+real_latvecs = [1 0; 0 1]
+convention="ordinary"
+atom_types=[0]
+atom_pos = Array([0 0]')
+coords = "Cartesian"
+ibzformat = "convex hull"
+makeprim=false
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
+ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",alpha=0.2)
+ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
+axis("off")
+```
+
+```@example
+import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
+using PyPlot
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+convention="ordinary"
+atom_types=[0]
+atom_pos = Array([0 0 0]')
+coords = "Cartesian"
+bzformat = "convex hull"
+makeprim=false
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
+fig = figure()
+ax = fig.add_subplot(111, projection="3d")
+ax = plot_3Dconvexhull(ibz,ax,facecolors="pink",alpha=1,edgecolors="black",linewidths = 1)
+ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
+axis("off")
+```
