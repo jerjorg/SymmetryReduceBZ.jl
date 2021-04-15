@@ -111,6 +111,7 @@ ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",a
 ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 axis("off")
 ```
+![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-3.png)
 
 ```@example
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
@@ -131,3 +132,4 @@ ax = plot_3Dconvexhull(ibz,ax,facecolors="pink",alpha=1,edgecolors="black",linew
 ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
 axis("off")
 ```
+![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-2.png)
