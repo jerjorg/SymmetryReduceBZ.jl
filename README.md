@@ -57,6 +57,8 @@ The arguments for `calc_ibz` are as follows:
 	frequency.
 - `makeprim`: make the unit cell primitive before calculating the IBZ if
 	`true`.
+- `rtol=sqrt(eps(float(maximum(real_latvecs))))`: (optional) a relative tolerance for floating-point comparisons.
+- `atol=1e-9`: (optional) an absolute tolerance for floating-point comparisons.	
 	
 The vertices of the ibz are accessed with `ibz.points[ibz.vertices,:]`. The
 vertices of the IBZ and `ibz.points` should be the same. The rows of the array
