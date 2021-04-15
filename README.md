@@ -45,18 +45,17 @@ ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,
   makeprim,convention)
 ```
 The arguments for `calc_ibz` are as follows:
-- `real_latvecs`: the real-space lattice vectors as columns of an array.
-- `atom_types`: a list of atom types as integers.
-- `atom_pos`: the positions of atoms in the crystal structure as columns of an
-	array.
-- `coords`: the positions of the atoms in \"lattice\" or \"Cartesian\"
+- `real_latvecs`: the real-space lattice vectors as columns of a matrix.
+- `atom_types`: a vector of atom types as integers.
+- `atom_pos`: the positions of atoms in the crystal structure as columns of a matrix.
+- `coordinates`: the positions of the atoms in \"lattice\" or \"Cartesian\"
 	coordinates.
 - `ibzformat`: the format of the irreducible Brillouin zone. Options include
 	\"convex hull\" and \"half-space\".
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are \"ordinary\" (temporal) frequency and \"angular\"
 	frequency.
-- `makeprim`: make the unit cell primitive before calculating the the IBZ if
+- `makeprim`: make the unit cell primitive before calculating the IBZ if
 	true.
 	
 The vertices of the ibz are accessed with `ibz.points[ibz.vertices,:]`. The
@@ -90,3 +89,5 @@ convention = "ordinary"
 (fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   makeprim,convention)
 ```
+The functions `plot_2Dconvexhull` and `plot_3Dconvexhull` allow greater customization of 
+the appearance of the convex hull, examples of which are provided in the documentation.
