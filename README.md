@@ -11,7 +11,7 @@ https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master&service=gi
 # SymmetryReduceBZ
 The primary purpose of `SymmetryReduceBZ` is to calculate the irreducible
 Brillouin zone (IBZ) for crystal structures in 2D or 3D provided the real-space
-lattice vectors, atomic positions, and atom types. It also contains methods for
+lattice vectors, atom positions, and atom types. It also contains methods for
 making unit cells primitive and lattice reduction. See the User Guide in the
 [documentation](https://jerjorg.github.io/SymmetryReduceBZ.jl/) for more details
 and usage examples in Python.
