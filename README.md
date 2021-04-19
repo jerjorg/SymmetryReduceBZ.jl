@@ -48,7 +48,7 @@ The arguments for `calc_ibz` are as follows:
 - `real_latvecs`: the real-space lattice vectors as columns of a matrix.
 - `atom_types`: a vector of atom types as integers.
 - `atom_pos`: the positions of atoms in the crystal structure as columns of a matrix.
-- `coordinates`: the positions of the atoms in `"lattice"` or `"Cartesian"`
+- `coordinates`: indicates the atoms are in `"lattice"` or `"Cartesian"`
 	coordinates.
 - `ibzformat`: the format of the irreducible Brillouin zone. Options include
 	`"convex hull"` and `"half-space"`.
