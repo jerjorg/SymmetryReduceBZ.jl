@@ -614,12 +614,12 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     or \"Cartesian\" coordinates.
 - `ibzformat::String`: the format of the irreducible Brillouin zone. Options
     include \"convex hull\" and \"half-space\".
+    - `makeprim::Bool=false`: make the unit cell primitive before calculating the
+    IBZ if true.
 - `convention::String="ordinary"`: the convention used to go between real and
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `makeprim::Bool=false`: make the unit cell primitive before calculating the
-    IBZ if true.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
