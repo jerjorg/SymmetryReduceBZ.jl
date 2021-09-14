@@ -14,7 +14,7 @@ Brillouin zone (IBZ) for crystal structures in 2D or 3D provided the real-space
 lattice vectors, atom positions, and atom types. It also contains methods for
 making unit cells primitive and lattice reduction. See the User Guide in the
 [documentation](https://jerjorg.github.io/SymmetryReduceBZ.jl/) for more details
-and usage examples in Python.
+and usage examples in Python. Details of the algorithm are explained [here](https://arxiv.org/abs/2104.05856).
 
 ## Installation
 
