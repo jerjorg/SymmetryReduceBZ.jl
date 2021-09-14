@@ -4,7 +4,7 @@ ENV["MPLBACKEND"]="qt5agg"
 include("Symmetry.jl")
 include("Utilities.jl")
 import .Symmetry: calc_bz, calc_ibz
-import .Utilities: get_uniquefacets, sortpts_perm
+import .Utilities: get_uniquefacets
 import QHull: Chull
 import PyCall: PyObject, pyimport
 import PyPlot: figaspect, figure, subplots

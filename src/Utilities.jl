@@ -407,6 +407,33 @@ function shoelace(vertices)
 end
 
 @doc """
+    function sortpts2D(pts)
+
+Calculate the permutation vector that sorts 2D Cartesian points counterclockwise with
+    respect to the average of the points.
+
+# Arguments
+- `pts::AbstractMatrix{<:Real}`: Cartesian points in 2D.
+
+# Returns
+- `perm::AbstractVector{<:Real}`: the permutation vector that orders the points
+    clockwise or counterclockwise.
+```
+"""
+function sortpts2D(pts::AbstractMatrix{<:Real})
+    c = sum(pts,dims=2)/size(pts,2)
+    @show c
+    angles=zeros(size(pts,2))
+    for i=1:size(pts,2)
+        (x,y)=pts[:,i] - c
+        angles[i] = atan(y,x)
+        if y < 0 angles[i] += 2π end
+    end
+    perm = sortperm(angles)
+    return perm
+end
+
+@doc """
     function sortpts_perm(pts)
 
 Calculate the permutation vector that sorts Cartesian points embedded in 3D that
@@ -417,7 +444,7 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
     on a plane. The points are columns of a matrix.
 
 # Returns
-- `perm::AbstractVector{<:Real}`: the permutation vector that orders the points
+- `::AbstractVector{<:Real}`: the permutation vector that orders the points
     clockwise or counterclockwise.
 
 # Examples
@@ -435,14 +462,15 @@ pts[:,perm]
 """
 function sortpts_perm(pts::AbstractMatrix{<:Real})
     xypts=mapto_xyplane(pts)
-    c=sum(xypts,dims=2)/size(pts,2)
-    angles=zeros(size(xypts,2))
-    for i=1:size(xypts,2)
-        (x,y)=xypts[:,i] - c
-        angles[i] = atan(y,x)
-    end
-    perm = sortperm(angles)
-    return perm
+    sortpts2D(xypts)
+    # c=sum(xypts,dims=2)/size(pts,2)
+    # angles=zeros(size(xypts,2))
+    # for i=1:size(xypts,2)
+    #     (x,y)=xypts[:,i] - c
+    #     angles[i] = atan(y,x)
+    # end
+    # perm = sortperm(angles)
+    # return perm
 end
 
 @doc """
