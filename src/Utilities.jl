@@ -422,12 +422,11 @@ Calculate the permutation vector that sorts 2D Cartesian points counterclockwise
 """
 function sortpts2D(pts::AbstractMatrix{<:Real})
     c = sum(pts,dims=2)/size(pts,2)
-    @show c
     angles=zeros(size(pts,2))
     for i=1:size(pts,2)
         (x,y)=pts[:,i] - c
         angles[i] = atan(y,x)
-        if y < 0 angles[i] += 2π end
+        # if y < 0 angles[i] += 2π end
     end
     perm = sortperm(angles)
     return perm
