@@ -462,14 +462,6 @@ pts[:,perm]
 function sortpts_perm(pts::AbstractMatrix{<:Real})
     xypts=mapto_xyplane(pts)
     sortpts2D(xypts)
-    # c=sum(xypts,dims=2)/size(pts,2)
-    # angles=zeros(size(xypts,2))
-    # for i=1:size(xypts,2)
-    #     (x,y)=xypts[:,i] - c
-    #     angles[i] = atan(y,x)
-    # end
-    # perm = sortperm(angles)
-    # return perm
 end
 
 @doc """
