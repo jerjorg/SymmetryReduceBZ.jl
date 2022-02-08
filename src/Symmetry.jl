@@ -53,7 +53,7 @@ function calc_pointgroup(latvecs::AbstractMatrix{<:Real};
 
     dim=size(latvecs,1)
     latvecs = minkowski_reduce(latvecs,rtol=rtol,atol=atol)
-    radius = maximum([norm(latvecs[:,i]) for i=1:dim])
+    radius = maximum([norm(latvecs[:,i]) for i=1:dim])*1.001
     if size(latvecs) == (2,2)
         pts=sample_circle(latvecs,radius,[0,0],rtol=rtol,atol=atol)
     elseif size(latvecs) == (3,3)
