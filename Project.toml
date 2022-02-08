@@ -1,7 +1,7 @@
 name = "SymmetryReduceBZ"
 uuid = "49a35663-c880-4242-bebb-1ec8c0fa8046"
 authors = ["Jeremy Jorgensen <jerjorg@gmail.com>"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
