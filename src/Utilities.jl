@@ -174,7 +174,7 @@ function edgelengths(basis::AbstractMatrix{<:Real}, radius::Real;
     end
 end
 
-get_simplex(v::Vector{Vector{<:Real}}, i) = v[i]
+get_simplex(v::Vector{<:Vector{<:Real}}, i) = v[i]
 get_simplex(v::Matrix{<:Real}, i) = v[i,:]
 
 
