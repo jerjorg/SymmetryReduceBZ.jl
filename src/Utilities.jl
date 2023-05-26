@@ -174,6 +174,10 @@ function edgelengths(basis::AbstractMatrix{<:Real}, radius::Real;
     end
 end
 
+get_simplex(v::Vector{Vector{<:Real}}, i) = v[i]
+get_simplex(v::Matrix{<:Real}, i) = v[i,:]
+
+
 @doc """
     get_uniquefacets(ch)
 
@@ -210,18 +214,18 @@ get_uniquefacets(bz)
  [8, 7, 5, 6]
 ```
 """
-function get_uniquefacets(ch::Chull{<:Real})::Vector{Vector{<:Int}}
+function get_uniquefacets(ch::Chull{<:Real})::Vector{Vector{<:Integer}}
     facets = ch.facets
     unique_facets = []
     removed=zeros(Int64,size(facets,1))
     for i=1:size(facets,1)
         if removed[i] == 0
             removed[i]=1
-            face=ch.simplices[i]
+            face=get_simplex(ch.simplices, i)
             for j=i+1:size(facets,1)
                 if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
                     removed[j]=1
-                    append!(face,ch.simplices[j])
+                    append!(face,get_simplex(ch.simplices, j))
                 end
             end
             face = unique(reduce(hcat,face)[:])
