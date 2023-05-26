@@ -214,28 +214,25 @@ get_uniquefacets(bz)
  [8, 7, 5, 6]
 ```
 """
-function get_uniquefacets(ch::Chull{<:Real})::Vector{Vector{<:Integer}}
+function get_uniquefacets(ch::Chull{<:Real})
     facets = ch.facets
-    unique_facets = []
-    removed=zeros(Int64,size(facets,1))
+    unique_facets = Vector{eltype(ch.vertices)}[]
+    removed=zeros(Bool,size(facets,1))
     for i=1:size(facets,1)
-        if removed[i] == 0
-            removed[i]=1
-            face=get_simplex(ch.simplices, i)
-            for j=i+1:size(facets,1)
-                if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
-                    removed[j]=1
-                    append!(face,get_simplex(ch.simplices, j))
-                end
+        removed[i] && continue
+        removed[i]=true
+        face=get_simplex(ch.simplices, i)
+        for j=i+1:size(facets,1)
+            if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
+                removed[j]=true
+                append!(face,get_simplex(ch.simplices, j))
             end
-            face = unique(reduce(hcat,face)[:])
-            # Order the corners of the face either clockwise or
-            # counterclockwise.
-            face = face[sortpts_perm(Array(ch.points[face,:]'))]
-            append!(unique_facets,[face])
         end
+        unique!(face)
+        # Order the corners of the face either clockwise or counterclockwise.
+        permute!(face, sortpts_perm(ch.points[face,:]'))
+        push!(unique_facets,face)
     end
-    # unique_facets = convert(Array{Array{Int,1}},unique_facets)
     unique_facets
 end
 
