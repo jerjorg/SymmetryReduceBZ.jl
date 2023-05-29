@@ -1,10 +1,9 @@
 module Plotting
 
 ENV["MPLBACKEND"]="qt5agg"
-include("Symmetry.jl")
-include("Utilities.jl")
-import .Symmetry: calc_bz, calc_ibz
-import .Utilities: get_uniquefacets
+
+import ..Symmetry: calc_bz, calc_ibz
+import ..Utilities: get_uniquefacets
 import QHull: Chull
 import PyCall: PyObject, pyimport
 import PyPlot: figaspect, figure, subplots
@@ -134,7 +133,7 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing
     p=art3d.Poly3DCollection(faces, alpha=alpha, facecolors=facecolors)
     l=art3d.Line3DCollection(edges, colors=edgecolors,linewidths=linewidths)
 
-    if ax == nothing 
+    if ax == nothing
         fig = figure()
         ax = fig.add_subplot(111, projection="3d")
     end

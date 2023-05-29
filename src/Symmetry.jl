@@ -7,10 +7,8 @@ import QHull: chull, Chull
 import Combinatorics: permutations
 import Base.Iterators: product, flatten
 
-include("Lattices.jl")
-include("Utilities.jl")
-import .Lattices: get_recip_latvecs, minkowski_reduce
-import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove_duplicates
+import ..Lattices: get_recip_latvecs, minkowski_reduce
+import ..Utilities: sample_circle, sample_sphere, contains, unique_points, remove_duplicates
 
 @doc """
     calc_pointgroup(latvecs;rtol,atol)
@@ -18,7 +16,7 @@ import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove
 Calculate the point group of a lattice in 2D or 3D.
 
 # Arguments
-- `latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns of a 
+- `latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns of a
     matrix.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))`: a relative tolerance for
     floating point comparisons. It is used to compare lengths of vectors and the
@@ -511,7 +509,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 - `real_latvecs::AbstractMatrix{<:Real}`: the real-space lattice vectors or
     primitive translation vectors as columns of a 2x2 or 3x3 matrix.
 - `atom_typesAbstractVector{<:Int}`: a list of atom types as integers.
-- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal 
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
     structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
@@ -758,7 +756,7 @@ coordinates = "Cartesian"
 convention = "ordinary"
 make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 # output
-([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0]) 
+([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0])
 ```
 """
 function make_primitive(real_latvecs::AbstractMatrix{<:Real},
@@ -777,9 +775,9 @@ function make_primitive(real_latvecs::AbstractMatrix{<:Real},
 
     # No need to consider the origin.
     dim = size(real_latvecs,1)
-    if dim==2 
+    if dim==2
         origin=[0.,0.]
-    elseif dim==3 
+    elseif dim==3
         origin=[0.,0.,0.]
     else
         throw(ArgumentError("Can only make 2D or 3D unit cells primitive."))
@@ -802,7 +800,7 @@ function make_primitive(real_latvecs::AbstractMatrix{<:Real},
         if dim == 2
             iters = [[(i,j) for j=i+1:nopts-1] for i=1:nopts-2] |> flatten
         else
-            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for 
+            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for
                 i=1:nopts-2] |> flatten |> flatten
         end
 
@@ -826,7 +824,7 @@ function make_primitive(real_latvecs::AbstractMatrix{<:Real},
             end
         end
     end
-    
+
     if !mapped
         prim_latvecs = real_latvecs
         inv_latvecs = inv(real_latvecs)
@@ -855,11 +853,11 @@ Complete the orbit of a point.
 
 # Arguments
 - `pt::AbstractVector{<:Real}`: the Cartesian coordinates of a point.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
-    in a nested list. The operators operate on points in Cartesian coordinates 
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
+    in a nested list. The operators operate on points in Cartesian coordinates
     from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
-- `atol::Real=1e-9`: an absolute tolerance. 
+- `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
 - `::AbstractMatrix{<:Real}`: the points of the orbit in Cartesian coordinates as
@@ -892,10 +890,10 @@ Complete the orbits of multiple points.
 # Arguments
 - `pt::AbstractMatrix{<:Real}`: the Cartesian coordinates of a points as columns of
     a matrix.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
     in a nested list. The operators operate on points in Cartesian coordinates from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
-- `atol::Real=1e-9`: an absolute tolerance. 
+- `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
 - `::AbstractMatrix{<:Real}`: the unique points of the orbits in Cartesian coordinates as
