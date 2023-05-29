@@ -32,7 +32,7 @@ SymmetryReduceBZ.Utilities.affine_trans(pts)
   0.0   0.0   0.0  1.0
 ```
 """
-function affine_trans(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
+function affine_trans(pts::AbstractMatrix{<:Real})
     a,b,c = [pts[:,i] for i=1:3]
 
     # Create a coordinate system with two vectors lying on the plane the points
@@ -54,7 +54,7 @@ end
 Check if a point is contained in a matrix of points as columns.
 
 # Arguments
-- `pt::AbstractVector{<:Real}`: a point whose coordinates are the components of 
+- `pt::AbstractVector{<:Real}`: a point whose coordinates are the components of
     a vector.
 - `pts::AbstractMatrix{<:Real}`: coordinates of points as columns of a matrix.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
@@ -259,10 +259,10 @@ SymmetryReduceBZ.Utilities.mapto_xyplane(pts)
  0.0  0.0  1.0  1.0
 ```
 """
-function mapto_xyplane(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
+function mapto_xyplane(pts::AbstractMatrix{<:Real})
 
     M = affine_trans(pts)
-    reduce(hcat,[(M*[pts[:,i]..., 1])[1:2] for i=1:size(pts,2)])
+    mapslices(pt -> first(M*vcat(pt, 1), 2), pts, dims=1)
 end
 
 @doc """
@@ -271,7 +271,7 @@ end
 Sample uniformly within a circle centered about a point.
 
 ## Arguments
-- `basis::AbstractMatrix{<:Real}`: a 2x2 matrix whose columns are the grid 
+- `basis::AbstractMatrix{<:Real}`: a 2x2 matrix whose columns are the grid
     generating vectors.
 - `radius::Real`: the radius of the circle.
 - `offset::AbstractVector{<:Real}=[0.,0.]`: the xy-coordinates of the center of
@@ -493,7 +493,7 @@ SymmetryReduceBZ.Utilities.unique_points(points)
 function unique_points(points::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
     atol::Real=1e-9)::AbstractMatrix
-    
+
     uniquepts=zeros(size(points))
     numpts = 0
     for i=1:size(points,2)
@@ -514,10 +514,10 @@ Remove duplicates from an array.
 # Arguments
 - `points::AbstractVector`: items in a vector, which can be floats or arrays.
 - `rtol::Real=sqrt(eps(float(maximum(points))))`: relative tolerance.
-- `atol::Real=1e-9`: absolute tolerance. 
+- `atol::Real=1e-9`: absolute tolerance.
 
 # Returns
-- `uniquepts::AbstractVector`: an vector with only unique elements. 
+- `uniquepts::AbstractVector`: an vector with only unique elements.
 
 # Examples
 ```jldoctest
@@ -583,7 +583,7 @@ function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
     ball_points = zeros(Int,size(points,2))
     count = 0
     for i=1:size(points,2)
-        if (norm(points[:,i] - offset) < radius) || 
+        if (norm(points[:,i] - offset) < radius) ||
             isapprox(norm(points[:,i] - offset),radius,rtol=rtol,atol=atol)
             count+=1
             ball_points[count] = i
