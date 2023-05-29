@@ -133,7 +133,7 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing
     p=art3d.Poly3DCollection(faces, alpha=alpha, facecolors=facecolors)
     l=art3d.Line3DCollection(edges, colors=edgecolors,linewidths=linewidths)
 
-    if ax == nothing
+    if ax == nothing 
         fig = figure()
         ax = fig.add_subplot(111, projection="3d")
     end
