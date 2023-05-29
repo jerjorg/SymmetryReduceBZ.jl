@@ -299,7 +299,7 @@ SymmetryReduceBZ.Utilities.sample_circle(basis,radius,offset)
 """
 function sample_circle(basis::AbstractMatrix{<:Real}, radius::Real,
     offset::AbstractVector{<:Real}=[0.,0.];
-    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::AbstractMatrix{<:Real}
+    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)
 
     # Put the offset in lattice coordinates and round.
     (o1,o2)=round.(inv(basis)*offset)
@@ -357,7 +357,7 @@ SymmetryReduceBZ.Utilities.sample_sphere(basis,radius,offset)
 """
 function sample_sphere(basis::AbstractMatrix{<:Real}, radius::Real,
     offset::AbstractVector{<:Real}=[0.,0.,0.]; rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=1e-9)::AbstractMatrix{<:Real}
+    atol::Real=1e-9)
 
     # Put the offset in lattice coordinates and round.
     (o1,o2,o3)=round.(inv(basis)*offset)
@@ -401,10 +401,10 @@ shoelace(pts)
 ````
 """
 function shoelace(vertices)
-    xs = vertices[1,:]
-    ys = vertices[2,:]
-    abs(xs[end]*ys[1] - xs[1]*ys[end] +
-        sum([xs[i]*ys[i+1]-xs[i+1]*ys[i] for i=1:(size(vertices,2)-1)]))/2
+    xs = vertices[begin,:]
+    ys = vertices[end,:]
+    abs(xs[end]*ys[begin] - xs[begin]*ys[end] +
+        sum(i -> xs[i]*ys[i+1]-xs[i+1]*ys[i], first(axes(vertices,2), size(vertices,2)-1)))/2
 end
 
 @doc """
@@ -424,9 +424,9 @@ Calculate the permutation vector that sorts 2D Cartesian points counterclockwise
 function sortpts2D(pts::AbstractMatrix{<:Real})
     c = sum(pts,dims=2)/size(pts,2)
     angles=zeros(size(pts,2))
-    for i=1:size(pts,2)
+    for (j,i) in enumerate(axes(pts,2))
         (x,y)=pts[:,i] - c
-        angles[i] = atan(y,x)
+        angles[j] = atan(y,x)
         # if y < 0 angles[i] += 2π end
     end
     perm = sortperm(angles)
@@ -485,25 +485,26 @@ using SymmetryReduceBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
 SymmetryReduceBZ.Utilities.unique_points(points)
 # output
-2×3 Matrix{Float64}:
- 1.0  2.0  3.0
- 2.0  3.0  4.0
+2×3 Matrix{Int64}:
+ 1  2  3
+ 2  3  4
 ```
 """
 function unique_points(points::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractMatrix
+    atol::Real=1e-9)
 
-    uniquepts=zeros(size(points))
+    uniquepts=similar(points)
+    j1 = firstindex(uniquepts, 2)
     numpts = 0
-    for i=1:size(points,2)
-        if !any([isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol)
-                for j=1:numpts])
+    for i=axes(points,2)
+        if !any(j -> isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol),
+                j1:j1+numpts-1)
             numpts += 1
-            uniquepts[:,numpts] = points[:,i]
+            uniquepts[:,j1+numpts-1] = points[:,i]
         end
     end
-    uniquepts[:,1:numpts]
+    uniquepts[:,j1:j1+numpts-1]
 end
 
 @doc """
@@ -525,25 +526,25 @@ import SymmetryReduceBZ.Utilities: remove_duplicates
 test = [1.,1.,2,2,]
 remove_duplicates(test)
 # output
-2-element Vector{Any}:
+2-element Vector{Float64}:
  1.0
  2.0
 ```
 """
 function remove_duplicates(points::AbstractVector;
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractVector
-    uniquepts=Array{Any}(undef, length(points))
-    uniquepts[1] = points[1]
-    npts = 1
-    for i=2:length(points)
+    atol::Real=1e-9)
+    uniquepts=similar(points)
+    i1 = firstindex(uniquepts)
+    npts = 0
+    for i=eachindex(points)
         pt=points[i]
-        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for i=1:npts])
+        if !any(i -> isapprox(pt,uniquepts[i],rtol=rtol,atol=atol), 1:npts)
             npts += 1
-            uniquepts[npts] = pt
+            uniquepts[i1+npts-1] = pt
         end
     end
-    uniquepts[1:npts]
+    uniquepts[i1:i1+npts-1]
 end
 
 @doc """
@@ -578,11 +579,11 @@ points₋in₋ball(points,radius,offset)
 """
 function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
     offset::AbstractVector{<:Real};rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=1e-9)::AbstractVector{<:Int}
+    atol::Real=1e-9)
 
     ball_points = zeros(Int,size(points,2))
     count = 0
-    for i=1:size(points,2)
+    for i=axes(points,2)
         if (norm(points[:,i] - offset) < radius) ||
             isapprox(norm(points[:,i] - offset),radius,rtol=rtol,atol=atol)
             count+=1
