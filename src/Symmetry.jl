@@ -807,7 +807,7 @@ function make_primitive(real_latvecs::AbstractMatrix{<:Real},
             iters = [[i,j,k] for i=1:nopts-2 for j=i+1:nopts-1 for k=j+1:nopts]
         end
 
-        for iter=reverse(iters)
+        for iter=iters
             prim_latvecs .= opts[:,iter]
             if isapprox(det(prim_latvecs),0,atol=atol)
                 continue

@@ -8,6 +8,7 @@ import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
 import SymmetryReduceBZ.Utilities: unique_points
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
+import CDDLib: Library
 import LinearAlgebra: inv
 import QHull: chull
 import PyCall: pyimport
@@ -220,7 +221,7 @@ ibzformat="convex hull"
             @test length(pointgroup) == pgsizes[i]
         end
 
-        @test_throws ArgumentError calc_pointgroup([1 0])
+        @test_throws DimensionMismatch calc_pointgroup([1 0])
 
     end
 
@@ -246,8 +247,8 @@ ibzformat="convex hull"
                     for convention=["ordinary","angular"]
 
                         bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
-                            bzformat,makeprim,convention)
-                        
+                            bzformat,makeprim,convention,Library())
+
                         if makeprim
                         	(prim_latvecs,prim_types,prim_pos) = make_primitive(
                                 real_latvecs,atom_types,atom_pos,coords)
@@ -277,7 +278,7 @@ ibzformat="convex hull"
         convention="ordinary"
         bzformat="bad format"
         @test_throws ArgumentError bz=calc_bz(real_latvecs,atom_types,atom_pos,
-            coords,bzformat,primitive,convention)
+            coords,bzformat,primitive,convention,Library())
     end
 
     @testset "calc_ibz" begin
@@ -313,10 +314,10 @@ ibzformat="convex hull"
                         prim_pos,coords)[2]
 
                     bz=calc_bz(prim_latvecs,prim_types,prim_pos,coords,
-                        bzformat,makeprim,convention)
+                        bzformat,makeprim,convention,Library())
 
                     ibz=calc_ibz(prim_latvecs,prim_types,prim_pos,coords,
-                        ibzformat,makeprim,convention)
+                        ibzformat,makeprim,convention,Library())
 
                     # Unfold IBZ
                     unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
@@ -332,11 +333,11 @@ ibzformat="convex hull"
         end
         ibzformat="bad format"
         @test_throws ArgumentError calc_ibz(listreal_latvecs[1], [0],
-            Array([0 0]'), "lattice", ibzformat, false, "ordinary")
+            Array([0 0]'), "lattice", ibzformat, false, "ordinary", Library())
 
         passed = false
         ibz = calc_ibz(listreal_latvecs[1], [0,0], Array([0 0; 0.5 0.5]'),
-            "Cartesian", "half-space", true,"ordinary")
+            "Cartesian", "half-space", true,"ordinary", Library())
         passed = true
         @test passed
     end
@@ -375,7 +376,7 @@ ibzformat="convex hull"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
-            convention)
+            convention,Library())
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
@@ -400,7 +401,7 @@ ibzformat="convex hull"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
-            convention)
+            convention,Library())
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
@@ -428,7 +429,7 @@ ibzformat="convex hull"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
-            convention)
+            convention,Library())
 
         kpoint = [1.2,0]
         @test inhull(kpoint,bz) == false
@@ -454,7 +455,7 @@ ibzformat="convex hull"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
-            convention)
+            convention,Library())
 
         kpoint = [1.2,0,0]
         @test inhull(kpoint,bz) == false
@@ -488,7 +489,7 @@ ibzformat="convex hull"
         inv_rlatvecs = inv(recip_latvecs)
 
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention)
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention,Library())
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0]
@@ -512,7 +513,7 @@ ibzformat="convex hull"
         recip_latvecs = get_recip_latvecs(real_latvecs,convention)
         inv_rlatvecs = inv(recip_latvecs)
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention)
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention,Library())
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0,0]
