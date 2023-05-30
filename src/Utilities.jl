@@ -400,11 +400,11 @@ shoelace(pts)
 1.0
 ````
 """
-function shoelace(vertices)
+function shoelace(vertices::AbstractMatrix{<:Real})
     xs = vertices[begin,:]
     ys = vertices[end,:]
     abs(xs[end]*ys[begin] - xs[begin]*ys[end] +
-        sum(i -> xs[i]*ys[i+1]-xs[i+1]*ys[i], first(axes(vertices,2), size(vertices,2)-1)))/2
+        sum(i -> xs[i]*ys[i+1]-xs[i+1]*ys[i], axes(vertices,2)[begin:end-1]))/2
 end
 
 @doc """
