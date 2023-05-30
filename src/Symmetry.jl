@@ -1,5 +1,6 @@
 module Symmetry
 
+import CDDLib
 import Polyhedra: HalfSpace, polyhedron, points, Intersection, Library, DefaultLibrary
 import LinearAlgebra: norm, det, I, dot, checksquare
 import QHull: chull, Chull
@@ -128,9 +129,9 @@ function mapto_unitcell(pt::AbstractVector{<:Real},
     atol::Real=1e-9)
     T = promote_type(eltype(pt), eltype(latvecs), eltype(inv_latvecs))
     if coordinates == "Cartesian"
-        latvecs*T[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1) for c=inv_latvecs*pt]
+        latvecs*T[isapprox(mod(c,1),1,rtol=rtol,atol=atol) ? 0 : mod(c,1) for c=inv_latvecs*pt]
     elseif coordinates == "lattice"
-        T[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1) for c=pt]
+        T[isapprox(mod(c,1),1,rtol=rtol,atol=atol) ? 0 : mod(c,1) for c=pt]
     else
         throw(ArgumentError("Allowed coordinates of the point are \"Cartesian\"
                 and \"lattice\"."))
@@ -520,7 +521,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=DefaultLibrary()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -553,7 +554,7 @@ Points on convex hull in original order:
 function calc_bz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,bzformat::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=DefaultLibrary{float(eltype(real_latvecs))}();
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     if makeprim
@@ -619,7 +620,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=DefaultLibrary()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -652,7 +653,7 @@ Points on convex hull in original order:
 function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,ibzformat::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=DefaultLibrary{float(eltype(real_latvecs))}();
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     if makeprim
