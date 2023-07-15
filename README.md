@@ -57,6 +57,7 @@ The arguments for `calc_ibz` are as follows:
 - `convention`: the convention used to go between real and reciprocal space. The
 	two conventions are `"ordinary"` (temporal) frequency and `"angular"`
 	frequency.
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol=sqrt(eps(float(maximum(real_latvecs))))`: (optional) a relative tolerance for floating-point comparisons.
 - `atol=1e-9`: (optional) an absolute tolerance for floating-point comparisons.	
 	
