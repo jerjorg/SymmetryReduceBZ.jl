@@ -32,7 +32,7 @@ SymmetryReduceBZ.Utilities.affine_trans(pts)
   0.0   0.0   0.0  1.0
 ```
 """
-function affine_trans(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
+function affine_trans(pts::AbstractMatrix{<:Real})
     a,b,c = [pts[:,i] for i=1:3]
 
     # Create a coordinate system with two vectors lying on the plane the points
@@ -54,7 +54,7 @@ end
 Check if a point is contained in a matrix of points as columns.
 
 # Arguments
-- `pt::AbstractVector{<:Real}`: a point whose coordinates are the components of 
+- `pt::AbstractVector{<:Real}`: a point whose coordinates are the components of
     a vector.
 - `pts::AbstractMatrix{<:Real}`: coordinates of points as columns of a matrix.
 - `rtol::Real=sqrt(eps(float(maximum(pts))))`: a relative tolerance for floating
@@ -174,6 +174,10 @@ function edgelengths(basis::AbstractMatrix{<:Real}, radius::Real;
     end
 end
 
+get_simplex(v::Vector{<:Vector{<:Real}}, i) = v[i]
+get_simplex(v::Matrix{<:Real}, i) = v[i,:]
+
+
 @doc """
     get_uniquefacets(ch)
 
@@ -210,28 +214,25 @@ get_uniquefacets(bz)
  [8, 7, 5, 6]
 ```
 """
-function get_uniquefacets(ch::Chull{<:Real})::Vector{Vector{<:Int}}
+function get_uniquefacets(ch::Chull{<:Real})
     facets = ch.facets
-    unique_facets = []
-    removed=zeros(Int64,size(facets,1))
+    unique_facets = Vector{eltype(ch.vertices)}[]
+    removed=zeros(Bool,size(facets,1))
     for i=1:size(facets,1)
-        if removed[i] == 0
-            removed[i]=1
-            face=ch.simplices[i]
-            for j=i+1:size(facets,1)
-                if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
-                    removed[j]=1
-                    append!(face,ch.simplices[j])
-                end
+        removed[i] && continue
+        removed[i]=true
+        face=get_simplex(ch.simplices, i)
+        for j=i+1:size(facets,1)
+            if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
+                removed[j]=true
+                append!(face,get_simplex(ch.simplices, j))
             end
-            face = unique(reduce(hcat,face)[:])
-            # Order the corners of the face either clockwise or
-            # counterclockwise.
-            face = face[sortpts_perm(Array(ch.points[face,:]'))]
-            append!(unique_facets,[face])
         end
+        unique!(face)
+        # Order the corners of the face either clockwise or counterclockwise.
+        permute!(face, sortpts_perm(ch.points[face,:]'))
+        push!(unique_facets,face)
     end
-    # unique_facets = convert(Array{Array{Int,1}},unique_facets)
     unique_facets
 end
 
@@ -258,10 +259,10 @@ SymmetryReduceBZ.Utilities.mapto_xyplane(pts)
  0.0  0.0  1.0  1.0
 ```
 """
-function mapto_xyplane(pts::AbstractMatrix{<:Real})::AbstractMatrix{<:Real}
+function mapto_xyplane(pts::AbstractMatrix{<:Real})
 
     M = affine_trans(pts)
-    reduce(hcat,[(M*[pts[:,i]..., 1])[1:2] for i=1:size(pts,2)])
+    mapslices(pt -> first(M*vcat(pt, 1), 2), pts, dims=1)
 end
 
 @doc """
@@ -270,7 +271,7 @@ end
 Sample uniformly within a circle centered about a point.
 
 ## Arguments
-- `basis::AbstractMatrix{<:Real}`: a 2x2 matrix whose columns are the grid 
+- `basis::AbstractMatrix{<:Real}`: a 2x2 matrix whose columns are the grid
     generating vectors.
 - `radius::Real`: the radius of the circle.
 - `offset::AbstractVector{<:Real}=[0.,0.]`: the xy-coordinates of the center of
@@ -298,7 +299,7 @@ SymmetryReduceBZ.Utilities.sample_circle(basis,radius,offset)
 """
 function sample_circle(basis::AbstractMatrix{<:Real}, radius::Real,
     offset::AbstractVector{<:Real}=[0.,0.];
-    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)::AbstractMatrix{<:Real}
+    rtol::Real=sqrt(eps(float(radius))), atol::Real=1e-9)
 
     # Put the offset in lattice coordinates and round.
     (o1,o2)=round.(inv(basis)*offset)
@@ -356,7 +357,7 @@ SymmetryReduceBZ.Utilities.sample_sphere(basis,radius,offset)
 """
 function sample_sphere(basis::AbstractMatrix{<:Real}, radius::Real,
     offset::AbstractVector{<:Real}=[0.,0.,0.]; rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=1e-9)::AbstractMatrix{<:Real}
+    atol::Real=1e-9)
 
     # Put the offset in lattice coordinates and round.
     (o1,o2,o3)=round.(inv(basis)*offset)
@@ -399,11 +400,11 @@ shoelace(pts)
 1.0
 ````
 """
-function shoelace(vertices)
-    xs = vertices[1,:]
-    ys = vertices[2,:]
-    abs(xs[end]*ys[1] - xs[1]*ys[end] +
-        sum([xs[i]*ys[i+1]-xs[i+1]*ys[i] for i=1:(size(vertices,2)-1)]))/2
+function shoelace(vertices::AbstractMatrix{<:Real})
+    xs = vertices[begin,:]
+    ys = vertices[end,:]
+    abs(xs[end]*ys[begin] - xs[begin]*ys[end] +
+        sum(i -> xs[i]*ys[i+1]-xs[i+1]*ys[i], axes(vertices,2)[begin:end-1]))/2
 end
 
 @doc """
@@ -423,9 +424,9 @@ Calculate the permutation vector that sorts 2D Cartesian points counterclockwise
 function sortpts2D(pts::AbstractMatrix{<:Real})
     c = sum(pts,dims=2)/size(pts,2)
     angles=zeros(size(pts,2))
-    for i=1:size(pts,2)
+    for (j,i) in enumerate(axes(pts,2))
         (x,y)=pts[:,i] - c
-        angles[i] = atan(y,x)
+        angles[j] = atan(y,x)
         # if y < 0 angles[i] += 2π end
     end
     perm = sortperm(angles)
@@ -484,25 +485,26 @@ using SymmetryReduceBZ
 points=Array([1 2; 2 3; 3 4; 1 2]')
 SymmetryReduceBZ.Utilities.unique_points(points)
 # output
-2×3 Matrix{Float64}:
- 1.0  2.0  3.0
- 2.0  3.0  4.0
+2×3 Matrix{Int64}:
+ 1  2  3
+ 2  3  4
 ```
 """
 function unique_points(points::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractMatrix
-    
-    uniquepts=zeros(size(points))
+    atol::Real=1e-9)
+
+    uniquepts=similar(points)
+    j1 = firstindex(uniquepts, 2)
     numpts = 0
-    for i=1:size(points,2)
-        if !any([isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol)
-                for j=1:numpts])
+    for i=axes(points,2)
+        if !any(j -> isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol),
+                j1:j1+numpts-1)
             numpts += 1
-            uniquepts[:,numpts] = points[:,i]
+            uniquepts[:,j1+numpts-1] = points[:,i]
         end
     end
-    uniquepts[:,1:numpts]
+    uniquepts[:,j1:j1+numpts-1]
 end
 
 @doc """
@@ -513,10 +515,10 @@ Remove duplicates from an array.
 # Arguments
 - `points::AbstractVector`: items in a vector, which can be floats or arrays.
 - `rtol::Real=sqrt(eps(float(maximum(points))))`: relative tolerance.
-- `atol::Real=1e-9`: absolute tolerance. 
+- `atol::Real=1e-9`: absolute tolerance.
 
 # Returns
-- `uniquepts::AbstractVector`: an vector with only unique elements. 
+- `uniquepts::AbstractVector`: an vector with only unique elements.
 
 # Examples
 ```jldoctest
@@ -524,25 +526,25 @@ import SymmetryReduceBZ.Utilities: remove_duplicates
 test = [1.,1.,2,2,]
 remove_duplicates(test)
 # output
-2-element Vector{Any}:
+2-element Vector{Float64}:
  1.0
  2.0
 ```
 """
 function remove_duplicates(points::AbstractVector;
     rtol::Real=sqrt(eps(float(maximum(flatten(points))))),
-    atol::Real=1e-9)::AbstractVector
-    uniquepts=Array{Any}(undef, length(points))
-    uniquepts[1] = points[1]
-    npts = 1
-    for i=2:length(points)
+    atol::Real=1e-9)
+    uniquepts=similar(points)
+    i1 = firstindex(uniquepts)
+    npts = 0
+    for i=eachindex(points)
         pt=points[i]
-        if !any([isapprox(pt,uniquepts[i],rtol=rtol,atol=atol) for i=1:npts])
+        if !any(i -> isapprox(pt,uniquepts[i],rtol=rtol,atol=atol), 1:npts)
             npts += 1
-            uniquepts[npts] = pt
+            uniquepts[i1+npts-1] = pt
         end
     end
-    uniquepts[1:npts]
+    uniquepts[i1:i1+npts-1]
 end
 
 @doc """
@@ -577,12 +579,12 @@ points₋in₋ball(points,radius,offset)
 """
 function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
     offset::AbstractVector{<:Real};rtol::Real=sqrt(eps(float(radius))),
-    atol::Real=1e-9)::AbstractVector{<:Int}
+    atol::Real=1e-9)
 
     ball_points = zeros(Int,size(points,2))
     count = 0
-    for i=1:size(points,2)
-        if (norm(points[:,i] - offset) < radius) || 
+    for i=axes(points,2)
+        if (norm(points[:,i] - offset) < radius) ||
             isapprox(norm(points[:,i] - offset),radius,rtol=rtol,atol=atol)
             count+=1
             ball_points[count] = i

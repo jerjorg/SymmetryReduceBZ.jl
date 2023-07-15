@@ -1,16 +1,14 @@
 module Symmetry
 
-import CDDLib: Library
-import Polyhedra: HalfSpace, polyhedron, points
-import LinearAlgebra: norm, det, I, dot
+import CDDLib
+import Polyhedra: HalfSpace, polyhedron, points, Intersection, Library, DefaultLibrary
+import LinearAlgebra: norm, det, I, dot, checksquare
 import QHull: chull, Chull
 import Combinatorics: permutations
 import Base.Iterators: product, flatten
 
-include("Lattices.jl")
-include("Utilities.jl")
-import .Lattices: get_recip_latvecs, minkowski_reduce
-import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove_duplicates
+import ..Lattices: get_recip_latvecs, minkowski_reduce
+import ..Utilities: sample_circle, sample_sphere, contains, unique_points, remove_duplicates
 
 @doc """
     calc_pointgroup(latvecs;rtol,atol)
@@ -18,7 +16,7 @@ import .Utilities: sample_circle, sample_sphere, contains, unique_points, remove
 Calculate the point group of a lattice in 2D or 3D.
 
 # Arguments
-- `latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns of a 
+- `latvecs::AbstractMatrix{<:Real}`: the basis of the lattice as columns of a
     matrix.
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))`: a relative tolerance for
     floating point comparisons. It is used to compare lengths of vectors and the
@@ -49,35 +47,35 @@ SymmetryReduceBZ.Symmetry.calc_pointgroup(basis)
 """
 function calc_pointgroup(latvecs::AbstractMatrix{<:Real};
     rtol::Real=sqrt(eps(float(maximum(latvecs)))),
-    atol::Real=1e-9)::AbstractVector{AbstractMatrix{<:Real}}
+    atol::Real=1e-9)
 
-    dim=size(latvecs,1)
+    dim=checksquare(latvecs)
     latvecs = minkowski_reduce(latvecs,rtol=rtol,atol=atol)
-    radius = maximum([norm(latvecs[:,i]) for i=1:dim])*1.001
-    if size(latvecs) == (2,2)
+    radius = maximum([norm(latvecs[:,i]) for i=axes(latvecs,2)])*1.001
+    if dim == 2
         pts=sample_circle(latvecs,radius,[0,0],rtol=rtol,atol=atol)
-    elseif size(latvecs) == (3,3)
+    elseif dim == 3
         pts=sample_sphere(latvecs,radius,[0,0,0],rtol=rtol,atol=atol)
     else
         throw(ArgumentError("The lattice basis must be a 2x2 or 3x3 matrix."))
     end
 
-    normsᵢ=[norm(latvecs[:,i]) for i=1:dim]
+    normsᵢ=[norm(latvecs[:,i]) for i=axes(latvecs,2)]
     sizeᵢ=abs(det(latvecs))
-    pointgroup=Array{Array{Float64,2}}([])
+    pointgroup=Array{Float64,2}[]
     inv_latvecs=inv(latvecs)
     for perm=permutations(1:size(pts,2),dim)
         latvecsᵣ=pts[:,perm]
-        normsᵣ=[norm(latvecsᵣ[:,i]) for i=1:dim]
+        normsᵣ=[norm(latvecsᵣ[:,i]) for i=axes(latvecsᵣ,2)]
         sizeᵣ=abs(det(latvecsᵣ))
         # Point operation preserves length of lattice vectors and
         # volume of primitive cell.
-        if (isapprox(normsᵢ,normsᵣ,rtol=rtol,atol=atol) &
+        if (isapprox(normsᵢ,normsᵣ,rtol=rtol,atol=atol) &&
             isapprox(sizeᵢ,sizeᵣ,rtol=rtol,atol=atol))
             op=latvecsᵣ*inv_latvecs
             # Point operators are orthogonal.
             if isapprox(op'*op,I,rtol=rtol,atol=atol)
-                append!(pointgroup,[op])
+                push!(pointgroup,op)
             end
         end
     end
@@ -128,13 +126,12 @@ SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
 function mapto_unitcell(pt::AbstractVector{<:Real},
     latvecs::AbstractMatrix{<:Real},inv_latvecs::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=1e-9)::AbstractVector{<:Real}
+    atol::Real=1e-9)
+    T = promote_type(eltype(pt), eltype(latvecs), eltype(inv_latvecs))
     if coordinates == "Cartesian"
-        Array{Float64,1}(latvecs*[isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1)
-            for c=inv_latvecs*pt])
+        latvecs*T[isapprox(mod(c,1),1,rtol=rtol,atol=atol) ? 0 : mod(c,1) for c=inv_latvecs*pt]
     elseif coordinates == "lattice"
-        Array{Float64,1}([isapprox(mod(c,1),1,rtol=rtol) ? 0 : mod(c,1) for
-            c=pt])
+        T[isapprox(mod(c,1),1,rtol=rtol,atol=atol) ? 0 : mod(c,1) for c=pt]
     else
         throw(ArgumentError("Allowed coordinates of the point are \"Cartesian\"
                 and \"lattice\"."))
@@ -149,10 +146,10 @@ Map points as columns of a matrix to the unitcell.
 function mapto_unitcell(points::AbstractMatrix{<:Real},
     latvecs::AbstractMatrix{<:Real},inv_latvecs::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(inv_latvecs)))),
-    atol::Real=1e-9)::AbstractMatrix{<:Real}
+    atol::Real=1e-9)
 
     reduce(hcat,[mapto_unitcell(points[:,i],latvecs,inv_latvecs,coordinates,
-        rtol=rtol,atol=atol) for i=1:size(points,2)])
+        rtol=rtol,atol=atol) for i=axes(points,2)])
 end
 
 @doc """
@@ -201,7 +198,7 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
     recip_latvecs::AbstractMatrix{<:Real},
     inv_rlatvecs::AbstractMatrix{<:Real},coordinates::String;
     rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-    atol::Real=1e-9)::AbstractVector{<:Real}
+    atol::Real=1e-9)
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
@@ -234,6 +231,9 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
         bz_point
     elseif coordinates == "lattice"
         inv_rlatvecs*bz_point
+    else
+        throw(ArgumentError("Allowed coordinates of the point are \"Cartesian\"
+        and \"lattice\"."))
     end
 end
 
@@ -246,10 +246,10 @@ function mapto_bz(kpoints::AbstractMatrix{<:Real},
     recip_latvecs::AbstractMatrix{<:Real},
     inv_rlatvecs::AbstractMatrix{<:Real},coordinates::String;
     rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-    atol::Real=1e-9)::AbstractMatrix{<:Real}
+    atol::Real=1e-9)
 
     reduce(hcat,[mapto_bz(kpoints[:,i],recip_latvecs,inv_rlatvecs,coordinates,
-        rtol=rtol, atol=atol) for i=1:size(kpoints,2)])
+        rtol=rtol, atol=atol) for i=axes(kpoints,2)])
 end
 
 @doc """
@@ -280,16 +280,16 @@ inhull(pt,convexhull)
 true
 ```
 """
-function inhull(point::AbstractVector{<:Real}, chull::Chull{Float64};
+function inhull(point::AbstractVector{<:Real}, chull::Chull{<:Real};
     rtol::Real=sqrt(eps(float(maximum(flatten(chull.points))))),
-    atol::Real=1e-9)::Bool
+    atol::Real=1e-9)
 
-    hullpts = Array(chull.points')
+    # hullpts = Array(chull.points')
     distances = chull.facets[:,end]
-    norms = Array(chull.facets[:,1:end-1]')
+    norms = chull.facets[:,begin:end-1]'
     inside = true
-    for i=1:length(distances)
-        s = dot(point + distances[i]*norms[:,i], norms[:,i])
+    for (dist,i)=zip(distances, axes(norms,2))
+        s = dot(point + dist*norms[:,i], norms[:,i])
 
         if !(s <= 0 || isapprox(s,0.0,rtol=rtol,atol=atol))
             inside = false
@@ -360,7 +360,7 @@ function mapto_ibz(kpoint::AbstractVector{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
         pointgroup::Vector{Matrix{Float64}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=1e-9)::AbstractVector{<:Real}
+        atol::Real=1e-9)
 
     bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
@@ -387,10 +387,10 @@ function mapto_ibz(kpoints::AbstractMatrix{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
         pointgroup::Vector{Matrix{Float64}}, coordinates::String,
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
-        atol::Real=1e-9)::AbstractMatrix{<:Real}
+        atol::Real=1e-9)
 
     ibzpts = reduce(hcat,[mapto_ibz(kpoints[:,i],recip_latvecs,
-        inv_rlatvecs,ibz,pointgroup,coordinates) for i=1:size(kpoints,2)])
+        inv_rlatvecs,ibz,pointgroup,coordinates) for i=axes(kpoints,2)])
 
     unique_points(ibzpts,rtol=rtol,atol=atol)
 end
@@ -432,18 +432,19 @@ SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
 ```
 """
 function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
-    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos_::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
-    atol::Real=1e-9)::Tuple
+    atol::Real=1e-9)
 
-    if length(atom_types) != size(atom_pos,2)
+    if length(atom_types) != size(atom_pos_,2)
         throw(ArgumentError("The number of atom types and positions must be the
             same."))
     end
 
     # Place atom positions in Cartesian coordinates.
+    atom_pos_1, real_latvecs_1 = promote(atom_pos_, real_latvecs)
     if coordinates == "lattice"
-        atom_pos = real_latvecs*atom_pos
+        atom_pos_1 = real_latvecs_1*atom_pos_1
     end
 
     real_latvecs = minkowski_reduce(real_latvecs,rtol=rtol,atol=atol)
@@ -452,13 +453,12 @@ function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
     numatoms = length(atom_types)
 
     # Map points to the primitive cell.
-    atom_pos = reduce(hcat,[mapto_unitcell(atom_pos[:,i],real_latvecs,
-                inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:numatoms])
+    atom_pos = mapto_unitcell(atom_pos_1[:,1:numatoms],real_latvecs,inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
-    ops_spacegroup=[]
-    trans_spacegroup=[]
+    ops_spacegroup=Array{Float64,2}[]
+    trans_spacegroup=Array{Float64,1}[]
     kindᵣ=atom_types[1]
-    opts = []
+    # opts = Array{Float64,1}[]
 
     # Atoms of the same type as the first atom.
     same_atoms=findall(x->x==kindᵣ,atom_types)
@@ -472,9 +472,9 @@ function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
             ftrans = mapto_unitcell(atom_pos[:,atomᵢ]-posᵣ,real_latvecs,
                 inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
-            if !contains(ftrans, opts)
-                append!(opts, [ftrans])
-            end
+            # if !contains(ftrans, opts)
+            #     push!(opts, ftrans)
+            # end
 
             # Check that all atoms land on the lattice when rotated and
             # translated.
@@ -490,20 +490,18 @@ function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
                 if !mapped continue end
             end
             if mapped
-                append!(ops_spacegroup,[op])
-                append!(trans_spacegroup,[ftrans])
+                push!(ops_spacegroup,op)
+                push!(trans_spacegroup,ftrans)
             end
         end
     end
-    trans_spacegroup=convert(Array{Array{Float64,1}}, trans_spacegroup)
-    ops_spacegroup = convert(Array{Array{Float64,2},1},ops_spacegroup)
 
     (trans_spacegroup,ops_spacegroup)
 end
 
 @doc """
     calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,
-        convention;rtol,atol)
+        convention,library;rtol,atol)
 
 Calculate the Brillouin zone for the given real-space lattice basis.
 
@@ -511,7 +509,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 - `real_latvecs::AbstractMatrix{<:Real}`: the real-space lattice vectors or
     primitive translation vectors as columns of a 2x2 or 3x3 matrix.
 - `atom_typesAbstractVector{<:Int}`: a list of atom types as integers.
-- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal 
+- `atom_pos::AbstractMatrix{<:Real}`: the positions of atoms in the crystal
     structure as columns of a matrix.
 - `coordinates::String`: indicates the positions of the atoms are in \"lattice\"
     or \"Cartesian\" coordinates.
@@ -523,6 +521,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -555,33 +554,34 @@ Points on convex hull in original order:
 function calc_bz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,bzformat::String,makeprim::Bool=false,
-    convention::String="ordinary";
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     if makeprim
         (prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
             atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
     else
-        (prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
+        (prim_types,prim_pos,prim_latvecs)=(atom_types,float(atom_pos),float(real_latvecs))
     end
 
     recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention),
         rtol=rtol,atol=atol)
+    latpts_ = Vector{eltype(recip_latvecs)}[]
     if size(real_latvecs) == (2,2)
-        latpts = reduce(hcat,[recip_latvecs*[i,j] for (i,j)=product(-2:2,-2:2)])
+        append!(latpts_,[recip_latvecs*[i,j] for (i,j)=product(-2:2,-2:2)])
     elseif size(real_latvecs) == (3,3)
-        latpts = reduce(hcat,[recip_latvecs*[i,j,k] for (i,j,k)=product(-2:2,-2:2,-2:2)])
+        append!(latpts_,[recip_latvecs*[i,j,k] for (i,j,k)=product(-2:2,-2:2,-2:2)])
     else
         throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 matrix."))
     end
+    latpts = reduce(hcat, latpts_)
 
     distances = [norm(latpts[:,i]) for i=1:size(latpts,2)] .^2 ./2
-    bz = HalfSpace(latpts[:,2],distances[2])
-    for i=3:size(latpts,2)
+    bz = HalfSpace(latpts[:,2],distances[2]) ∩ HalfSpace(latpts[:,3],distances[3])
+    for i=4:size(latpts,2)
         bz = bz ∩ HalfSpace(latpts[:,i],distances[i])
     end
-
-    verts = reduce(hcat,points(polyhedron(bz,Library())))
+    verts = reduce(hcat,collect(points(polyhedron(bz, library))))
     bzvolume = chull(Array(verts')).volume
 
     if !(bzvolume ≈ abs(det(recip_latvecs)))
@@ -591,7 +591,7 @@ function calc_bz(real_latvecs::AbstractMatrix{<:Real},
     if bzformat == "half-space"
         bz
     elseif bzformat == "convex hull"
-        chull(Array(verts'))
+        chull(Array(verts'))    # chull is a type-unstable function
     else
         throw(ArgumentError("Formats for the BZ include \"half-space\" and
             \"convex hull\"."))
@@ -600,7 +600,7 @@ end
 
 @doc """
     calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,makeprim,
-        convention;rtol,atol)
+        convention,library;rtol,atol)
 
 Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 
@@ -620,6 +620,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -652,14 +653,14 @@ Points on convex hull in original order:
 function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,ibzformat::String,makeprim::Bool=false,
-    convention::String="ordinary";
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     if makeprim
         (prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
             atom_types,atom_pos,coordinates,rtol=rtol,atol=atol)
     else
-        (prim_types,prim_pos,prim_latvecs)=(atom_types,atom_pos,real_latvecs)
+        (prim_types,prim_pos,prim_latvecs)=(atom_types,float(atom_pos),float(real_latvecs))
         if coordinates == "lattice"
             prim_pos = real_latvecs*prim_pos
         end
@@ -668,9 +669,11 @@ function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     pointgroup = remove_duplicates(calc_spacegroup(prim_latvecs,prim_types,
         prim_pos,"Cartesian",rtol=rtol,atol=atol)[2],rtol=rtol,atol=atol)
     sizepg = size(pointgroup,1)
-    bz = calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian","half-space",false,
+    # enforce type here due to instability in calc_bz
+    bz::Intersection{eltype(prim_latvecs), Vector{eltype(prim_latvecs)}, Int64} =
+        calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian","half-space",false,
         convention,rtol=rtol,atol=atol)
-    bz_vertices = collect(points(polyhedron(bz,Library())))
+    bz_vertices = collect(points(polyhedron(bz, library)))
     ibz = bz
     for v=bz_vertices
         for i=length(pointgroup):-1:1
@@ -687,11 +690,11 @@ function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
         end
     end
 
-    ibz_vertices = reduce(hcat,points(polyhedron(ibz,Library())))
+    ibz_vertices = reduce(hcat,collect(points(polyhedron(ibz, library))))
     bz_vertices = reduce(hcat,bz_vertices)
     bzvolume = chull(Array(bz_vertices')).volume
     ibzvolume = chull(Array(ibz_vertices')).volume
-    reduction = bzvolume/ibzvolume
+    # reduction = bzvolume/ibzvolume
 
     if !(ibzvolume ≈ bzvolume/sizepg)
         @show ibzvolume
@@ -702,7 +705,7 @@ function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     if ibzformat == "half-space"
         ibz
     elseif ibzformat == "convex hull"
-        chull(Array(ibz_vertices'))
+        chull(Array(ibz_vertices')) # chull is type-unstable
     else
         throw(ArgumentError("Formats for the IBZ include \"half-space\" and
             \"convex hull\"."))
@@ -758,40 +761,40 @@ coordinates = "Cartesian"
 convention = "ordinary"
 make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 # output
-([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0]) 
+([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0])
 ```
 """
 function make_primitive(real_latvecs::AbstractMatrix{<:Real},
-    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Integer},atom_pos::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=1e-9)
 
     if length(atom_types) == 1
-        return (real_latvecs, atom_types, atom_pos)
+        return (float(real_latvecs), atom_types, float(atom_pos)) # fractional translations will be floating-point
     end
 
-    (ftrans, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
+    (ftrans_, pg) = calc_spacegroup(real_latvecs,atom_types,atom_pos,coordinates,
         rtol=rtol,atol=atol)
     # Unique fractional translations
-    ftrans = unique_points(reduce(hcat, ftrans),rtol=rtol,atol=atol)
+    ftrans = unique_points(reduce(hcat, ftrans_),rtol=rtol,atol=atol)
 
     # No need to consider the origin.
     dim = size(real_latvecs,1)
-    if dim==2 
+    if dim==2
         origin=[0.,0.]
-    elseif dim==3 
+    elseif dim==3
         origin=[0.,0.,0.]
     else
         throw(ArgumentError("Can only make 2D or 3D unit cells primitive."))
     end
-    for i = 1:size(ftrans,2)
+    for i = axes(ftrans,2)
         if isapprox(ftrans[:,i],origin,rtol=rtol,atol=atol)
             ftrans  = ftrans[:,1:end .!= i]
             break
         end
     end
 
-    prim_latvecs = real_latvecs
+    prim_latvecs = similar(real_latvecs, promote_type(eltype(real_latvecs), eltype(ftrans)))
     inv_latvecs = inv(real_latvecs)
     mapped = false
     if size(ftrans,2)!=0
@@ -800,45 +803,44 @@ function make_primitive(real_latvecs::AbstractMatrix{<:Real},
         # Lattice vector options
         opts = hcat(real_latvecs, ftrans)
         if dim == 2
-            iters = [[(i,j) for j=i+1:nopts-1] for i=1:nopts-2] |> flatten
+            iters = [[i,j] for i=1:nopts-2 for j=i+1:nopts-1]
         else
-            iters = [[[(i,j,k) for k=j+1:nopts] for j=i+1:nopts-1] for 
-                i=1:nopts-2] |> flatten |> flatten
+            iters = [[i,j,k] for i=1:nopts-2 for j=i+1:nopts-1 for k=j+1:nopts]
         end
 
         for iter=iters
-            prim_latvecs = opts[:,[iter...]]
+            prim_latvecs .= opts[:,iter]
             if isapprox(det(prim_latvecs),0,atol=atol)
                 continue
             end
-            inv_latvecs = inv(prim_latvecs)
+            inv_latvecs .= inv(prim_latvecs)
             # Move all lattice points into the potential primitive unit cell.
-            test = [mapto_unitcell(opts[:,i],prim_latvecs,
-                    inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:nopts]
+            tests = mapto_unitcell(opts[:,1:nopts],prim_latvecs,
+                    inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
             # Check if all coordinates of all fractional translations are
             # integers in lattice coordinates.
-            test = [inv_latvecs*t for t=test]
-            test = isapprox(mod.(collect(flatten(test)),1)
-                        ,zeros(dim*length(test)),rtol=rtol,atol=atol)
-            if test
+            test = [inv_latvecs*tests[:,i] for i=axes(tests,2)]
+            if isapprox(mod.(collect(flatten(test)),1)
+                ,zeros(dim*length(test)),rtol=rtol,atol=atol)
                 mapped = true
                 break
             end
         end
     end
-    
+
     if !mapped
-        prim_latvecs = real_latvecs
-        inv_latvecs = inv(real_latvecs)
+        prim_latvecs .= real_latvecs
+        inv_latvecs .= inv(real_latvecs)
     end
 
     # Map all atoms into the primitive cell.
-    all_prim_pos = atom_pos
+    all_prim_pos_ = similar(atom_pos, promote_type(eltype(real_latvecs), eltype(atom_pos)))
+    all_prim_pos_ .= atom_pos
     if coordinates == "lattice"
-        all_prim_pos = real_latvecs*all_prim_pos
+        all_prim_pos_ .= real_latvecs*all_prim_pos_
     end
-    all_prim_pos = reduce(hcat,[mapto_unitcell(all_prim_pos[:,i], prim_latvecs,
-        inv_latvecs,"Cartesian",rtol=rtol,atol=atol) for i=1:length(atom_types)])
+    all_prim_pos = mapto_unitcell(all_prim_pos_[:,1:length(atom_types)], prim_latvecs,
+        inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
     # Remove atoms at the same positions that are the same type.
     tmp = unique_points(vcat(all_prim_pos,atom_types'),rtol=rtol,atol=atol)
@@ -855,11 +857,11 @@ Complete the orbit of a point.
 
 # Arguments
 - `pt::AbstractVector{<:Real}`: the Cartesian coordinates of a point.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
-    in a nested list. The operators operate on points in Cartesian coordinates 
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
+    in a nested list. The operators operate on points in Cartesian coordinates
     from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
-- `atol::Real=1e-9`: an absolute tolerance. 
+- `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
 - `::AbstractMatrix{<:Real}`: the points of the orbit in Cartesian coordinates as
@@ -880,7 +882,7 @@ complete_orbit(pt,pointgroup)
 function complete_orbit(pt::AbstractVector{<:Real},
         pointgroup::Vector{Matrix{Float64}};
         rtol::Real=sqrt(eps(float(maximum(pt)))),
-        atol::Real=1e-9)::AbstractMatrix{<:Real}
+        atol::Real=1e-9)
     unique_points(reduce(hcat,map(op->op*pt,pointgroup)),rtol=rtol,atol=atol)
 end
 
@@ -892,10 +894,10 @@ Complete the orbits of multiple points.
 # Arguments
 - `pt::AbstractMatrix{<:Real}`: the Cartesian coordinates of a points as columns of
     a matrix.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators 
+- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
     in a nested list. The operators operate on points in Cartesian coordinates from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
-- `atol::Real=1e-9`: an absolute tolerance. 
+- `atol::Real=1e-9`: an absolute tolerance.
 
 # Returns
 - `::AbstractMatrix{<:Real}`: the unique points of the orbits in Cartesian coordinates as
@@ -916,7 +918,7 @@ complete_orbit(pts,pointgroup)
 function complete_orbit(pts::AbstractMatrix{<:Real},
     pointgroup::Vector{Matrix{Float64}};
     rtol::Real=sqrt(eps(float(maximum(pts)))),
-    atol::Real=1e-9)::AbstractMatrix{<:Real}
-    unique_points(reduce(hcat,reduce(hcat,[map(op->op*pts[:,i],pointgroup) for i=1:size(pts,2)])))
+    atol::Real=1e-9)
+    unique_points(reduce(hcat,reduce(hcat,[map(op->op*pts[:,i],pointgroup) for i=axes(pts,2)])))
  end
 end #module

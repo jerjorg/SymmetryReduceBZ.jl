@@ -9,6 +9,8 @@ import SymmetryReduceBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HX
 
 import SymmetryReduceBZ.Symmetry: calc_bz
 
+import CDDLib: Library
+
 # Lattice vectors
 # 2D
 a=5/7.
@@ -91,7 +93,7 @@ bzformat = "convex hull"
 		makeprim = false
 
 		bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,
-			convention)
+			convention,Library())
 
         facetsᵢ = get_uniquefacets(bz)
         facets = [bz.points[facetsᵢ[i],:] for i=1:length(facetsᵢ)]
@@ -185,7 +187,7 @@ bzformat = "convex hull"
 			coords = "Cartesian"
 			makeprim = false
 			bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,
-				makeprim,convention)
+				makeprim,convention,Library())
 
             svol = shoelace(bz.points[bz.vertices,:]')
             @test svol ≈ bz.volume
