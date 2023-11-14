@@ -210,7 +210,7 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
     bz_dist = norm(bz_point)
 
     if size(recip_latvecs) == (2,2)
-        for (i,j)=product(-1:0,-1:0)
+        for (i,j)=product(-1:1,-1:1)
             tpoint = uc_point + recip_latvecs*[i,j]
             if norm(tpoint) < bz_dist
                 bz_point = tpoint
@@ -218,7 +218,7 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
             end
         end
     else
-        for (i,j,k)=product(-1:0,-1:0,-1:0)
+        for (i,j,k)=product(-2:2,-2:2,-2:2)
             tpoint = uc_point + recip_latvecs*[i,j,k]
             if norm(tpoint) < bz_dist
                 bz_point = tpoint
@@ -385,7 +385,7 @@ Map points as columns of a matrix to the IBZ and then remove duplicate points.
 function mapto_ibz(kpoints::AbstractMatrix{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
-        pointgroup::Vector{Matrix{Float64}}, coordinates::String,
+        pointgroup::Vector{Matrix{Float64}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
