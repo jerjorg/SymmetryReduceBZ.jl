@@ -12,14 +12,12 @@ Polyhedra = "67491407-f73d-577b-9b50-8179a7c68029"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 QHull = "a8468747-bd6f-53ef-9e5c-744dbc5c59e7"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 CDDLib = "0.9"
 Combinatorics = "1.0"
 Distances = "0.10"
-Documenter = "0.26"
+LinearAlgebra = "1.6"
 Polyhedra = "0.7"
 PyCall = "1.9"
 PyPlot = "2.9"
@@ -29,8 +27,11 @@ julia = "1.6"
 
 [extras]
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+QHull = "a8468747-bd6f-53ef-9e5c-744dbc5c59e7"
 
 [targets]
-test = ["SymPy", "CDDLib"]
+test = ["Test", "SymPy", "CDDLib", "LinearAlgebra", "QHull", "PyCall"]

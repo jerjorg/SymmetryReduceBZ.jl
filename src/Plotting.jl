@@ -42,7 +42,7 @@ ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,conven
 ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",alpha=0.2)
 ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 # output
-PyObject <AxesSubplot:>
+PyObject <AxesSubplot: >
 ```
 """
 function plot_2Dconvexhull(convexhull::Chull{<:Real},
@@ -105,7 +105,7 @@ ax = fig.add_subplot(111, projection="3d")
 ax = plot_3Dconvexhull(ibz,ax,facecolors="coral",alpha=1,edgecolors="black",linewidths = 1)
 ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
 # output
-PyObject <Axes3DSubplot:>
+PyObject <Axes3DSubplot: >
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing}=nothing;
@@ -183,7 +183,7 @@ makeprim = true
 convention = "ordinary"
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
 # output
-PyObject <AxesSubplot:>
+PyObject <AxesSubplot: >
 ```
 """
 function plot_convexhulls(real_latvecs::AbstractMatrix{<:Real},
