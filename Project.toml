@@ -14,6 +14,7 @@ PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 QHull = "a8468747-bd6f-53ef-9e5c-744dbc5c59e7"
 
 [compat]
+Aqua = "0.8"
 CDDLib = "0.9"
 Combinatorics = "1.0"
 Distances = "0.10"
@@ -23,15 +24,17 @@ PyCall = "1.9"
 PyPlot = "2.9"
 QHull = "0.2"
 SymPy = "1.0"
+Test = "1.6"
 julia = "1.6"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 QHull = "a8468747-bd6f-53ef-9e5c-744dbc5c59e7"
+SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "SymPy", "CDDLib", "LinearAlgebra", "QHull", "PyCall"]
+test = ["Aqua", "Test", "SymPy", "CDDLib", "LinearAlgebra", "QHull", "PyCall"]
