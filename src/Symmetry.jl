@@ -202,28 +202,23 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
-    if coordinates == "lattice"
-        bz_point = recip_latvecs*uc_point
-    else
-        bz_point = uc_point
-    end
-    bz_dist = norm(bz_point)
+    
+    coordinates == "lattice" && (uc_point = recip_latvecs*uc_point)
 
-    if size(recip_latvecs) == (2,2)
-        for (i,j)=product(-1:0,-1:0)
-            tpoint = uc_point + recip_latvecs*[i,j]
-            if norm(tpoint) < bz_dist
-                bz_point = tpoint
-                bz_dist = norm(tpoint)
-            end
-        end
+    bz_dist = Inf
+    bz_point = similar(uc_point)
+    
+    if checksquare(recip_latvecs) == 2
+        shifts = collect.(product(-1:0,-1:0))
     else
-        for (i,j,k)=product(-1:0,-1:0,-1:0)
-            tpoint = uc_point + recip_latvecs*[i,j,k]
-            if norm(tpoint) < bz_dist
-                bz_point = tpoint
-                bz_dist = norm(tpoint)
-            end
+        shifts = collect.(product(-1:0,-1:0,-1:0))
+    end
+
+    for shift = shifts
+        tpoint = uc_point + recip_latvecs*shift
+        if norm(tpoint) < bz_dist
+            bz_point = tpoint
+            bz_dist = norm(tpoint)
         end
     end
 
@@ -364,6 +359,9 @@ function mapto_ibz(kpoint::AbstractVector{<:Real},
 
     bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
+    
+    coordinates == "lattice" && (bzpoint = recip_latvecs * bzpoint)
+
     for op in pointgroup
         rot_point = op*bzpoint
         if inhull(rot_point,ibz,rtol=rtol,atol=atol)
