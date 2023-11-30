@@ -383,7 +383,7 @@ Map points as columns of a matrix to the IBZ and then remove duplicate points.
 function mapto_ibz(kpoints::AbstractMatrix{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
-        pointgroup::Vector{Matrix{Float64}}, coordinates::String,
+        pointgroup::Vector{Matrix{Float64}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
