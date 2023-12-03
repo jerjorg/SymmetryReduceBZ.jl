@@ -11,7 +11,8 @@ import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 import CDDLib: Library
 import LinearAlgebra: inv
 import QHull: chull
-import SymPy: sympy
+import PyCall: pyimport_conda
+sympy = pyimport_conda("sympy", "sympy")
 x,y,z=sympy.symbols("x,y,z")
 
 
