@@ -22,6 +22,8 @@ jobs:
           - windows-latest
         arch:
           - x64
+        python-version:
+          - '3.x'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
@@ -29,7 +31,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.arch }}
           cache: 'pip'
-      - run: pip install sympy scipy matplotlib
+      - run: pip install -r requirements.txt
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
