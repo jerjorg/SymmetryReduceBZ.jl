@@ -432,11 +432,11 @@ SymmetryReduceBZ.Symmetry.calc_spacegroup(real_latvecs,atom_types,atom_pos,
 ```
 """
 function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
-    atom_types::AbstractVector{<:Int},atom_pos_::AbstractMatrix{<:Real},
+    atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String;rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),
     atol::Real=1e-9)
 
-    if length(atom_types) != size(atom_pos_,2)
+    if length(atom_types) != size(atom_pos,2)
         throw(ArgumentError("The number of atom types and positions must be the
             same."))
     end
