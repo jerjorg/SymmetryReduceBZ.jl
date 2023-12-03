@@ -117,7 +117,7 @@ coordinates = "Cartesian"
 SymmetryReduceBZ.Symmetry.mapto_unitcell(pt,real_latvecs,inv_latvecs,
     coordinates)
 # output
-3-element Vector{Real}:
+3-element Vector{Float64}:
  0.0
  0.0
  0.20000000000000018
@@ -350,7 +350,7 @@ ibz = chull([0.0 0.25; 0.0 0.0; 0.5 0.0; 0.5 0.25])
 kpoint = [2,3]
 ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 # output
-2-element Vector{Real}:
+2-element Vector{Float64}:
  0.0
  0.0
 ```
@@ -545,7 +545,7 @@ SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coordinates,
 # output
 Convex Hull of 4 points in 2 dimensions
 Hull segment vertex indices:
-[3, 2, 1, 4]
+Int32[3, 2, 1, 4]
 Points on convex hull in original order:
 
 [0.5 0.5; 0.5 -0.5; -0.5 -0.5; -0.5 0.5]
@@ -644,7 +644,7 @@ SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,
 # output
 Convex Hull of 3 points in 2 dimensions
 Hull segment vertex indices:
-[1, 2, 3]
+Int32[1, 2, 3]
 Points on convex hull in original order:
 
 [0.0 0.0; 0.5 0.0; 0.5 0.5]

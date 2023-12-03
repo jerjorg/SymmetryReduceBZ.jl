@@ -33,6 +33,9 @@ Order   = [:function, :type]
 Modules = [SymmetryReduceBZ.Lattices]
 Order   = [:function, :type]
 ```
+```@docs
+SymmetryReduceBZ.Lattices.lattice_types
+```
 
 ### Plotting
 ```@autodocs
@@ -44,6 +47,9 @@ Order   = [:function, :type]
 ```@autodocs
 Modules = [SymmetryReduceBZ.Symmetry]
 Order   = [:function, :type]
+```
+```@docs
+SymmetryReduceBZ.Symmetry.pointgroup_size
 ```
 
 ### Utilities

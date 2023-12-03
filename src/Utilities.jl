@@ -205,7 +205,7 @@ convention = "ordinary"
 bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,convention)
 get_uniquefacets(bz)
 # output
-6-element Vector{Vector{Int64}}:
+6-element Vector{Vector{Int32}}:
  [1, 2, 3, 4]
  [7, 2, 3, 5]
  [6, 4, 3, 5]
