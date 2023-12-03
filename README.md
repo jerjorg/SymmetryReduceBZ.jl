@@ -25,6 +25,16 @@ Julia's package manager `Pkg`.
 using Pkg
 Pkg.add("SymmetryReduceBZ")
 ```
+You will also need to have the Python Matplotlib and SciPy libraries installed on
+your machine in order to use SymmetryReduceBZ, which
+[PyCall.jl](https://github.com/JuliaPy/PyCall.jl) can setup automatically via [Conda.jl](https://github.com/JuliaPy/Conda.jl).
+If you are installing PyCall and SymmetryReduceBZ for the first time, just do
+`ENV["PYTHON"]=""` before running `Pkg.add("SymmetryReduceBZ")`. Otherwise you
+can reconfigure PyCall to use Conda via:
+```
+ENV["PYTHON"]=""
+Pkg.build("PyCall")
+```
 
 ## Examples
 

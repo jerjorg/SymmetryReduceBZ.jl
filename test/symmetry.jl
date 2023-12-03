@@ -11,10 +11,8 @@ import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 import CDDLib: Library
 import LinearAlgebra: inv
 import QHull: chull
-import PyCall: pyimport
-sympy=pyimport("sympy")
-import SymPy: symbols
-x,y,z=symbols("x,y,z")
+import SymPy: sympy
+x,y,z=sympy.symbols("x,y,z")
 
 
 # Lattice vectors
