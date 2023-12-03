@@ -27,7 +27,7 @@ Plot a 2D convex hull
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
 
 # Examples
-```jldoctest
+```julia
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
 real_latvecs = [1 0; 0 1]
@@ -87,7 +87,7 @@ Plot a 3D convex hull
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
 
 # Examples
-```jldoctest
+```julia
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
 using PyPlot
@@ -173,7 +173,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 - `ax::PyObject`: an updated `ax` with plots of the BZ and IBZ.
 
 # Examples
-```jldoctest
+```julia
 using SymmetryReduceBZ
 real_latvecs = [1 0; .5 1]
 atom_types=[0]
