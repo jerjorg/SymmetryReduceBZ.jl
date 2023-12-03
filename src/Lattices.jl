@@ -204,13 +204,13 @@ function minkowski_reduce(basis::AbstractMatrix{<:Real};
 
     # Sort the lattice vectors by increasing norm.
     order = sortperm([basis[:,i] for i=axes(basis,1)])
-    rbasis = basis[:,order]
+    rbasis = Matrix(basis[:,order])
 
     k=2
     while k <= size(rbasis,1)
         k=reduce_basis!(rbasis,k,rtol=rtol,atol=atol)
     end
-    rbasis
+    oftype(basis, rbasis)
 end
 
 @doc """
