@@ -1,7 +1,6 @@
 module Utilities
 
 import LinearAlgebra: cross, dot, norm
-import LinearAlgebra.BLAS: gemv
 import Distances: euclidean
 import Base.Iterators: flatten
 import QHull: Chull
@@ -307,13 +306,12 @@ function sample_circle(basis::AbstractMatrix{<:Real}, radius::Real,
     n1,n2=round.(lens) .+ 1
 
     l=0;
-    pt=Array{Float64,1}(undef,2)
-    pts=Array{Float64,2}(undef,2,Int((2*n1+1)*(2*n2+1)));
-    distances=Array{Float64,1}(undef,size(pts,2))
+    pts=Matrix{eltype(basis)}(undef,2,Int((2*n1+1)*(2*n2+1)));
+    distances=Vector{float(eltype(basis))}(undef,size(pts,2))
     for (i,j) in Iterators.product((-n1+o1):(n1+o1),(-n2+o2):(n2+o2))
         l+=1
-        pt=gemv('N',float(basis),[i,j])
-        pts[:,l]=pt
+        pt= basis * [i, j]
+        pts[:,l] = pt
         distances[l]=euclidean(pt,offset)
     end
 
@@ -365,13 +363,12 @@ function sample_sphere(basis::AbstractMatrix{<:Real}, radius::Real,
     n1,n2,n3=round.(lens) .+ 1
 
     l=0;
-    pt=Array{Float64,1}(undef,3)
-    pts=Array{Float64,2}(undef,3,Int((2*n1+1)*(2*n2+1)*(2*n3+1)));
-    distances=Array{Float64,1}(undef,size(pts,2))
+    pts=Matrix{eltype(basis)}(undef,3,Int((2*n1+1)*(2*n2+1)*(2*n3+1)));
+    distances=Vector{float(eltype(basis))}(undef,size(pts,2))
     for (i,j,k) in Iterators.product((-n1+o1):(n1+o1),(-n2+o2):(n2+o2),
                                      (-n3+o3):(n3+o3))
         l+=1
-        pt=gemv('N',float(basis),[i,j,k])
+        pt= basis * [i,j,k]
         pts[:,l]=pt
         distances[l]=euclidean(pt,offset)
     end
