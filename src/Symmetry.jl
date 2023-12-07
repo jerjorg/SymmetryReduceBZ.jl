@@ -209,9 +209,9 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
     bz_point = similar(uc_point)
     
     if checksquare(recip_latvecs) == 2
-        shifts = collect.(product(-1:0,-1:0))
+        shifts = collect.(product(0:-1:-1,0:-1:-1))
     else
-        shifts = collect.(product(-1:0,-1:0,-1:0))
+        shifts = collect.(product(0:-1:-1,0:-1:-1,0:-1:-1))
     end
 
     for shift = shifts
