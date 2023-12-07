@@ -1,11 +1,8 @@
 [![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](
 https://jerjorg.github.io/SymmetryReduceBZ.jl/)
-[![Build Status](
-https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl.svg?branch=master)](
-https://travis-ci.com/jerjorg/SymmetryReduceBZ.jl)
-[![Coverage Status](
-https://coveralls.io/repos/github/jerjorg/SymmetryReduceBZ.jl/badge.svg?branch=master)](
-https://coveralls.io/github/jerjorg/SymmetryReduceBZ.jl?branch=master&service=github)
+[![Build Status](https://github.com/jerjorg/SymmetryReduceBZ.jl/actions/workflows/CI.yml/badge.svg?branch=master)](
+https://github.com/jerjorg/SymmetryReduceBZ.jl/actions/?query=workflow:CI)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
 
 # SymmetryReduceBZ
@@ -23,6 +20,16 @@ Julia's package manager `Pkg`.
 ```
 using Pkg
 Pkg.add("SymmetryReduceBZ")
+```
+You will also need to have the Python Matplotlib and SciPy libraries installed on
+your machine in order to use SymmetryReduceBZ, which
+[PyCall.jl](https://github.com/JuliaPy/PyCall.jl) can setup automatically via [Conda.jl](https://github.com/JuliaPy/Conda.jl).
+If you are installing PyCall and SymmetryReduceBZ for the first time, just do
+`ENV["PYTHON"]=""` before running `Pkg.add("SymmetryReduceBZ")`. Otherwise you
+can reconfigure PyCall to use Conda via:
+```
+ENV["PYTHON"]=""
+Pkg.build("PyCall")
 ```
 
 ## Examples

@@ -27,7 +27,7 @@ Plot a 2D convex hull
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
 
 # Examples
-```jldoctest
+```julia
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
 real_latvecs = [1 0; 0 1]
@@ -42,7 +42,7 @@ ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,conven
 ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",alpha=0.2)
 ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 # output
-PyObject <AxesSubplot:>
+PyObject <AxesSubplot: >
 ```
 """
 function plot_2Dconvexhull(convexhull::Chull{<:Real},
@@ -87,7 +87,7 @@ Plot a 3D convex hull
 - `ax::PyObject`: updated `ax` that includes a plot of the convex hull.
 
 # Examples
-```jldoctest
+```julia
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
 using PyPlot
@@ -105,7 +105,7 @@ ax = fig.add_subplot(111, projection="3d")
 ax = plot_3Dconvexhull(ibz,ax,facecolors="coral",alpha=1,edgecolors="black",linewidths = 1)
 ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
 # output
-PyObject <Axes3DSubplot:>
+PyObject <Axes3DSubplot: >
 ```
 """
 function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing}=nothing;
@@ -173,7 +173,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 - `ax::PyObject`: an updated `ax` with plots of the BZ and IBZ.
 
 # Examples
-```jldoctest
+```julia
 using SymmetryReduceBZ
 real_latvecs = [1 0; .5 1]
 atom_types=[0]
@@ -183,7 +183,7 @@ makeprim = true
 convention = "ordinary"
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
 # output
-PyObject <AxesSubplot:>
+PyObject <AxesSubplot: >
 ```
 """
 function plot_convexhulls(real_latvecs::AbstractMatrix{<:Real},

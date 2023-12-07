@@ -71,7 +71,7 @@ using SymmetryReduceBZ
 latvecs = [1 0; 0 1]
 SymmetryReduceBZ.Lattices.get_latparams(latvecs)
 # output
-2-element Array{Array{Float64,1},1}:
+2-element Vector{Vector{Float64}}:
  [1.0, 1.0]
  [1.5707963267948966, 1.5707963267948966]
 ```
@@ -121,7 +121,7 @@ k=2
 SymmetryReduceBZ.Lattices.reduce_basis!(basis,k)
 basis
 # output
-3×3 Array{Int64,2}:
+3×3 Matrix{Int64}:
  0  1  3
  1  2  2
  0  0  1
@@ -193,7 +193,7 @@ using SymmetryReduceBZ
 basis = [1 2 0; 0 1 0; 0 0 1]
 SymmetryReduceBZ.Lattices.minkowski_reduce(basis)
 # output
-3×3 Array{Int64,2}:
+3×3 Matrix{Int64}:
  0  1  0
  0  0  1
  1  0  0
@@ -204,13 +204,13 @@ function minkowski_reduce(basis::AbstractMatrix{<:Real};
 
     # Sort the lattice vectors by increasing norm.
     order = sortperm([basis[:,i] for i=axes(basis,1)])
-    rbasis = basis[:,order]
+    rbasis = Matrix(basis[:,order])
 
     k=2
     while k <= size(rbasis,1)
         k=reduce_basis!(rbasis,k,rtol=rtol,atol=atol)
     end
-    rbasis
+    oftype(basis, rbasis)
 end
 
 @doc """
@@ -283,7 +283,7 @@ using SymmetryReduceBZ
 a=1
 SymmetryReduceBZ.Lattices.genlat_SQR(a)
 # output
-2×2 Array{Int64,2}:
+2×2 Matrix{Int64}:
  1  0
  0  1
 ```
@@ -311,7 +311,7 @@ using SymmetryReduceBZ
 a=1
 SymmetryReduceBZ.Lattices.genlat_HXG(a)
 # output
-2×2 Array{Float64,2}:
+2×2 Matrix{Float64}:
  1.0  -0.5
  0.0   0.866025
 ```
@@ -340,7 +340,7 @@ a=1
 b=1.2
 SymmetryReduceBZ.Lattices.genlat_REC(a,b)
 # output
-2×2 Array{Float64,2}:
+2×2 Matrix{Float64}:
  1.0  0.0
  0.0  1.2
 ```
@@ -370,7 +370,7 @@ a=1
 b=1.2
 SymmetryReduceBZ.Lattices.genlat_RECI(a,b)
 # output
-2×2 Array{Float64,2}:
+2×2 Matrix{Float64}:
   0.5  0.5
  -0.6  0.6
 ```
@@ -415,7 +415,7 @@ b=1.2
 θ=π/3
 SymmetryReduceBZ.Lattices.genlat_OBL(a,b,θ)
 # output
-2×2 Array{Float64,2}:
+2×2 Matrix{Float64}:
  1.0  0.6
  0.0  1.03923
 ```
@@ -452,7 +452,7 @@ using SymmetryReduceBZ
 a=1
 SymmetryReduceBZ.Lattices.genlat_CUB(a)
 # output
-3×3 Array{Int64,2}:
+3×3 Matrix{Int64}:
  1  0  0
  0  1  0
  0  0  1
@@ -481,7 +481,7 @@ using SymmetryReduceBZ
 a=1
 SymmetryReduceBZ.Lattices.genlat_FCC(a)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  0.0  0.5  0.5
  0.5  0.0  0.5
  0.5  0.5  0.0
@@ -517,7 +517,7 @@ using SymmetryReduceBZ
 a=1
 SymmetryReduceBZ.Lattices.genlat_BCC(a)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  -0.5   0.5   0.5
   0.5  -0.5   0.5
   0.5   0.5  -0.5
@@ -555,7 +555,7 @@ a=1
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_TET(a,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  1.0  0.0  0.0
  0.0  1.0  0.0
  0.0  0.0  1.2
@@ -591,7 +591,7 @@ a=1
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_BCT(a,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  -0.5   0.5   0.5
   0.5  -0.5   0.5
   0.6   0.6  -0.6
@@ -636,7 +636,7 @@ b=1.4;
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_ORC(a,b,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  1.0  0.0  0.0
  0.0  1.4  0.0
  0.0  0.0  1.2
@@ -674,7 +674,7 @@ b=1.4;
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_ORCF(a,b,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  0.0  0.5  0.5
  0.7  0.0  0.7
  0.6  0.6  0.0
@@ -720,7 +720,7 @@ b=1.4;
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_ORCI(a,b,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  -0.5   0.5   0.5
   0.7  -0.7   0.7
   0.6   0.6  -0.6
@@ -766,7 +766,7 @@ b=1.2;
 c=1.4;
 SymmetryReduceBZ.Lattices.genlat_ORCC(a,b,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
   0.5  0.5  0.0
  -0.6  0.6  0.0
   0.0  0.0  1.4
@@ -810,7 +810,7 @@ a=1
 c=1.2;
 SymmetryReduceBZ.Lattices.genlat_HEX(a,c)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
   0.5       0.5       0.0
  -0.866025  0.866025  0.0
   0.0       0.0       1.2
@@ -846,7 +846,7 @@ a=1
 α=π/6;
 SymmetryReduceBZ.Lattices.genlat_RHL(a,α)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
   0.965926  0.965926  0.896575
  -0.258819  0.258819  0.0
   0.0       0.0       0.442891
@@ -887,7 +887,7 @@ c=1.4
 α=π/6;
 SymmetryReduceBZ.Lattices.genlat_MCL(a,b,c,α)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  1.0  0.0  0.0
  0.0  1.2  1.21244
  0.0  0.0  0.7
@@ -930,7 +930,7 @@ c=1.4
 α=π/6;
 SymmetryReduceBZ.Lattices.genlat_MCLC(a,b,c,α)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  0.5  -0.5  0.0
  0.6   0.6  1.21244
  0.0   0.0  0.7
@@ -984,7 +984,7 @@ c=1.4
 γ=π/4;
 SymmetryReduceBZ.Lattices.genlat_TRI(a,b,c,α,β,γ)
 # output
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  1.0  0.848528  0.7
  0.0  0.848528  1.01464
  0.0  0.0       0.663702

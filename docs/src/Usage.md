@@ -34,20 +34,20 @@ atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
 makeprim = false
 convention = "ordinary"
-(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
+ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   makeprim,convention)
 ```
 
 ## Python
-It is possible to call `SymmetryReduceBZ` from Python using [PyJulia](
-https://pyjulia.readthedocs.io/en/latest/index.html). In a
+It is possible to call `SymmetryReduceBZ` from Python using 
+[PyJulia](https://pyjulia.readthedocs.io/en/latest/). In a
 Jupyter notebook, IPython magic can be used to directly evaluate Julia commands
 in notebook cells.
-```@example
+```
 from julia import Julia
 jl = Julia(runtime="/usr/local/bin/julia")
 ```
-```@example
+```
 %%julia
 using Pkg
 Pkg.add("SymmetryReduceBZ")
@@ -62,14 +62,13 @@ coordinates = "Cartesian"
 primitive = true
 makeprim = false
 convention = "ordinary"
-(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
    convention)
-fig.show()
 ```
 
 Without IPython magic, Julia commands can be called with the `eval` method of
 `PyJulia`.
-```@example
+```
 from julia import Julia
 jl = Julia(runtime="/usr/local/bin/julia")
 
@@ -85,8 +84,7 @@ atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
 coordinates = "Cartesian"
 makeprim = true
 convention = "ordinary"
-(fig,ax)=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
+ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
    convention)
-fig.show()
 """)
 ```
