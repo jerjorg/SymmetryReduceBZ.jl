@@ -86,8 +86,9 @@ for additional attributes of the IBZ.
 
 The function `plot_convexhulls` is useful for visualizing the Brillouin zone
 and irreducible Brillouin zone. The arguments are the same as those from
-`calc_ibz`.
+`calc_ibz`. It is available through a package extension with PyPlot.
 ```@example
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 2.0
@@ -106,6 +107,7 @@ The functions `plot_2Dconvexhull` and `plot_3Dconvexhull` allow greater customiz
 the appearance of the convex hull.
 
 ```@example
+using PyPlot
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
 using PyPlot
@@ -125,9 +127,9 @@ axis("off")
 ![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-3.png)
 
 ```@example
+using PyPlot
 import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
-using PyPlot
 real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 convention="ordinary"
 atom_types=[0]

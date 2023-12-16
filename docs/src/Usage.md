@@ -25,6 +25,7 @@ gives the convention for going from real to reciprocal space (whether or not to
 multiply by 2π). There is a simple function for visualizing the IBZ along with
 the Brillouin zone (BZ).
 ```@example
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 2.0
@@ -51,6 +52,8 @@ jl = Julia(runtime="/usr/local/bin/julia")
 %%julia
 using Pkg
 Pkg.add("SymmetryReduceBZ")
+Pkg.add("PyPlot")
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 
@@ -75,6 +78,8 @@ jl = Julia(runtime="/usr/local/bin/julia")
 jl.eval("""
 using Pkg
 Pkg.add(\"SymmetryReduceBZ\")
+Pkg.add(\"PyPlot\")
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 1.0
