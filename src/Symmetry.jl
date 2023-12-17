@@ -448,7 +448,7 @@ function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
     atom_pos = mapto_unitcell(atom_pos_1[:,1:numatoms],real_latvecs,inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
     ops_spacegroup=empty!(similar(pointgroup))
-    trans_spacegroup=typeof(atom_pos)[]
+    trans_spacegroup=typeof(atom_pos[:,begin])[]
     kindᵣ=atom_types[1]
     # opts = Array{Float64,1}[]
 
