@@ -16,8 +16,7 @@ Int32[1, 2, 3, 4, 5, 6]
 Points on convex hull in original order:
 
 [0.25 0.0 0.0; 0.0 0.0 0.0; … ; 0.0 -0.25 0.0; 0.25 -0.25 0.25]
-</code></pre><p>The columns of <code>real_latvecs</code> are the lattice generating vectors, the columns of <code>atom_pos</code> are the positions of the atoms in Cartesian coordinates (in this case), <code>coordinates</code> are the coordinates of the atom positions, and <code>convention</code> gives the convention for going from real to reciprocal space (whether or not to multiply by 2π). There is a simple function for visualizing the IBZ along with the Brillouin zone (BZ).</p><pre><code class="language-julia hljs">using PyPlot
-import SymmetryReduceBZ.Plotting: plot_convexhulls
+</code></pre><p>The columns of <code>real_latvecs</code> are the lattice generating vectors, the columns of <code>atom_pos</code> are the positions of the atoms in Cartesian coordinates (in this case), <code>coordinates</code> are the coordinates of the atom positions, and <code>convention</code> gives the convention for going from real to reciprocal space (whether or not to multiply by 2π). There is a simple function for visualizing the IBZ along with the Brillouin zone (BZ).</p><pre><code class="language-julia hljs">import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 2.0
 real_latvecs = genlat_CUB(a)
@@ -31,8 +30,6 @@ ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
 jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)</code></pre><pre><code class="nohighlight hljs">%%julia
 using Pkg
 Pkg.add(&quot;SymmetryReduceBZ&quot;)
-Pkg.add(&quot;PyPlot&quot;)
-using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 
@@ -51,8 +48,6 @@ jl = Julia(runtime=&quot;/usr/local/bin/julia&quot;)
 jl.eval(&quot;&quot;&quot;
 using Pkg
 Pkg.add(\&quot;SymmetryReduceBZ\&quot;)
-Pkg.add(\&quot;PyPlot\&quot;)
-using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 a = 1.0
@@ -64,4 +59,4 @@ makeprim = true
 convention = &quot;ordinary&quot;
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,makeprim,
    convention)
-&quot;&quot;&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Documentation/">« Documentation</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Saturday 16 December 2023 03:45">Saturday 16 December 2023</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+&quot;&quot;&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Documentation/">« Documentation</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Sunday 17 December 2023 05:35">Sunday 17 December 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
