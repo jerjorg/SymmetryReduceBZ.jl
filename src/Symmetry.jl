@@ -25,7 +25,7 @@ Calculate the point group of a lattice in 2D or 3D.
     used to compare lengths of vectors and the volumes of primitive cells.
 
 # Returns
-- `pointgroup::Vector{Matrix{Float64}}`: the point group of the lattice. The
+- `pointgroup::AbstractVector{<:Matrix{<:Real}}`: the point group of the lattice. The
     operators operate on points in Cartesian coordinates from the right.
 
 # Examples
@@ -62,8 +62,8 @@ function calc_pointgroup(latvecs::AbstractMatrix{<:Real};
 
     normsᵢ=[norm(latvecs[:,i]) for i=axes(latvecs,2)]
     sizeᵢ=abs(det(latvecs))
-    pointgroup=Array{Float64,2}[]
     inv_latvecs=inv(latvecs)
+    pointgroup=Matrix{typeof(zero(eltype(inv_latvecs))*zero(eltype(latvecs)))}[]
     for perm=permutations(1:size(pts,2),dim)
         latvecsᵣ=pts[:,perm]
         normsᵣ=[norm(latvecsᵣ[:,i]) for i=axes(latvecsᵣ,2)]
@@ -202,12 +202,12 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
 
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
-    
+
     coordinates == "lattice" && (uc_point = recip_latvecs*uc_point)
 
     bz_dist = Inf
     bz_point = similar(uc_point)
-    
+
     if checksquare(recip_latvecs) == 2
         shifts = collect.(product(0:-1:-1,0:-1:-1))
     else
@@ -254,7 +254,7 @@ Check if a point lies within a convex hull (including the boundaries).
 
 # Arguments
 - `point::AbstractVector{<:Real}`: a point in Cartesian coordinates.
-- `chull::Chull{Float64}`: a convex hull in 2D or 3D.
+- `chull::Chull`: a convex hull in 2D or 3D.
 - `rtol::Real=sqrt(eps(float(maximum(flatten(chull.points)))))`: a relative
     tolerance for floating point comparisons. Needed when a point is on the
     boundary of the convex hull.
@@ -307,9 +307,9 @@ Map a point to a symmetrically equivalent point within the IBZ.
     columns of a a matrix.
 - `inv_rlatvecs::AbstractMatrix{<:Real}`: the inverse of the square matrix
     `recip_latvecs`.
-- `ibz::Chull{Float64}`: the irreducible Brillouin zone as as a convex hull
+- `ibz::Chull`: the irreducible Brillouin zone as as a convex hull
     objects from `QHull`.
-- `pointgroup::Vector{Matrix{Float64}}`: a list of point symmetry operators
+- `pointgroup::AbstractVector{<:Matrix{<:Real}}`: a list of point symmetry operators
     in matrix form that operate on points from the left.
 - `coordinates::String`: the coordinates the *k*-point is in. Options are
     \"lattice\" and \"Cartesian\". The *k*-point within the IBZ is returned in
@@ -352,14 +352,14 @@ ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 """
 function mapto_ibz(kpoint::AbstractVector{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
-        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
-        pointgroup::Vector{Matrix{Float64}}, coordinates::String;
+        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull,
+        pointgroup::AbstractVector{<:Matrix{<:Real}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
     bzpoint = mapto_bz(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
-    
+
     coordinates == "lattice" && (bzpoint = recip_latvecs * bzpoint)
 
     for op in pointgroup
@@ -382,8 +382,8 @@ Map points as columns of a matrix to the IBZ and then remove duplicate points.
 """
 function mapto_ibz(kpoints::AbstractMatrix{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
-        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull{Float64},
-        pointgroup::Vector{Matrix{Float64}}, coordinates::String;
+        inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull,
+        pointgroup::AbstractVector{<:Matrix{<:Real}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
@@ -450,8 +450,8 @@ function calc_spacegroup(real_latvecs::AbstractMatrix{<:Real},
     # Map points to the primitive cell.
     atom_pos = mapto_unitcell(atom_pos_1[:,1:numatoms],real_latvecs,inv_latvecs,"Cartesian",rtol=rtol,atol=atol)
 
-    ops_spacegroup=Array{Float64,2}[]
-    trans_spacegroup=Array{Float64,1}[]
+    ops_spacegroup=empty!(similar(pointgroup))
+    trans_spacegroup=typeof(atom_pos)[]
     kindᵣ=atom_types[1]
     # opts = Array{Float64,1}[]
 
@@ -852,7 +852,7 @@ Complete the orbit of a point.
 
 # Arguments
 - `pt::AbstractVector{<:Real}`: the Cartesian coordinates of a point.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
+- `pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}`: the point group operators
     in a nested list. The operators operate on points in Cartesian coordinates
     from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
@@ -875,7 +875,7 @@ complete_orbit(pt,pointgroup)
 ```
 """
 function complete_orbit(pt::AbstractVector{<:Real},
-        pointgroup::Vector{Matrix{Float64}};
+        pointgroup::AbstractVector{<:AbstractMatrix{<:Real}};
         rtol::Real=sqrt(eps(float(maximum(pt)))),
         atol::Real=1e-9)
     unique_points(reduce(hcat,map(op->op*pt,pointgroup)),rtol=rtol,atol=atol)
@@ -889,7 +889,7 @@ Complete the orbits of multiple points.
 # Arguments
 - `pt::AbstractMatrix{<:Real}`: the Cartesian coordinates of a points as columns of
     a matrix.
-- `pointgroup::Vector{Matrix{Float64}}`: the point group operators
+- `pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}`: the point group operators
     in a nested list. The operators operate on points in Cartesian coordinates from the right.
 - `rtol::Real=sqrt(eps(float(maximum(pt))))`: a relative tolerance.
 - `atol::Real=1e-9`: an absolute tolerance.
@@ -911,7 +911,7 @@ complete_orbit(pts,pointgroup)
 ```
 """
 function complete_orbit(pts::AbstractMatrix{<:Real},
-    pointgroup::Vector{Matrix{Float64}};
+    pointgroup::AbstractVector{<:AbstractMatrix{<:Real}};
     rtol::Real=sqrt(eps(float(maximum(pts)))),
     atol::Real=1e-9)
     unique_points(reduce(hcat,reduce(hcat,[map(op->op*pts[:,i],pointgroup) for i=axes(pts,2)])))
