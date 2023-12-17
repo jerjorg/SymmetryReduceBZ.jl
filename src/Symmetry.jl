@@ -25,7 +25,7 @@ Calculate the point group of a lattice in 2D or 3D.
     used to compare lengths of vectors and the volumes of primitive cells.
 
 # Returns
-- `pointgroup::AbstractVector{<:Matrix{<:Real}}`: the point group of the lattice. The
+- `pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}`: the point group of the lattice. The
     operators operate on points in Cartesian coordinates from the right.
 
 # Examples
@@ -306,7 +306,7 @@ Map a point to a symmetrically equivalent point within the IBZ.
     `recip_latvecs`.
 - `ibz::Chull`: the irreducible Brillouin zone as as a convex hull
     objects from `QHull`.
-- `pointgroup::AbstractVector{<:Matrix{<:Real}}`: a list of point symmetry operators
+- `pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}`: a list of point symmetry operators
     in matrix form that operate on points from the left.
 - `coordinates::String`: the coordinates the *k*-point is in. Options are
     \"lattice\" and \"Cartesian\". The *k*-point within the IBZ is returned in
@@ -350,7 +350,7 @@ ibz_point = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pg,coordinates)
 function mapto_ibz(kpoint::AbstractVector{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull,
-        pointgroup::AbstractVector{<:Matrix{<:Real}}, coordinates::String;
+        pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
@@ -380,7 +380,7 @@ Map points as columns of a matrix to the IBZ and then remove duplicate points.
 function mapto_ibz(kpoints::AbstractMatrix{<:Real},
         recip_latvecs::AbstractMatrix{<:Real},
         inv_rlatvecs::AbstractMatrix{<:Real}, ibz::Chull,
-        pointgroup::AbstractVector{<:Matrix{<:Real}}, coordinates::String;
+        pointgroup::AbstractVector{<:AbstractMatrix{<:Real}}, coordinates::String;
         rtol::Real=sqrt(eps(float(maximum(recip_latvecs)))),
         atol::Real=1e-9)
 
