@@ -203,11 +203,8 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
     uc_point = mapto_unitcell(kpoint,recip_latvecs,inv_rlatvecs,coordinates,
         rtol=rtol,atol=atol)
 
-    coordinates == "lattice" && (uc_point = recip_latvecs*uc_point)
-
-    bz_dist = typemax(norm(uc_point))
-    bz_point = similar(uc_point)
-
+    bz_point = uc_point = coordinates == "lattice" ? recip_latvecs*uc_point : uc_point
+    bz_dist = norm(bz_point)
     if checksquare(recip_latvecs) == 2
         shifts = collect.(product(0:-1:-1,0:-1:-1))
     else
