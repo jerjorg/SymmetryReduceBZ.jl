@@ -756,7 +756,7 @@ coordinates = "Cartesian"
 convention = "ordinary"
 make_primitive(real_latvecs, atom_types, atom_pos, coordinates)
 # output
-([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0;;])
+([1.0 0.0 0.5; 0.0 1.0 0.5; 0.0 0.0 0.5], [0], [0.0; 0.0; 0.0])
 ```
 """
 function make_primitive(real_latvecs::AbstractMatrix{<:Real},

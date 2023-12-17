@@ -1,6 +1,5 @@
 using Test
 
-using PyPlot
 import SymmetryReduceBZ
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 
