@@ -205,7 +205,7 @@ function mapto_bz(kpoint::AbstractVector{<:Real},
 
     coordinates == "lattice" && (uc_point = recip_latvecs*uc_point)
 
-    bz_dist = Inf
+    bz_dist = typemax(norm(uc_point))
     bz_point = similar(uc_point)
 
     if checksquare(recip_latvecs) == 2
