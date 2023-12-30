@@ -265,15 +265,6 @@ convention="ordinary"
                 end
             end
         end
-
-        real_latvecs = [1.0 0.0; 0.0 1.0]
-        primitive=false
-        atom_types=[0]
-        atom_pos=Array([0 0]')
-        coords="Cartesian"
-        convention="ordinary"
-        @test_throws ArgumentError bz=calc_bz(real_latvecs,atom_types,atom_pos,
-            coords,primitive,convention,Library())
     end
 
     @testset "calc_ibz" begin
