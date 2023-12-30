@@ -28,17 +28,18 @@ Plot a 2D convex hull
 
 # Examples
 ```julia
-import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
-import SymmetryReduceBZ.Plotting: plot_2Dconvexhull
+ENV["MPLBACKEND"]="qt5agg"
+using PyPlot
+using SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+using SymmetryReduceBZ.Plotting: plot_2Dconvexhull
 real_latvecs = [1 0; 0 1]
 convention="ordinary"
 atom_types=[0]
 atom_pos = Array([0 0]')
 coords = "Cartesian"
-ibzformat = "convex hull"
 makeprim=false
-bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
-ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibzformat,makeprim,convention)
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
 ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",alpha=0.2)
 ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 # output
@@ -88,18 +89,19 @@ Plot a 3D convex hull
 
 # Examples
 ```julia
-import SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
-import SymmetryReduceBZ.Plotting: plot_3Dconvexhull
+ENV["MPLBACKEND"]="qt5agg"
 using PyPlot
+using SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
+using SymmetryReduceBZ.Plotting: plot_3Dconvexhull
 real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 convention="ordinary"
 atom_types=[0]
 atom_pos = Array([0 0 0]')
 coords = "Cartesian"
-bzformat = "convex hull"
 makeprim=false
-bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
-ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,convention)
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention)
+using3D()
 fig = figure()
 ax = fig.add_subplot(111, projection="3d")
 ax = plot_3Dconvexhull(ibz,ax,facecolors="coral",alpha=1,edgecolors="black",linewidths = 1)
@@ -133,7 +135,7 @@ function plot_3Dconvexhull(convexhull::Chull{<:Real}, ax::Union{PyObject,Nothing
     p=art3d.Poly3DCollection(faces, alpha=alpha, facecolors=facecolors)
     l=art3d.Line3DCollection(edges, colors=edgecolors,linewidths=linewidths)
 
-    if ax == nothing 
+    if ax == nothing
         fig = figure()
         ax = fig.add_subplot(111, projection="3d")
     end
@@ -174,6 +176,8 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
 
 # Examples
 ```julia
+ENV["MPLBACKEND"]="qt5agg"
+using PyPlot
 using SymmetryReduceBZ
 real_latvecs = [1 0; .5 1]
 atom_types=[0]
