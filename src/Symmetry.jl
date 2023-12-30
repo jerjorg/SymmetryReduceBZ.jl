@@ -639,7 +639,7 @@ function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     pointgroup = remove_duplicates(calc_spacegroup(prim_latvecs,prim_types,
         prim_pos,"Cartesian"; rtol, atol)[2]; rtol, atol)
     sizepg = size(pointgroup,1)
-    # enforce type here due to instability in calc_bz
+
     bz=calc_bz(prim_latvecs,prim_types,prim_pos,"Cartesian",false,
         convention,library; rtol, atol)
     bz_vertices = collect(points(bz))
