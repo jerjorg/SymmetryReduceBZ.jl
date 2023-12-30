@@ -5,9 +5,10 @@ const lt = Lattices
 
 import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
     calc_ibz, mapto_unitcell, make_primitive, inhull, mapto_bz, mapto_ibz
-import SymmetryReduceBZ.Utilities: unique_points
+import SymmetryReduceBZ.Utilities: unique_points, vertices
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
+import Polyhedra: points
 import CDDLib: Library
 import LinearAlgebra: inv
 import QHull: chull
@@ -209,8 +210,6 @@ pgsizes = [8, 4, 4, 12, 2, 48, 48, 48, 16, 16, 16, 8, 8, 8, 8, 8, 8, 24, 12, 12,
 atom_types=[0]
 coords="Cartesian"
 convention="ordinary"
-bzformat="convex hull"
-ibzformat="convex hull"
 
 @testset "symmetry" begin
     @testset "calc_pointgroup" begin
@@ -225,7 +224,6 @@ ibzformat="convex hull"
 
     @testset "calc_bz" begin
         coords="Cartesian"
-        bzformat="convex hull"
         for real_latvecs=listreal_latvecs
             if size(real_latvecs) == (2,2)
                 atype_list=[[0],[0,0],[0,1],[0,1,0]]
@@ -245,24 +243,24 @@ ibzformat="convex hull"
                     for convention=["ordinary","angular"]
 
                         bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
-                            bzformat,makeprim,convention,Library())
+                            makeprim,convention,Library())
 
                         if makeprim
-                        	(prim_latvecs,prim_types,prim_pos) = make_primitive(
+                            (prim_latvecs,prim_types,prim_pos) = make_primitive(
                                 real_latvecs,atom_types,atom_pos,coords)
-                    	else
-                    		(prim_latvecs,prim_types,prim_pos)=(
+                        else
+                            (prim_latvecs,prim_types,prim_pos)=(
                                 real_latvecs,atom_types,atom_pos)
-                    	end
+                        end
 
                         pointgroup=calc_pointgroup(prim_latvecs)
                         # Rotate BZ vertices
-                        bzverts=reduce(hcat,[op*(bz.points[i,:]) for
-                            op=pointgroup for i=1:size(bz.points,1)])
+                        bzverts=reduce(hcat,[op*pt for
+                            op=pointgroup for pt in points(bz)])
                         # BZ vertices should map to other BZ vertices under
                         # point group operations
                         @test (size(unique_points(bzverts),2) ==
-                            size(bz.points,1))
+                            length(points(bz)))
                     end
                 end
             end
@@ -274,16 +272,13 @@ ibzformat="convex hull"
         atom_pos=Array([0 0]')
         coords="Cartesian"
         convention="ordinary"
-        bzformat="bad format"
         @test_throws ArgumentError bz=calc_bz(real_latvecs,atom_types,atom_pos,
-            coords,bzformat,primitive,convention,Library())
+            coords,primitive,convention,Library())
     end
 
     @testset "calc_ibz" begin
         convention = "ordinary"
         coords="Cartesian"
-        ibzformat="convex hull"
-        bzformat="convex hull"
         for real_latvecs=listreal_latvecs
             if size(real_latvecs) == (2,2)
                 atype_list=[[0],[0,0],[0,1],[0,1,0]]
@@ -302,40 +297,38 @@ ibzformat="convex hull"
                 for makeprim=[true,false]
 
                     if makeprim
-                    	(prim_latvecs,prim_types,prim_pos) = make_primitive(
+                        (prim_latvecs,prim_types,prim_pos) = make_primitive(
                             real_latvecs,atom_types,atom_pos,coords)
-                	else
-                		(prim_latvecs,prim_types,prim_pos)=(real_latvecs,atom_types,atom_pos)
-                	end
+                    else
+                        (prim_latvecs,prim_types,prim_pos)=(real_latvecs,atom_types,atom_pos)
+                    end
 
                     pointgroup = calc_spacegroup(prim_latvecs,prim_types,
                         prim_pos,coords)[2]
 
                     bz=calc_bz(prim_latvecs,prim_types,prim_pos,coords,
-                        bzformat,makeprim,convention,Library())
+                        makeprim,convention,Library())
 
                     ibz=calc_ibz(prim_latvecs,prim_types,prim_pos,coords,
-                        ibzformat,makeprim,convention,Library())
+                        makeprim,convention,Library())
 
                     # Unfold IBZ
-                    unfoldpts=reduce(hcat,[op*(ibz.points[i,:]) for op=pointgroup
-                                for i=1:size(ibz.points,1)])
+                    unfoldpts=reduce(hcat,[op*v for op=pointgroup
+                                for v in vertices(ibz)])
                     unfoldpts = unique_points(unfoldpts)
                     unfold_chull = chull(Array(unfoldpts'))
                     unfoldpts=unfold_chull.points[unfold_chull.vertices,:]
-                    @test size(unfoldpts,1) == size(bz.points[bz.vertices,:],1)
-                    @test all([any([isapprox(unfoldpts[i,:],bz.points[j,:])
-                        for i=1:size(unfoldpts,1)]) for j=1:size(bz.points,1)])
+                    bz_chull = chull(permutedims(reduce(hcat, vertices(bz))))
+                    @test size(unfoldpts,1) == size(bz_chull.points[bz_chull.vertices,:],1)
+                    @test all([any([isapprox(unfoldpts[i,:],bz_chull.points[j,:])
+                        for i=1:size(unfoldpts,1)]) for j=1:size(bz_chull.points,1)])
                 end
             end
         end
-        ibzformat="bad format"
-        @test_throws ArgumentError calc_ibz(listreal_latvecs[1], [0],
-            Array([0 0]'), "lattice", ibzformat, false, "ordinary", Library())
 
         passed = false
         ibz = calc_ibz(listreal_latvecs[1], [0,0], Array([0 0; 0.5 0.5]'),
-            "Cartesian", "half-space", true,"ordinary", Library())
+            "Cartesian", true,"ordinary", Library())
         passed = true
         @test passed
     end
@@ -369,11 +362,10 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0]')
         coords = "Cartesian"
-        bz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
 
-        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
             convention,Library())
 
         recip_latvecs = real_latvecs
@@ -394,11 +386,10 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0 0]')
         coords = "Cartesian"
-        bz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
 
-        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
             convention,Library())
 
         recip_latvecs = real_latvecs
@@ -422,11 +413,10 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0]')
         coords = "Cartesian"
-        bz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
 
-        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
             convention,Library())
 
         kpoint = [1.2,0]
@@ -448,11 +438,10 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0 0]')
         coords = "Cartesian"
-        bz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
 
-        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bz_format,makeprim,
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
             convention,Library())
 
         kpoint = [1.2,0,0]
@@ -480,14 +469,13 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0]')
         coords = "Cartesian"
-        ibz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
         recip_latvecs = get_recip_latvecs(real_latvecs,convention)
         inv_rlatvecs = inv(recip_latvecs)
 
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention,Library())
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,Library())
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0]
@@ -505,13 +493,12 @@ ibzformat="convex hull"
         atom_types = [0]
         atom_pos = Array([0 0 0]')
         coords = "Cartesian"
-        ibz_format = "convex hull"
         makeprim = false
         convention = "ordinary"
         recip_latvecs = get_recip_latvecs(real_latvecs,convention)
         inv_rlatvecs = inv(recip_latvecs)
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,ibz_format,makeprim,convention,Library())
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,Library())
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0,0]
@@ -578,7 +565,7 @@ ibzformat="convex hull"
             same = []
             for i=1:length(ibzP), j=1:length(findsymP)
                 if isapprox(ibzP[i],findsymP[j],atol=atol,rtol=rtol) &&
-        		   isapprox(ibzT[i],findsymT[j],atol=atol,rtol=rtol)
+                   isapprox(ibzT[i],findsymT[j],atol=atol,rtol=rtol)
                     append!(same,i)
                 end
             end
@@ -967,7 +954,6 @@ ibzformat="convex hull"
         real_latvecs = genlat_BCC(a)
         atom_types = [0,0,0,0,0]
         atom_pos = Array([0 0 0; 1 0 0 ; 0 1 0; 1 1 0; 1 0 1]')
-        ibzformat = "convex hull"
         coords = "lattice"
         convention = "ordinary"
         (prim_latvecs,prim_types, prim_pos) = make_primitive(real_latvecs,
@@ -980,7 +966,6 @@ ibzformat="convex hull"
         real_latvecs = genlat_CUB(a)
         atom_types = [0,0,0]
         atom_pos = Array([0 0 0; 0.5 0.5 0.5; 1 1 1]')
-        ibzformat = "convex hull"
         coords = "Cartesian"
         convention = "ordinary"
         (prim_latvecs, prim_types, prim_pos) = make_primitive(real_latvecs,
