@@ -1,6 +1,7 @@
 module Symmetry
 
-import Polyhedra: HalfSpace, polyhedron, points, hrep, Library, DefaultLibrary, volume, removehredundancy!, removehredundancy!, Polyhedron
+import CDDLib
+import Polyhedra: HalfSpace, polyhedron, points, hrep, Library, volume, removehredundancy!, removehredundancy!, Polyhedron
 import LinearAlgebra: norm, det, I, dot, checksquare
 import Combinatorics: permutations
 import Base.Iterators: product, flatten
@@ -497,7 +498,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=DefaultLibrary{Float64}()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -529,7 +530,7 @@ Points on convex hull in original order:
 function calc_bz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=DefaultLibrary{Float64}();
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     prim_latvecs, prim_types, prim_pos = if makeprim
@@ -575,7 +576,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=DefaultLibrary{Float64}()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -607,7 +608,7 @@ Points on convex hull in original order:
 function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=DefaultLibrary{Float64}();
+    convention::String="ordinary", library::Library=CDDLib.Library();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
     prim_latvecs, prim_types, prim_pos = if makeprim

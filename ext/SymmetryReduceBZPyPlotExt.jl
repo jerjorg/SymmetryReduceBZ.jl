@@ -1,5 +1,7 @@
 module SymmetryReduceBZPyPlotExt
 
+import Polyhedra: Library
+import CDDLib
 using PyPlot: figaspect, figure, subplots, using3D, art3D
 using SymmetryReduceBZ.Symmetry: calc_bz, calc_ibz
 using SymmetryReduceBZ.Utilities: get_uniquefacets, vertices, volume, sortpts2D
@@ -23,7 +25,7 @@ function plot_3Dconvexhull(convexhull, ax=nothing;
     facecolors::String="blue",alpha::Real=0.3,linewidths::Real=1,edgecolors::String="black")
 
     ϵ=0.1*(volume(convexhull))^1/3
-    plotrange=[[minimum(v)-ϵ,maximum(v)+ϵ] for v in vertices(convexhull)]
+    plotrange=[map(+, extrema(v), (-ϵ,ϵ)) for v in eachrow(reduce(hcat,vertices(convexhull)))]
 
     faces=get_uniquefacets(convexhull)
     edges=deepcopy(faces)
@@ -51,11 +53,11 @@ end
 function plot_convexhulls(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coords::String,makeprim::Bool,
-    convention::String,ax=nothing;
+    convention::String,library::Library=CDDLib.Library(),ax=nothing;
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
-    bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention; rtol,atol)
-    ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention; rtol,atol)
+    bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,library; rtol,atol)
+    ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,library; rtol,atol)
     dim = size(real_latvecs,1)
 
     if ax === nothing

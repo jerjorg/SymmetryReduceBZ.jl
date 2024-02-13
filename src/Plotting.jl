@@ -109,6 +109,7 @@ Plot the Brillouin and Irreducible Brillouin zone in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
+- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
