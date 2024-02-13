@@ -15,6 +15,20 @@ using Polyhedra: Polyhedra, Polyhedron, removehredundancy!, removevredundancy!, 
 - `vol::Real`
 
 # Examples
+```jldoctest
+using SymmetryReduceBZ.Utilities: volume
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+volume(bz)
+# output
+1.0
+```
 """
 volume(p::Polyhedron) = Polyhedra.volume(p)
 
@@ -30,11 +44,25 @@ volume(p::Polyhedron) = Polyhedra.volume(p)
 # Examples
 ```jldoctest
 using SymmetryReduceBZ.Utilities: vertices
-pts = Array([1 2; 2 3; 3 4; 4 5]')
-pt = [1,2]
-contains(pt,pts)
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+vertices(bz)
 # output
-true
+8-element iterator of Vector{Float64}:
+ [0.5, -0.5, 0.5]
+ [0.5, -0.5, -0.5]
+ [0.5, 0.5, -0.5]
+ [0.5, 0.5, 0.5]
+ [-0.5, 0.5, -0.5]
+ [-0.5, 0.5, 0.5]
+ [-0.5, -0.5, -0.5]
+ [-0.5, -0.5, 0.5]
 ```
 """
 vertices(hull::Polyhedron) = points(hull)
@@ -212,27 +240,26 @@ get_simplex(v::Matrix{<:Real}, i) = v[i,:]
 
 
 @doc """
-    get_uniquefacets(ch)
+    get_uniquefacetsindices(ch)
 
-Calculate the unique facets of a convex hull.
+Calculate the indices of unique facets of a convex hull.
 
 !!! note "QHull.jl package extension"
-    This function is available through a package extension of
-    [QHull.jl](https://github.com/JuliaPolyhedra/QHull.jl).
+    This function is compatible with [QHull.jl](https://github.com/JuliaPolyhedra/QHull.jl)
+    convex hulls through a package extension.
     After installing Python, SciPy, and QHull.jl, do `using QHull` to load it.
 
 # Arguments
-- `ch::Polyhedron`: a convex hull in 3D from `QHull`.
+- `ch::Polyhedron`: a polyhedron from Polyhedra.jl or convex hull in 3D from QHull.jl.
 
 # Returns
-- `unique_facets::Vector{Vector{Int64}}`: a nested list of the
-    indices of points that lie on each face. For example, the points that lie on
-    the first face are `ch.points[unique_facets[1],:]`.
+- `unique_facets::Vector{<:Vector}`: a nested list of the indices of points that lie on
+  each face. See [`get_uniquefacets`](@ref) if you want the facets' points.
 
 # Examples
 ```jldoctest
-using QHull
-using SymmetryReduceBZ.Utilities: get_uniquefacets
+using QHull: chull
+using SymmetryReduceBZ.Utilities: get_uniquefacetsindices, vertices
 using SymmetryReduceBZ.Symmetry: calc_bz
 real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 atom_types = [0]
@@ -241,7 +268,8 @@ coordinates = "Cartesian"
 makeprim = false
 convention = "ordinary"
 bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
-get_uniquefacets(bz)
+ch = chull(permutedims(reduce(hcat, vertices(bz))))
+get_uniquefacetsindices(ch)
 # output
 6-element Vector{Vector{Int32}}:
  [1, 2, 3, 4]
@@ -262,6 +290,44 @@ function get_uniquefacetsindices(poly::Polyhedron)
     end
 end
 
+@doc """
+    get_uniquefacets(ch)
+
+Calculate the unique facets of a convex hull.
+
+!!! note "QHull.jl package extension"
+    This function is compatible with [QHull.jl](https://github.com/JuliaPolyhedra/QHull.jl)
+    convex hulls through a package extension.
+    After installing Python, SciPy, and QHull.jl, do `using QHull` to load it.
+
+# Arguments
+- `ch::Polyhedron`: a polyhedron from Polyhedra.jl or convex hull in 3D from QHull.jl.
+
+# Returns
+- `unique_facets::Vector{<:Vector}`: a nested list of the vertices of points that lie on each face.
+
+# Examples
+```jldoctest
+using SymmetryReduceBZ.Utilities: get_uniquefacets
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+get_uniquefacets(bz)
+# output
+6-element Vector{Vector{Vector{Float64}}}:
+ [[-0.5, 0.5, -0.5], [-0.5, 0.5, 0.5], [-0.5, -0.5, 0.5], [-0.5, -0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5]]
+ [[0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5], [-0.5, -0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, -0.5, 0.5]]
+ [[0.5, 0.5, -0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5]]
+```
+"""
 function get_uniquefacets(poly::Polyhedron)
     map(get_uniquefacetsindices(poly)) do j
         map(i -> get(poly, i), j)

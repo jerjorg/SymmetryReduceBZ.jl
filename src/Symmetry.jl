@@ -504,8 +504,8 @@ Calculate the Brillouin zone for the given real-space lattice basis.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `bz`: the vertices or half-space representation of the Brillouin zone
-    depending on the value of `vertsOrHrep`.
+- `bz`: a polyhedron conforming to the Polyhedra.jl interface that represents the convex
+  hull of the Brillouin zone.
 
 # Examples
 ```jldoctest
@@ -519,12 +519,34 @@ makeprim=false
 SymmetryReduceBZ.Symmetry.calc_bz(real_latvecs,atom_types,atom_pos,coordinates,
     makeprim,convention)
 # output
-Convex Hull of 4 points in 2 dimensions
-Hull segment vertex indices:
-Int32[3, 2, 1, 4]
-Points on convex hull in original order:
-
-[0.5 0.5; 0.5 -0.5; -0.5 -0.5; -0.5 0.5]
+Polyhedron CDDLib.Polyhedron{Float64}:
+25-element iterator of Polyhedra.HalfSpace{Float64, Vector{Float64}}:
+ HalfSpace([-2.0, -2.0], 4.0)
+ HalfSpace([-2.0, -1.0], 2.5)
+ HalfSpace([-2.0, 0.0], 2.0)
+ HalfSpace([-2.0, 1.0], 2.5)
+ HalfSpace([-2.0, 2.0], 4.0)
+ HalfSpace([-1.0, -2.0], 2.5)
+ HalfSpace([-1.0, -1.0], 1.0)
+ HalfSpace([-1.0, 0.0], 0.5)
+ HalfSpace([-1.0, 1.0], 1.0)
+ HalfSpace([-1.0, 2.0], 2.5)
+ HalfSpace([0.0, -2.0], 2.0)
+ HalfSpace([0.0, -1.0], 0.5)
+ HalfSpace([0.0, 0.0], 0.0)
+ HalfSpace([0.0, 1.0], 0.5)
+ HalfSpace([0.0, 2.0], 2.0)
+ HalfSpace([1.0, -2.0], 2.5)
+ HalfSpace([1.0, -1.0], 1.0)
+ HalfSpace([1.0, 0.0], 0.5)
+ HalfSpace([1.0, 1.0], 1.0)
+ HalfSpace([1.0, 2.0], 2.5)
+  ⋮:
+4-element iterator of Vector{Float64}:
+ [0.5, 0.5]
+ [0.5, -0.5]
+ [-0.5, -0.5]
+ [-0.5, 0.5]
 ```
 """
 function calc_bz(real_latvecs::AbstractMatrix{<:Real},
@@ -582,8 +604,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
 
 # Returns
-- `ibz`: the irreducible Brillouin zone as a convex hull or intersection of
-    half-spaces.
+- `ibz`: the irreducible Brillouin zone as a polyhedron conforming to the Polyhedra.jl interface.
 
 # Examples
 ```jldoctest
@@ -597,12 +618,33 @@ makeprim=false
 SymmetryReduceBZ.Symmetry.calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,
     makeprim,convention)
 # output
-Convex Hull of 3 points in 2 dimensions
-Hull segment vertex indices:
-Int32[1, 2, 3]
-Points on convex hull in original order:
-
-[0.0 0.0; 0.5 0.0; 0.5 0.5]
+Polyhedron CDDLib.Polyhedron{Float64}:
+32-element iterator of Polyhedra.HalfSpace{Float64, Vector{Float64}}:
+ HalfSpace([-2.0, -2.0], 4.0)
+ HalfSpace([-2.0, -1.0], 2.5)
+ HalfSpace([-2.0, 0.0], 2.0)
+ HalfSpace([-2.0, 1.0], 2.5)
+ HalfSpace([-2.0, 2.0], 4.0)
+ HalfSpace([-1.0, -2.0], 2.5)
+ HalfSpace([-1.0, -1.0], 1.0)
+ HalfSpace([-1.0, 0.0], 0.5)
+ HalfSpace([-1.0, 1.0], 1.0)
+ HalfSpace([-1.0, 2.0], 2.5)
+ HalfSpace([0.0, -2.0], 2.0)
+ HalfSpace([0.0, -1.0], 0.5)
+ HalfSpace([0.0, 0.0], 0.0)
+ HalfSpace([0.0, 1.0], 0.5)
+ HalfSpace([0.0, 2.0], 2.0)
+ HalfSpace([1.0, -2.0], 2.5)
+ HalfSpace([1.0, -1.0], 1.0)
+ HalfSpace([1.0, 0.0], 0.5)
+ HalfSpace([1.0, 1.0], 1.0)
+ HalfSpace([1.0, 2.0], 2.5)
+  ⋮:
+3-element iterator of Vector{Float64}:
+ [0.0, 0.0]
+ [0.5, 0.0]
+ [0.5, 0.5]
 ```
 """
 function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
