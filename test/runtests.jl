@@ -1,9 +1,6 @@
-using Aqua, Test
-using SymmetryReduceBZ
+using Test
 
-@testset "method ambiguity" Aqua.test_ambiguities(SymmetryReduceBZ)
-Aqua.test_all(SymmetryReduceBZ, ambiguities=false)
-
+@testset    "aqua"      begin include("aqua.jl") end
 @testset    "lattices"  begin include("lattices.jl") end
 @testset    "symmetry"  begin include("symmetry.jl") end
 @testset    "utilities" begin include("utilities.jl") end
