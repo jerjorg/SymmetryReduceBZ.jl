@@ -1,6 +1,7 @@
 module SymmetryReduceBZQHullExt
 
 using Base.Iterators: flatten
+using LinearAlgebra: dot
 
 using QHull: Chull
 using SymmetryReduceBZ.Utilities: get_simplex, sortpts_perm
