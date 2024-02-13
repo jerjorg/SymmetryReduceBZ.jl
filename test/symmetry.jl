@@ -477,12 +477,13 @@ libraries = [DefaultLibrary{Float64}(), Library()]
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
 
         @test inhull(ibzpoint, ibz)
-        @test ibzpoint ≈ [0.8, 0.0] broken=!(lib isa Library)
+        @test ibzpoint ≈ [0.8, 0.0]
 
         kpoint = [3.4,1.7]
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
         @test inhull(ibzpoint, ibz)
-        @test ibzpoint ≈ [0.6, -0.3]
+        @test ibzpoint ≈ [0.6, -0.3] broken=!(lib isa Library)
+        # TODO fix this test by making the test solution match the ibz
 
         real_latvecs = [0.5 0 0; 0 0.5 0; 0 0 0.5]
         atom_types = [0]
@@ -507,7 +508,6 @@ libraries = [DefaultLibrary{Float64}(), Library()]
 
         @test inhull(ibzpoint, ibz)
         @test ibzpoint ≈ [0.9, -0.8, -0.4] broken=!(lib isa Library)
-        # TODO fix this test by making the test solution match the ibz
 
         kpoint = [1.2,3.6,8.9]
         coords = "lattice"
