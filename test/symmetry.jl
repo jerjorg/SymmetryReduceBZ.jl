@@ -8,8 +8,8 @@ import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
 import SymmetryReduceBZ.Utilities: unique_points, vertices
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
-import Polyhedra: points, DefaultLibrary
-import CDDLib: Library
+import Polyhedra: points
+import CDDLib
 import LinearAlgebra: inv
 import QHull: chull
 import SymPy: sympy
@@ -210,7 +210,7 @@ pgsizes = [8, 4, 4, 12, 2, 48, 48, 48, 16, 16, 16, 8, 8, 8, 8, 8, 8, 24, 12, 12,
 atom_types=[0]
 coords="Cartesian"
 convention="ordinary"
-libraries = [DefaultLibrary{Float64}(), Library()]
+libraries = [CDDLib.Library()]
 
 @testset "symmetry" begin
     @testset "calc_pointgroup" begin
@@ -482,7 +482,7 @@ libraries = [DefaultLibrary{Float64}(), Library()]
         kpoint = [3.4,1.7]
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
         @test inhull(ibzpoint, ibz)
-        @test ibzpoint ≈ [0.6, -0.3] broken=!(lib isa Library)
+        @test ibzpoint ≈ [0.6, -0.3]
         # TODO fix this test by making the test solution match the ibz
 
         real_latvecs = [0.5 0 0; 0 0.5 0; 0 0 0.5]
@@ -507,12 +507,12 @@ libraries = [DefaultLibrary{Float64}(), Library()]
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
 
         @test inhull(ibzpoint, ibz)
-        @test ibzpoint ≈ [0.9, -0.8, -0.4] broken=!(lib isa Library)
+        @test ibzpoint ≈ [0.9, -0.8, -0.4]
 
         kpoint = [1.2,3.6,8.9]
         coords = "lattice"
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
-        @test ibzpoint ≈ [0.4, -0.2, -0.1] broken=!(lib isa Library)
+        @test ibzpoint ≈ [0.4, -0.2, -0.1]
         ibzpoint = convert(Array{Float64,1},recip_latvecs*ibzpoint)
         @test inhull(ibzpoint, ibz)
         end
