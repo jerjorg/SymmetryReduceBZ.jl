@@ -1,6 +1,5 @@
 module Symmetry
 
-import CDDLib
 import Polyhedra: HalfSpace, polyhedron, points, hrep, Library, DefaultLibrary, volume, removehredundancy!, removehredundancy!, Polyhedron
 import LinearAlgebra: norm, det, I, dot, checksquare
 import Combinatorics: permutations
@@ -498,7 +497,7 @@ Calculate the Brillouin zone for the given real-space lattice basis.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=DefaultLibrary{Float64}()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -530,36 +529,21 @@ Points on convex hull in original order:
 function calc_bz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=CDDLib.Library();
+    convention::String="ordinary", library::Library=DefaultLibrary{Float64}();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
-    if makeprim
-        (prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
-            atom_types,atom_pos,coordinates; rtol, atol)
+    prim_latvecs, prim_types, prim_pos = if makeprim
+        make_primitive(real_latvecs,atom_types,atom_pos,coordinates; rtol, atol)
     else
-        (prim_types,prim_pos,prim_latvecs)=(atom_types,float(atom_pos),float(real_latvecs))
+        (float(real_latvecs), atom_types, float(atom_pos))
     end
 
-    recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention),
-        rtol=rtol,atol=atol)
+    recip_latvecs = minkowski_reduce(get_recip_latvecs(prim_latvecs,convention); rtol, atol)
     latpts = vec([recip_latvecs*collect(i) for i in product(ntuple(n->-2:2, checksquare(real_latvecs))...)])
-    # if size(real_latvecs) == (2,2)
-    #     latpts = [recip_latvecs*[i,j] for (i,j)=product(-2:2,-2:2)]
-    # elseif size(real_latvecs) == (3,3)
-    #     latpts = [recip_latvecs*[i,j,k] for (i,j,k)=product(-2:2,-2:2,-2:2)]
-    # else
-    #     throw(ArgumentError("The lattice vectors must be a 2x2 or 3x3 matrix."))
-    # end
-    # popfirst!(latpts)
-
     distances = dot.(latpts, latpts) ./ 2
-    # bz = HalfSpace(latpts[:,2],distances[2]) ∩ HalfSpace(latpts[:,3],distances[3])
-    # for i=4:size(latpts,2)
-    #     bz = bz ∩ HalfSpace(latpts[:,i],distances[i])
-    # end
+
     bz = hrep(map(HalfSpace, latpts, distances))
     hull = polyhedron(bz, library)
-    removehredundancy!(hull)
     bzvolume = volume(hull)
     if !(bzvolume ≈ abs(det(recip_latvecs)))
         @info "problem" hull bzvolume abs(det(recip_latvecs))
@@ -591,7 +575,7 @@ Calculate the irreducible Brillouin zone of a crystal structure in 2D or 3D.
     reciprocal space. The two conventions are ordinary (temporal) frequency and
     angular frequency. The transformation from real to reciprocal space is
     unitary if the convention is ordinary.
-- `library::Polyhedra.Library=CDDLib.Library()`: a polyhedron manipulation library
+- `library::Polyhedra.Library=DefaultLibrary{Float64}()`: a polyhedron manipulation library
 - `rtol::Real=sqrt(eps(float(maximum(real_latvecs))))` a relative tolerance for
     floating point comparisons.
 - `atol::Real=1e-9`: an absolute tolerance for floating point comparisons.
@@ -623,17 +607,13 @@ Points on convex hull in original order:
 function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
     atom_types::AbstractVector{<:Int},atom_pos::AbstractMatrix{<:Real},
     coordinates::String,makeprim::Bool=false,
-    convention::String="ordinary", library::Library=CDDLib.Library();
+    convention::String="ordinary", library::Library=DefaultLibrary{Float64}();
     rtol::Real=sqrt(eps(float(maximum(real_latvecs)))),atol::Real=1e-9)
 
-    if makeprim
-        (prim_latvecs,prim_types,prim_pos) = make_primitive(real_latvecs,
-            atom_types,atom_pos,coordinates; rtol, atol)
+    prim_latvecs, prim_types, prim_pos = if makeprim
+        make_primitive(real_latvecs,atom_types,atom_pos,coordinates; rtol, atol)
     else
-        (prim_types,prim_pos,prim_latvecs)=(atom_types,float(atom_pos),float(real_latvecs))
-        if coordinates == "lattice"
-            prim_pos = real_latvecs*prim_pos
-        end
+        (float(real_latvecs), atom_types, float(coordinates == "lattice" ? real_latvecs*atom_pos : atom_pos))
     end
 
     pointgroup = remove_duplicates(calc_spacegroup(prim_latvecs,prim_types,
@@ -659,7 +639,6 @@ function calc_ibz(real_latvecs::AbstractMatrix{<:Real},
         end
     end
 
-    removehredundancy!(ibz)
     bzvolume = volume(bz)
     ibzvolume = volume(ibz)
     # reduction = bzvolume/ibzvolume
