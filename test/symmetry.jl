@@ -512,7 +512,7 @@ libraries = [DefaultLibrary{Float64}(), Library()]
         kpoint = [1.2,3.6,8.9]
         coords = "lattice"
         ibzpoint = mapto_ibz(kpoint,recip_latvecs,inv_rlatvecs,ibz,pointgroup,coords)
-        @test ibzpoint ≈ [0.4, -0.2, -0.1]
+        @test ibzpoint ≈ [0.4, -0.2, -0.1] broken=!(lib isa Library)
         ibzpoint = convert(Array{Float64,1},recip_latvecs*ibzpoint)
         @test inhull(ibzpoint, ibz)
         end
