@@ -3,19 +3,19 @@
 ## Julia
 
 To calculate the IBZ, simply provide the lattice and atomic basis to `calc_ibz`.
-The IBZ will be returned as either a convex hull or intersection of half spaces.
+The IBZ will be returned as polyhedron from [Polyhedra.jl](https://github.com/JuliaPolyhedra/Polyhedra.jl).
 ```@example
 import SymmetryReduceBZ.Lattices: genlat_CUB
 import SymmetryReduceBZ.Symmetry: calc_ibz
+
 a = 2.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
 atom_pos = Array([0 0 0; 0.5 0.5 0.5]')
-ibzformat = "convex hull"
 coordinates = "Cartesian"
 makeprim = false
 convention = "ordinary"
-ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,ibzformat,
+ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coordinates,
   makeprim,convention)
 ```
 The columns of `real_latvecs` are the lattice generating vectors, the columns
@@ -25,8 +25,11 @@ gives the convention for going from real to reciprocal space (whether or not to
 multiply by 2π). There is a simple function for visualizing the IBZ along with
 the Brillouin zone (BZ).
 ```@example
+ENV["MPLBACKEND"]="qt5agg"
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
+
 a = 2.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,0]
@@ -49,8 +52,11 @@ jl = Julia(runtime="/usr/local/bin/julia")
 ```
 ```
 %%julia
+ENV["PYTHON"]="" # this lets conda manage installation
+ENV["MPLBACKEND"]="qt5agg"
 using Pkg
-Pkg.add("SymmetryReduceBZ")
+Pkg.add(["SymmetryReduceBZ", "PyPlot"])
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
 
@@ -73,10 +79,14 @@ from julia import Julia
 jl = Julia(runtime="/usr/local/bin/julia")
 
 jl.eval("""
+ENV["PYTHON"]="" # this lets conda manage installation
+ENV["MPLBACKEND"]="qt5agg"
 using Pkg
-Pkg.add(\"SymmetryReduceBZ\")
+Pkg.add([\"SymmetryReduceBZ\", \"PyPlot\"])
+using PyPlot
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 import SymmetryReduceBZ.Lattices: genlat_CUB
+
 a = 1.0
 real_latvecs = genlat_CUB(a)
 atom_types = [0,1]
