@@ -1,5 +1,7 @@
 using Test
 
+ENV["MPLBACKEND"]="qt5agg"
+using PyPlot
 import SymmetryReduceBZ
 import SymmetryReduceBZ.Plotting: plot_convexhulls
 

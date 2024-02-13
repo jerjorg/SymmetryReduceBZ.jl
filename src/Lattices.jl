@@ -208,7 +208,7 @@ function minkowski_reduce(basis::AbstractMatrix{<:Real};
 
     k=2
     while k <= size(rbasis,1)
-        k=reduce_basis!(rbasis,k,rtol=rtol,atol=atol)
+        k=reduce_basis!(rbasis,k; rtol, atol)
     end
     oftype(basis, rbasis)
 end

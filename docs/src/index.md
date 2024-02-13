@@ -4,5 +4,5 @@
 
 ```@contents
 Pages = ["Usage.md", "Documentation.md"]
-depth = 5
+Depth = 5
 ```

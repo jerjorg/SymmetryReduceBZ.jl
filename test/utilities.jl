@@ -1,8 +1,8 @@
 using Test
 
 import SymmetryReduceBZ.Utilities: affine_trans, contains, edgelengths,
-	get_uniquefacets, mapto_xyplane, remove_duplicates, sample_circle,
-	sample_sphere, shoelace, sortpts_perm, unique_points
+    get_uniquefacets, mapto_xyplane, remove_duplicates, sample_circle,
+    sample_sphere, shoelace, sortpts_perm, unique_points, vertices, volume
 
 import SymmetryReduceBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HXG,
     genlat_OBL, genlat_CUB
@@ -10,6 +10,7 @@ import SymmetryReduceBZ.Lattices: genlat_SQR, genlat_REC, genlat_RECI, genlat_HX
 import SymmetryReduceBZ.Symmetry: calc_bz
 
 import CDDLib: Library
+import QHull: chull
 
 # Lattice vectors
 # 2D
@@ -25,7 +26,6 @@ obl_latvecs=genlat_OBL(a,b,θ)
 listreal_latvecs = [sqr_latvecs, rec_latvecs, reci_latvecs, hxg_latvecs,
     obl_latvecs]
 conventions=["ordinary", "angular"]
-bzformat = "convex hull"
 
 @testset "Utilities" begin
 
@@ -85,26 +85,31 @@ bzformat = "convex hull"
     @testset "get_uniquefacets" begin
         a=1
         real_latvecs=genlat_CUB(a)
-		atom_types = [0]
-		atom_pos = Array([0 0 0]')
+        atom_types = [0]
+        atom_pos = Array([0 0 0]')
         convention = "ordinary"
-        bzformat = "convex hull"
-		coords = "Cartesian"
-		makeprim = false
+        coords = "Cartesian"
+        makeprim = false
 
-		bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,makeprim,
-			convention,Library())
+        bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
+            convention,Library())
 
-        facetsᵢ = get_uniquefacets(bz)
-        facets = [bz.points[facetsᵢ[i],:] for i=1:length(facetsᵢ)]
-		truefacets = [[0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5],
-			[-0.5 -0.5 -0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; -0.5 0.5 -0.5],
-			[-0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 0.5 -0.5; -0.5 0.5 -0.5],
-			[-0.5 -0.5 -0.5; 0.5 -0.5 -0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5],
-			[-0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 -0.5 0.5; -0.5 -0.5 0.5],
-			[-0.5 -0.5 0.5; -0.5 -0.5 -0.5; -0.5 0.5 -0.5; -0.5 0.5 0.5]]
+        facets = get_uniquefacets(bz)
 
-        @test truefacets ≈ facets
+        bz_chull = chull(permutedims(reduce(hcat, vertices(bz))))
+        facets_chull = get_uniquefacets(bz_chull)
+
+        truefacets = [
+            [[ 0.5,-0.5, 0.5], [ 0.5,-0.5,-0.5], [ 0.5, 0.5,-0.5], [ 0.5, 0.5, 0.5]],
+            [[-0.5,-0.5,-0.5], [ 0.5,-0.5,-0.5], [ 0.5, 0.5,-0.5], [-0.5, 0.5,-0.5]],
+            [[-0.5, 0.5, 0.5], [ 0.5, 0.5, 0.5], [ 0.5, 0.5,-0.5], [-0.5, 0.5,-0.5]],
+            [[-0.5,-0.5,-0.5], [ 0.5,-0.5,-0.5], [ 0.5,-0.5, 0.5], [-0.5,-0.5, 0.5]],
+            [[-0.5, 0.5, 0.5], [ 0.5, 0.5, 0.5], [ 0.5,-0.5, 0.5], [-0.5,-0.5, 0.5]],
+            [[-0.5,-0.5, 0.5], [-0.5,-0.5,-0.5], [-0.5, 0.5,-0.5], [-0.5, 0.5, 0.5]],
+            ]
+
+        @test all(f -> any(g -> all(h -> any(j -> j ≈ h, g), f), truefacets), facets)
+        @test truefacets ≈ facets_chull
     end
 
     @testset "mapto_xyplane" begin
@@ -182,15 +187,15 @@ bzformat = "convex hull"
     @testset "shoelace" begin
         for (real_latvecs,convention)=Iterators.product(listreal_latvecs,
                 conventions)
-			atom_types = [0]
-			atom_pos = Array([0 0 0]')
-			coords = "Cartesian"
-			makeprim = false
-			bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,bzformat,
-				makeprim,convention,Library())
+            atom_types = [0]
+            atom_pos = Array([0 0 0]')
+            coords = "Cartesian"
+            makeprim = false
+            bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,
+                makeprim,convention,Library())
 
-            svol = shoelace(bz.points[bz.vertices,:]')
-            @test svol ≈ bz.volume
+            svol = shoelace(reduce(hcat, vertices(bz)))
+            @test svol ≈ volume(bz)
         end
     end
 

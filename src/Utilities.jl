@@ -1,9 +1,71 @@
 module Utilities
 
-import LinearAlgebra: cross, dot, norm
-import Distances: euclidean
-import Base.Iterators: flatten
-import QHull: Chull
+using LinearAlgebra: cross, dot, norm
+using Distances: euclidean
+using Base.Iterators: flatten
+using Polyhedra: Polyhedra, Polyhedron, removehredundancy!, removevredundancy!, hrep, vrep, halfspaces, points, incidentpointindices
+
+@doc """
+    volume(hull)
+
+# Arguments
+- `hull::Polyhedron`
+
+# Returns
+- `vol::Real`
+
+# Examples
+```jldoctest
+using SymmetryReduceBZ.Utilities: volume
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+volume(bz)
+# output
+1.0
+```
+"""
+volume(p::Polyhedron) = Polyhedra.volume(p)
+
+@doc """
+    vertices(hull)
+
+# Arguments
+- `hull::Polyhedron`: a convex hull of a polytope
+
+# Returns
+- `pts`: a iterator of points (vectors) at the vertices of the convex hull
+
+# Examples
+```jldoctest
+using SymmetryReduceBZ.Utilities: vertices
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+vertices(bz)
+# output
+8-element iterator of Vector{Float64}:
+ [0.5, -0.5, 0.5]
+ [0.5, -0.5, -0.5]
+ [0.5, 0.5, -0.5]
+ [0.5, 0.5, 0.5]
+ [-0.5, 0.5, -0.5]
+ [-0.5, 0.5, 0.5]
+ [-0.5, -0.5, -0.5]
+ [-0.5, -0.5, 0.5]
+```
+"""
+vertices(hull::Polyhedron) = points(hull)
 
 @doc """
     affine_trans(pts)
@@ -32,19 +94,19 @@ SymmetryReduceBZ.Utilities.affine_trans(pts)
 ```
 """
 function affine_trans(pts::AbstractMatrix{<:Real})
-    a,b,c = [pts[:,i] for i=1:3]
+    a,b,c, = eachcol(pts)
 
     # Create a coordinate system with two vectors lying on the plane the points
     # lie on.
-    u = b-a
-    v = c-a
-    u = u/norm(u)
-    v = v - dot(u,v)*u/dot(u,u)
-    v = v/norm(v)
+    u0 = b-a
+    v0 = c-a
+    u = u0/norm(u0)
+    v1 = v0 - dot(u,v0)*u/dot(u,u)
+    v = v1/norm(v1)
     w = cross(u,v)
 
     # Augmented matrix of affine transform
-    inv(vcat(hcat([u v w],a),[0 0 0 1]))
+    inv(hvcat((4,1), u, v, w, a, [0 0 0 1]))
 end
 
 @doc """
@@ -65,7 +127,7 @@ Check if a point is contained in a matrix of points as columns.
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: contains
+using SymmetryReduceBZ.Utilities: contains
 pts = Array([1 2; 2 3; 3 4; 4 5]')
 pt = [1,2]
 contains(pt,pts)
@@ -75,7 +137,7 @@ true
 """
 function contains(pt::AbstractVector{<:Real},pts::AbstractMatrix{<:Real};
         rtol::Real=sqrt(eps(float(maximum(pts)))),atol::Real=1e-9)::Bool
-    any(isapprox(pt,pts[:,i],rtol=rtol,atol=atol) for i=1:size(pts,2))
+    any(isapprox(pt,pts[:,i]; rtol, atol) for i=1:size(pts,2))
 end
 
 @doc """
@@ -96,7 +158,7 @@ Check if an array of arrays contains an array.
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: contains
+using SymmetryReduceBZ.Utilities: contains
 arrays = [[1 2; 2 3], [2 3; 4 5]]
 array = [1 2; 2 3]
 contains(array, arrays)
@@ -107,7 +169,7 @@ true
 function contains(array::AbstractArray,arrays::AbstractArray;
     rtol::Real=sqrt(eps(float(maximum(Iterators.flatten(array))))),
     atol::Real=1e-9)::Bool
-    any(isapprox(array,a,rtol=rtol,atol=atol) for a in arrays)
+    any(isapprox(array,a; rtol, atol) for a in arrays)
 end
 
 @doc """
@@ -178,31 +240,36 @@ get_simplex(v::Matrix{<:Real}, i) = v[i,:]
 
 
 @doc """
-    get_uniquefacets(ch)
+    get_uniquefacetsindices(ch)
 
-Calculate the unique facets of a convex hull.
+Calculate the indices of unique facets of a convex hull.
+
+!!! note "QHull.jl package extension"
+    This function is compatible with [QHull.jl](https://github.com/JuliaPolyhedra/QHull.jl)
+    convex hulls through a package extension.
+    After installing Python, SciPy, and QHull.jl, do `using QHull` to load it.
 
 # Arguments
-- `ch::Chull{<:Real}`: a convex hull in 3D from `QHull`.
+- `ch::Polyhedron`: a polyhedron from Polyhedra.jl or convex hull in 3D from QHull.jl.
 
 # Returns
-- `unique_facets::Vector{Vector{Int64}}`: a nested list of the
-    indices of points that lie on each face. For example, the points that lie on
-    the first face are `ch.points[unique_facets[1],:]`.
+- `unique_facets::Vector{<:Vector}`: a nested list of the indices of points that lie on
+  each face. See [`get_uniquefacets`](@ref) if you want the facets' points.
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: get_uniquefacets
-import SymmetryReduceBZ.Symmetry: calc_bz
+using QHull: chull
+using SymmetryReduceBZ.Utilities: get_uniquefacetsindices, vertices
+using SymmetryReduceBZ.Symmetry: calc_bz
 real_latvecs = [1 0 0; 0 1 0; 0 0 1]
 atom_types = [0]
 atom_pos = Array([0 0 0]')
 coordinates = "Cartesian"
-bzformat = "convex hull"
 makeprim = false
 convention = "ordinary"
-bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,bzformat,makeprim,convention)
-get_uniquefacets(bz)
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+ch = chull(permutedims(reduce(hcat, vertices(bz))))
+get_uniquefacetsindices(ch)
 # output
 6-element Vector{Vector{Int32}}:
  [1, 2, 3, 4]
@@ -213,26 +280,58 @@ get_uniquefacets(bz)
  [8, 7, 5, 6]
 ```
 """
-function get_uniquefacets(ch::Chull{<:Real})
-    facets = ch.facets
-    unique_facets = Vector{eltype(ch.vertices)}[]
-    removed=zeros(Bool,size(facets,1))
-    for i=1:size(facets,1)
-        removed[i] && continue
-        removed[i]=true
-        face=get_simplex(ch.simplices, i)
-        for j=i+1:size(facets,1)
-            if isapprox(facets[i,:],facets[j,:],rtol=1e-6)
-                removed[j]=true
-                append!(face,get_simplex(ch.simplices, j))
-            end
-        end
-        unique!(face)
-        # Order the corners of the face either clockwise or counterclockwise.
-        permute!(face, sortpts_perm(ch.points[face,:]'))
-        push!(unique_facets,face)
+function get_uniquefacetsindices(poly::Polyhedron)
+    removehredundancy!(poly)
+    removevredundancy!(poly)
+    map(eachindex(halfspaces(poly))) do i
+        id = incidentpointindices(poly, i)
+        permute!(id, sortpts_perm(mapreduce(j -> get(poly, j), hcat, id)))
+        return id
     end
-    unique_facets
+end
+
+@doc """
+    get_uniquefacets(ch)
+
+Calculate the unique facets of a convex hull.
+
+!!! note "QHull.jl package extension"
+    This function is compatible with [QHull.jl](https://github.com/JuliaPolyhedra/QHull.jl)
+    convex hulls through a package extension.
+    After installing Python, SciPy, and QHull.jl, do `using QHull` to load it.
+
+# Arguments
+- `ch::Polyhedron`: a polyhedron from Polyhedra.jl or convex hull in 3D from QHull.jl.
+
+# Returns
+- `unique_facets::Vector{<:Vector}`: a nested list of the vertices of points that lie on each face.
+
+# Examples
+```jldoctest
+using SymmetryReduceBZ.Utilities: get_uniquefacets
+using SymmetryReduceBZ.Symmetry: calc_bz
+real_latvecs = [1 0 0; 0 1 0; 0 0 1]
+atom_types = [0]
+atom_pos = Array([0 0 0]')
+coordinates = "Cartesian"
+makeprim = false
+convention = "ordinary"
+bz = calc_bz(real_latvecs,atom_types,atom_pos,coordinates,makeprim,convention)
+get_uniquefacets(bz)
+# output
+6-element Vector{Vector{Vector{Float64}}}:
+ [[-0.5, 0.5, -0.5], [-0.5, 0.5, 0.5], [-0.5, -0.5, 0.5], [-0.5, -0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5]]
+ [[0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5], [-0.5, -0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, -0.5, 0.5]]
+ [[0.5, 0.5, -0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]]
+ [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5]]
+```
+"""
+function get_uniquefacets(poly::Polyhedron)
+    map(get_uniquefacetsindices(poly)) do j
+        map(i -> get(poly, i), j)
+    end
 end
 
 @doc """
@@ -386,22 +485,27 @@ Calculate the area of a polygon with the shoelace algorithm.
     of the polygon as the columns of a matrix.
 
 # Returns
-- `<:Real`: the area of the polygon.
+- `area::Real`: the area of the polygon.
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: shoelace
+using SymmetryReduceBZ.Utilities: shoelace
 pts = [0 0 1; -1 1 0]
 shoelace(pts)
 # output
 1.0
-````
+```
 """
 function shoelace(vertices::AbstractMatrix{<:Real})
-    xs = vertices[begin,:]
-    ys = vertices[end,:]
-    abs(xs[end]*ys[begin] - xs[begin]*ys[end] +
-        sum(i -> xs[i]*ys[i+1]-xs[i+1]*ys[i], axes(vertices,2)[begin:end-1]))/2
+    @assert size(vertices, 1) == 2  "shoelace only works for polygons"
+    verts = vertices[:,sortpts2D(vertices)]
+    xs = verts[begin,:]
+    ys = verts[end,:]
+    A = (ys[end]+ys[begin])*(xs[end]-xs[begin])
+    for i in axes(verts,2)[begin:end-1]
+        A += (ys[i]+ys[i+1])*(xs[i]-xs[i+1])
+    end
+    abs(A)/2
 end
 
 @doc """
@@ -419,15 +523,13 @@ Calculate the permutation vector that sorts 2D Cartesian points counterclockwise
 ```
 """
 function sortpts2D(pts::AbstractMatrix{<:Real})
-    c = sum(pts,dims=2)/size(pts,2)
-    angles=zeros(size(pts,2))
-    for (j,i) in enumerate(axes(pts,2))
-        (x,y)=pts[:,i] - c
-        angles[j] = atan(y,x)
-        # if y < 0 angles[i] += 2π end
+    @assert size(pts,1) == 2 "sortpts2D only accepts polygons"
+    cx,cy=map(x->sum(x)/size(pts,2),eachrow(pts))
+    angles=map(eachcol(pts)) do v
+        vx,vy = v
+        atan(vy-cy,vx-cx)
     end
-    perm = sortperm(angles)
-    return perm
+    return sortperm(angles)
 end
 
 @doc """
@@ -446,7 +548,7 @@ Calculate the permutation vector that sorts Cartesian points embedded in 3D that
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: sortpts_perm
+using SymmetryReduceBZ.Utilities: sortpts_perm
 pts = [0.5 -0.5 0.5; 0.5 -0.5 -0.5; 0.5 0.5 -0.5; 0.5 0.5 0.5]'
 perm=sortpts_perm(pts)
 pts[:,perm]
@@ -495,7 +597,7 @@ function unique_points(points::AbstractMatrix{<:Real};
     j1 = firstindex(uniquepts, 2)
     numpts = 0
     for i=axes(points,2)
-        if !any(j -> isapprox(points[:,i],uniquepts[:,j],rtol=rtol,atol=atol),
+        if !any(j -> isapprox(points[:,i],uniquepts[:,j]; rtol, atol),
                 j1:j1+numpts-1)
             numpts += 1
             uniquepts[:,j1+numpts-1] = points[:,i]
@@ -519,7 +621,7 @@ Remove duplicates from an array.
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: remove_duplicates
+using SymmetryReduceBZ.Utilities: remove_duplicates
 test = [1.,1.,2,2,]
 remove_duplicates(test)
 # output
@@ -536,7 +638,7 @@ function remove_duplicates(points::AbstractVector;
     npts = 0
     for i=eachindex(points)
         pt=points[i]
-        if !any(i -> isapprox(pt,uniquepts[i],rtol=rtol,atol=atol), 1:npts)
+        if !any(i -> isapprox(pt,uniquepts[i]; rtol, atol), 1:npts)
             npts += 1
             uniquepts[i1+npts-1] = pt
         end
@@ -545,7 +647,7 @@ function remove_duplicates(points::AbstractVector;
 end
 
 @doc """
-    points₋in₋ball(points,radius,offset,rtol=sqrt(eps(float(radius))),atol=1e-9)
+    points_in_ball(points,radius,offset,rtol=sqrt(eps(float(radius))),atol=1e-9)
 
 Calculate the points within a ball (circle, sphere, ...).
 
@@ -561,11 +663,11 @@ Calculate the points within a ball (circle, sphere, ...).
 
 # Examples
 ```jldoctest
-import SymmetryReduceBZ.Utilities: points₋in₋ball
+using SymmetryReduceBZ.Utilities: points_in_ball
 points = [0.0 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.25 0.3 0.35 0.4 0.45 0.5 0.3 0.35 0.4 0.45 0.5 0.35 0.4 0.45 0.5 0.4 0.45 0.5 0.45 0.5 0.5; 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.25 0.25 0.25 0.25 0.25 0.25 0.3 0.3 0.3 0.3 0.3 0.35 0.35 0.35 0.35 0.4 0.4 0.4 0.45 0.45 0.5]
 radius = 0.1
 offset = [0,0]
-points₋in₋ball(points,radius,offset)
+points_in_ball(points,radius,offset)
 # output
 4-element Vector{Int64}:
   1
@@ -574,7 +676,7 @@ points₋in₋ball(points,radius,offset)
  12
 ```
 """
-function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
+function points_in_ball(points::AbstractMatrix{<:Real},radius::Real,
     offset::AbstractVector{<:Real};rtol::Real=sqrt(eps(float(radius))),
     atol::Real=1e-9)
 
@@ -582,7 +684,7 @@ function points₋in₋ball(points::AbstractMatrix{<:Real},radius::Real,
     count = 0
     for i=axes(points,2)
         if (norm(points[:,i] - offset) < radius) ||
-            isapprox(norm(points[:,i] - offset),radius,rtol=rtol,atol=atol)
+            isapprox(norm(points[:,i] - offset),radius; rtol, atol)
             count+=1
             ball_points[count] = i
         end
