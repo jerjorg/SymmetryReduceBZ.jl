@@ -8,7 +8,7 @@ import SymmetryReduceBZ.Symmetry: calc_spacegroup, calc_pointgroup, calc_bz,
 import SymmetryReduceBZ.Utilities: unique_points, vertices
 import SymmetryReduceBZ.Lattices: genlat_FCC, get_recip_latvecs
 
-import Polyhedra: points
+import Polyhedra: points, DefaultLibrary
 import CDDLib: Library
 import LinearAlgebra: inv
 import QHull: chull
@@ -210,6 +210,7 @@ pgsizes = [8, 4, 4, 12, 2, 48, 48, 48, 16, 16, 16, 8, 8, 8, 8, 8, 8, 24, 12, 12,
 atom_types=[0]
 coords="Cartesian"
 convention="ordinary"
+libraries = [DefaultLibrary{Float64}(), Library()]
 
 @testset "symmetry" begin
     @testset "calc_pointgroup" begin
@@ -240,10 +241,10 @@ convention="ordinary"
             end
             for (atom_types,atom_pos)=zip(atype_list,apos_list)
                 for makeprim=[true,false]
-                    for convention=["ordinary","angular"]
+                    for convention=["ordinary","angular"], lib=libraries
 
                         bz=calc_bz(real_latvecs,atom_types,atom_pos,coords,
-                            makeprim,convention,Library())
+                            makeprim,convention,lib)
 
                         if makeprim
                             (prim_latvecs,prim_types,prim_pos) = make_primitive(
@@ -285,7 +286,7 @@ convention="ordinary"
                            Array([0 0 0; 0 0 0.5; 0.5 0.5 0.5]')]
             end
             for (atom_types,atom_pos)=zip(atype_list,apos_list)
-                for makeprim=[true,false]
+                for makeprim=[true,false], lib=libraries
 
                     if makeprim
                         (prim_latvecs,prim_types,prim_pos) = make_primitive(
@@ -298,10 +299,10 @@ convention="ordinary"
                         prim_pos,coords)[2]
 
                     bz=calc_bz(prim_latvecs,prim_types,prim_pos,coords,
-                        makeprim,convention,Library())
+                        makeprim,convention,lib)
 
                     ibz=calc_ibz(prim_latvecs,prim_types,prim_pos,coords,
-                        makeprim,convention,Library())
+                        makeprim,convention,lib)
 
                     # Unfold IBZ
                     unfoldpts=reduce(hcat,[op*v for op=pointgroup
@@ -317,11 +318,13 @@ convention="ordinary"
             end
         end
 
+        for lib=libraries
         passed = false
         ibz = calc_ibz(listreal_latvecs[1], [0,0], Array([0 0; 0.5 0.5]'),
-            "Cartesian", true,"ordinary", Library())
+            "Cartesian", true,"ordinary", lib)
         passed = true
         @test passed
+        end
     end
 
     @testset "mapto_unitcell" begin
@@ -348,6 +351,7 @@ convention="ordinary"
     end
 
     @testset "mapto_bz" begin
+        for lib=libraries
         kpoint = [3.3, 4.4]
         real_latvecs = [1 0; 0 1]
         atom_types = [0]
@@ -357,7 +361,7 @@ convention="ordinary"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
-            convention,Library())
+            convention,lib)
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
@@ -381,7 +385,7 @@ convention="ordinary"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
-            convention,Library())
+            convention,lib)
 
         recip_latvecs = real_latvecs
         inv_rlatvecs = inv(recip_latvecs)
@@ -395,11 +399,11 @@ convention="ordinary"
 
         @test inhull(bz_point,bz)
         @test bz_point ≈ [.3, .4, .5]
-
+        end
     end
 
     @testset "inhull" begin
-
+        for lib=libraries
         real_latvecs = [0.5 0; 0 0.5]
         atom_types = [0]
         atom_pos = Array([0 0]')
@@ -408,7 +412,7 @@ convention="ordinary"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
-            convention,Library())
+            convention,lib)
 
         kpoint = [1.2,0]
         @test inhull(kpoint,bz) == false
@@ -433,7 +437,7 @@ convention="ordinary"
         convention = "ordinary"
 
         bz = calc_bz(real_latvecs,atom_types,atom_pos,coords,makeprim,
-            convention,Library())
+            convention,lib)
 
         kpoint = [1.2,0,0]
         @test inhull(kpoint,bz) == false
@@ -451,11 +455,11 @@ convention="ordinary"
         rtol=1e-7
         atol=1e-7
         @test inhull(kpoint,bz,rtol=rtol,atol=atol) == true
-
+        end
     end
 
     @testset "mapto_ibz" begin
-
+        for lib=libraries
         real_latvecs = [0.5 0; 0 0.5]
         atom_types = [0]
         atom_pos = Array([0 0]')
@@ -466,7 +470,7 @@ convention="ordinary"
         inv_rlatvecs = inv(recip_latvecs)
 
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,Library())
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,lib)
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0]
@@ -489,7 +493,7 @@ convention="ordinary"
         recip_latvecs = get_recip_latvecs(real_latvecs,convention)
         inv_rlatvecs = inv(recip_latvecs)
 
-        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,Library())
+        ibz = calc_ibz(real_latvecs,atom_types,atom_pos,coords,makeprim,convention,lib)
         (ftrans, pointgroup)=calc_spacegroup(real_latvecs,atom_types,atom_pos,coords)
 
         kpoint = [1.2,0,0]
@@ -510,6 +514,7 @@ convention="ordinary"
         @test ibzpoint ≈ [0.4, -0.2, -0.1]
         ibzpoint = convert(Array{Float64,1},recip_latvecs*ibzpoint)
         @test inhull(ibzpoint, ibz)
+        end
     end
 
     @testset "calc_spacegroup" begin
