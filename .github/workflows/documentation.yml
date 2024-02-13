@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/cache@v1
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
