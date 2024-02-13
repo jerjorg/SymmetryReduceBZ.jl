@@ -4,7 +4,7 @@ using SymmetryReduceBZ
 @testset "method ambiguity" Aqua.test_ambiguities(SymmetryReduceBZ)
 Aqua.test_all(SymmetryReduceBZ, ambiguities=false)
 
-@testset    "lattices"  include("lattices.jl")
-@testset    "symmetry"  include("symmetry.jl")
-@testset    "utilities" include("utilities.jl")
-@testset    "plotting"  include("plotting.jl")
+@testset    "lattices"  begin include("lattices.jl") end
+@testset    "symmetry"  begin include("symmetry.jl") end
+@testset    "utilities" begin include("utilities.jl") end
+@testset    "plotting"  begin include("plotting.jl") end
