@@ -13,8 +13,8 @@ making unit cells primitive and lattice reduction. See the User Guide in the
 [documentation](https://jerjorg.github.io/SymmetryReduceBZ.jl/) for more details
 and usage examples in Python. Details of the algorithm are explained [here](https://arxiv.org/abs/2104.05856).
 
-!!! note "Breaking changes in v0.2"
-    See the NEWS.md file for a description of the breaking changes in v0.2.
+> **Breaking changes in v0.2**:
+See the NEWS.md file for a description of the breaking changes in v0.2.
 
 ## Installation
 
