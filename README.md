@@ -13,6 +13,9 @@ making unit cells primitive and lattice reduction. See the User Guide in the
 [documentation](https://jerjorg.github.io/SymmetryReduceBZ.jl/) for more details
 and usage examples in Python. Details of the algorithm are explained [here](https://arxiv.org/abs/2104.05856).
 
+> **Breaking changes in v0.2**:
+See the NEWS.md file for a description of the breaking changes in v0.2.
+
 ## Installation
 
 `SymmetryReduceBZ` is a registered Julia package and can be installed using
@@ -35,8 +38,8 @@ Pkg.build("PyCall")
 ## Examples
 
 To calculate the irreducible Brillouin zone, provide the lattice and atomic
-basis to `calc_ibz`. The IBZ will be returned as either a convex hull or
-intersection of half spaces.
+basis to `calc_ibz`. The IBZ will be returned as a polyhedron from Polyhedra.jl,
+which can be viewed either as a convex hull or an intersection of half spaces.
 ```@example
 import SymmetryReduceBZ.Lattices: genlat_CUB
 import SymmetryReduceBZ.Symmetry: calc_ibz
