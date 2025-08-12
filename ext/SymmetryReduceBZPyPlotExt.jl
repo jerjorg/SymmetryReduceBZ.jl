@@ -43,7 +43,7 @@ function plot_3Dconvexhull(convexhull, ax=nothing;
     l=art3D.Line3DCollection(edges; colors=edgecolors, linewidths)
 
     ax.add_collection3d(p)
-    ax.add_collection3d(l)
+    ax.add_collection3d(l; autolim=false)
     ax.auto_scale_xyz(plotrange[1],plotrange[2],plotrange[3])
     ax.set_box_aspect((1, 1, 1))
 
