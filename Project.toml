@@ -1,7 +1,7 @@
 name = "SymmetryReduceBZ"
 uuid = "49a35663-c880-4242-bebb-1ec8c0fa8046"
 authors = ["Jeremy Jorgensen <jerjorg@gmail.com>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 CDDLib = "3391f64e-dcde-5f30-b752-e11513730f60"
@@ -22,11 +22,11 @@ SymmetryReduceBZQHullExt = "QHull"
 
 [compat]
 Aqua = "0.8"
-CDDLib = "0.9"
+CDDLib = "0.9,0.10"
 Combinatorics = "1"
 Distances = "0.10"
 LinearAlgebra = "1.6"
-Polyhedra = "0.7.7"
+Polyhedra = "0.7,0.8"
 PyPlot = "2.9"
 QHull = "0.2"
 SymPy = "1,2"
