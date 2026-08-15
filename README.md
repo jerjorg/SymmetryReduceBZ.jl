@@ -16,6 +16,18 @@ and usage examples in Python. Details of the algorithm are explained [here](http
 > **Breaking changes in v0.2**:
 See the NEWS.md file for a description of the breaking changes in v0.2.
 
+## Citation
+
+If you use `SymmetryReduceBZ` in published work, please cite:
+
+> J. J. Jorgensen, J. E. Christensen, T. J. Jarvis, and G. L. W. Hart,
+> "A General Algorithm for Calculating Irreducible Brillouin Zones,"
+> *Communications in Computational Physics* **31**(2), 495-515 (2022).
+> [doi:10.4208/cicp.OA-2021-0094](https://doi.org/10.4208/cicp.OA-2021-0094)
+
+A BibTeX entry is in [CITATION.bib](CITATION.bib). GitHub's "Cite this
+repository" button reads [CITATION.cff](CITATION.cff).
+
 ## Installation
 
 `SymmetryReduceBZ` is a registered Julia package and can be installed using
