@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article in preferred-citation."
+title: SymmetryReduceBZ.jl
+abstract: "A Julia package for calculating irreducible Brillouin zones for 2D or 3D crystal structures."
+type: software
+version: 0.2.1
+license: GPL-3.0
+repository-code: "https://github.com/jerjorg/SymmetryReduceBZ.jl"
+authors:
+  - family-names: Jorgensen
+    given-names: Jeremy J.
+    orcid: "https://orcid.org/0000-0003-0629-7549"
+  - family-names: Van Munoz
+    given-names: Lorenzo
+    orcid: "https://orcid.org/0000-0003-0807-5034"
+preferred-citation:
+  type: article
+  title: "A General Algorithm for Calculating Irreducible Brillouin Zones"
+  authors:
+    - family-names: Jorgensen
+      given-names: Jeremy J.
+      orcid: "https://orcid.org/0000-0003-0629-7549"
+    - family-names: Christensen
+      given-names: John E.
+    - family-names: Jarvis
+      given-names: Tyler J.
+    - family-names: Hart
+      given-names: Gus L. W.
+  journal: "Communications in Computational Physics"
+  volume: 31
+  issue: 2
+  start: 495
+  end: 515
+  year: 2022
+  doi: "10.4208/cicp.oa-2021-0094"
