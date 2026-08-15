@@ -111,7 +111,7 @@ convention = "ordinary"
 ax=plot_convexhulls(real_latvecs,atom_types,atom_pos,coordinates,
   makeprim,convention)
 ```
-![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz.png)
+![Brillouin zone and irreducible Brillouin zone of a cubic lattice](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz.png)
 
 The functions `plot_2Dconvexhull` and `plot_3Dconvexhull` allow greater customization of 
 the appearance of the convex hull.
@@ -133,7 +133,7 @@ ax = plot_2Dconvexhull(bz,facecolor="deepskyblue",linewidth=3,edgecolor="cyan",a
 ax = plot_2Dconvexhull(ibz,ax;facecolor="coral",linewidth=3,edgecolor="magenta",alpha=0.4)
 axis("off")
 ```
-![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-3.png)
+![Two-dimensional Brillouin zone and irreducible Brillouin zone of a square lattice](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-3.png)
 
 ```@example
 ENV["MPLBACKEND"]="qt5agg"
@@ -154,4 +154,4 @@ ax = plot_3Dconvexhull(ibz,ax,facecolors="pink",alpha=1,edgecolors="black",linew
 ax = plot_3Dconvexhull(bz,ax,facecolors="deepskyblue",edgecolors="white",linewidths=1,alpha=0.2)
 axis("off")
 ```
-![IBZ](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-2.png)
+![Three-dimensional Brillouin zone and irreducible Brillouin zone of a simple cubic lattice](https://github.com/jerjorg/SymmetryReduceBZ.jl/blob/master/plots/ibz-2.png)
